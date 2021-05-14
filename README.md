@@ -1,8 +1,10 @@
 # SDIS Project
 
-SDIS Project for group T&lt;n&gt;G&lt;p&gt;&lt;q&gt;.
+SDIS Project for group T6G26.
 
 Group members:
 
-1. &lt;first name&gt; &lt;family name&gt; (&lt;email address&gt;)
-2. &lt;first name&gt; &lt;family name&gt; (&lt;email address&gt;)
+1. Tiago Alves (up201603820@fe.up.pt)
+2. João Romão (up201806779@fe.up.pt)
+3. Nuno Resende (up201806825@fe.up.pt)
+4. João Gonçalves (up201806796@fe.up.pt)
