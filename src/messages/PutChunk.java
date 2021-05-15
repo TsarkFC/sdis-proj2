@@ -8,7 +8,7 @@ public class PutChunk extends MsgWithChunk {
     private final Integer replicationDeg;
     private final byte[] body;
 
-    public PutChunk(Integer senderId, String fileId, Integer chunkNo,
+    public PutChunk(Double version, Integer senderId, String fileId, Integer chunkNo,
                     Integer replicationDeg, byte[] body) {
         super(version, senderId, fileId, chunkNo);
         this.replicationDeg = replicationDeg;

@@ -1,7 +1,6 @@
 import peer.RemoteObject;
 import filehandler.FileHandler;
-import protocols.Protocols;
-import rmi.SubProtocol;
+import utils.SubProtocol;
 
 import java.io.*;
 
@@ -18,27 +17,30 @@ public class TestApp {
     private final int PATH_IDX = 2;
     private final int DISK_SPACE_IDX = 2;
     private final int REPLICATION_DEGREE_IDX = 3;
-
     private String peerAp;
     private SubProtocol subProtocol;
     private String path;
     private double diskSpace; //RECLAIM
     private int replicationDegree; //Backup protocol
 
-    private Protocols stub;
+    private RemoteObject stub;
 
     public static void main(String[] args) {
         TestApp testApp = new TestApp();
         if (!testApp.parseArguments(args)) return;
-        if (!testApp.connectRmi()) return;
+        if(!testApp.connectRmi()) return;
 
         try {
             if (testApp.path != null) {
                 testApp.processRequest(testApp.subProtocol, testApp.path);
             } else testApp.processRequest(testApp.subProtocol);
-        } catch (IOException | InterruptedException e) {
+        } catch (IOException e) {
+            System.out.println("Error: Failed to process Client Request");
+        } catch (InterruptedException e) {
             System.out.println("Error: Failed to process Client Request");
         }
+
+
     }
 
     private boolean parseArguments(String[] args) {
@@ -108,7 +110,7 @@ public class TestApp {
     private boolean connectRmi() {
         try {
             Registry registry = LocateRegistry.getRegistry("localhost");
-            this.stub = (Protocols) registry.lookup(this.peerAp);
+            this.stub = (RemoteObject) registry.lookup(this.peerAp);
             System.out.println("Connected!");
             return true;
         } catch (Exception e) {
@@ -120,22 +122,29 @@ public class TestApp {
 
     private void processRequest(SubProtocol protocol, String path) throws IOException, InterruptedException {
         File file = FileHandler.getFile(path);
-        if (file == null) return;
+        if(file==null) return;
         switch (protocol) {
-            case BACKUP -> {
+            case BACKUP:{
                 System.out.println("Initiating Backup Protocol");
                 stub.backup(file, replicationDegree);
+                break;
+
             }
-            case DELETE -> {
+            case DELETE:{
                 System.out.println("Initiating Delete Protocol");
                 stub.delete(path);
+                break;
+
             }
-            case RESTORE -> {
+            case RESTORE:{
                 System.out.println("Initiating Restore Protocol");
                 stub.restore(path);
+                break;
+
             }
-            default -> {
+            default:{
                 System.out.println("[ERROR] File was null");
+                break;
             }
         }
     }
@@ -143,17 +152,17 @@ public class TestApp {
     private void processRequest(SubProtocol protocol) throws IOException {
         String result = "";
         switch (protocol) {
-            case RECLAIM: {
+            case RECLAIM:{
                 System.out.println("Initiating Reclaim Protocol");
                 stub.reclaim(diskSpace);
                 break;
             }
-            case STATE: {
+            case STATE:{
                 System.out.println("Initiating State Protocol");
                 result = stub.state();
                 break;
             }
-            default: {
+            default:{
                 System.out.println("Error processing request");
                 break;
             }

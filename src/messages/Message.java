@@ -1,17 +1,21 @@
 package messages;
 
-public abstract class Message {
-    protected static final int MSG_TYPE_IDX = 0;
-    protected static final int SENDER_ID_IDX = 1;
-    protected static final int FILE_ID_IDX = 2;
+import peer.Peer;
 
+public abstract class Message {
+    protected static final int VERSION_IDX = 0;
+    protected static final int MSG_TYPE_IDX = 1;
+    protected static final int SENDER_ID_IDX = 2;
+    protected static final int FILE_ID_IDX = 3;
+    protected final Double version;
     protected final Integer senderId;
     protected final String fileId;
     protected final int CR = 0xD;
     protected final int LF = 0xA;
     protected String[] tokens;
 
-    public Message(Integer senderId, String fileId) {
+    public Message(Double version, Integer senderId, String fileId) {
+        this.version = version;
         this.senderId = senderId;
         this.fileId = fileId;
     }
@@ -23,6 +27,7 @@ public abstract class Message {
             System.out.println("ERROR: building " + tokens[MSG_TYPE_IDX] + " message with " + getMsgType() + " constructor!");
         }
 
+        this.version = Double.parseDouble(tokens[VERSION_IDX]);
         this.senderId = Integer.parseInt(tokens[SENDER_ID_IDX]);
         if(getNumberArguments() >= 5){
             this.fileId = tokens[FILE_ID_IDX];
@@ -30,7 +35,7 @@ public abstract class Message {
     }
 
     public String getMsgString() {
-        return String.format("%s %d %s %s", getMsgType(), this.senderId,
+        return String.format("%s %s %d %s %s", this.version, getMsgType(), this.senderId,
                 this.fileId, getExtraString());
     }
 
@@ -43,11 +48,16 @@ public abstract class Message {
 
     public void printMsg() {
         System.out.println(getMsgType());
+        System.out.println("Version: " + this.version);
         System.out.println("Sender ID: " + this.senderId);
         System.out.println("File ID: " + this.fileId);
     }
 
     public abstract byte[] getBytes();
+
+    public Double getVersion() {
+        return version;
+    }
 
     public Integer getSenderId() {
         return senderId;

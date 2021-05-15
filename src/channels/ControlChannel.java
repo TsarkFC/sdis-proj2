@@ -61,6 +61,7 @@ public class ControlChannel extends Channel {
         }
     }
 
+
     public void handleDeleted(String msgString) {
         Deleted msg = new Deleted(msgString);
         if (!msg.samePeerAndSender(peer) && !peer.isVanillaVersion()) {
@@ -97,13 +98,12 @@ public class ControlChannel extends Channel {
 
     public void handleReclaim(String msgString) {
         Removed removed = new Removed(msgString);
-        StoredChunksMetadata storageMetadata = peer.getMetadata().getStoredChunksMetadata();
-
         if (removed.samePeerAndSender(peer)) return;
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
 
         //A peer that has a local copy of the chunk shall update its local count of this chunk
         //1- Check if chunk is stored
+        StoredChunksMetadata storageMetadata = peer.getMetadata().getStoredChunksMetadata();
         int peerId = peer.getArgs().getPeerId();
         if (storageMetadata.chunkIsStored(removed.getFileId(), removed.getChunkNo()) && !removed.samePeerAndSender(peerId)) {
             //2- Update local count of its chunk

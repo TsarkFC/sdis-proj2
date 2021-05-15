@@ -42,24 +42,22 @@ public class BackupChannel extends Channel {
                 saveChunk(rcvdMsg);
                 delayMsg = "[BACKUP] Sending stored messages after: ";
             } else delayMsg = "[BACKUP] Initiate Backup after: ";
-            //TODO send in Intetnet
             new ScheduledThreadPoolExecutor(1).schedule(() -> sendStored(rcvdMsg),
                     Utils.generateRandomDelay(delayMsg), TimeUnit.MILLISECONDS);
         } else {
-            /*if (!peer.isVanillaVersion()) {
+            if (!peer.isVanillaVersion()) {
                 peer.getMetadata().getStoredChunksMetadata().deleteChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
                 peer.getMetadata().getStoredChunksMetadata().receivedPutChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), peer);
                 peer.getMetadata().writeMetadata();
-            }*/
+            }
         }
     }
 
     private boolean shouldSaveFile(PutChunk rcvdMsg) {
         boolean sameSenderPeer = rcvdMsg.getSenderId().equals(peer.getArgs().getPeerId());
-        //boolean hasSpace = peer.getMetadata().hasSpace(rcvdMsg.getBody().length / 1000.0);
-        //boolean isOriginalFileSender = peer.getMetadata().hasFile(rcvdMsg.getFileId());
-        //return !sameSenderPeer && hasSpace && !isOriginalFileSender;
-        return true;
+        boolean hasSpace = peer.getMetadata().hasSpace(rcvdMsg.getBody().length / 1000.0);
+        boolean isOriginalFileSender = peer.getMetadata().hasFile(rcvdMsg.getFileId());
+        return !sameSenderPeer && hasSpace && !isOriginalFileSender;
     }
 
     private void saveStateMetadata(PutChunk rcvdMsg) {
@@ -78,7 +76,11 @@ public class BackupChannel extends Channel {
         if (!alreadyReachedRepDgr(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg())) {
             Stored confMsg = new Stored(rcvdMsg.getVersion(), peer.getArgs().getPeerId(), rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
             sendStoredMsg(confMsg.getBytes());
-            saveChunk(rcvdMsg);
+            if (!peer.isVanillaVersion()) {
+                //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize0(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
+                saveChunk(rcvdMsg);
+            }
+
         } else {
             System.out.println("[BACKUP] Not backing up because reached perceived rep degree");
             if (!peer.isVanillaVersion()) {
@@ -101,6 +103,7 @@ public class BackupChannel extends Channel {
     }
 
     private boolean alreadyReachedRepDgr(String fileId, int chunkNo, int repDgr) {
+        if (peer.isVanillaVersion()) return false;
         int stored = peer.getMetadata().getStoredChunksMetadata().getStoredCount(fileId, chunkNo);
         System.out.println("[BACKUP] Replication Degree = " + repDgr + " and perceived = " + stored + " of file " + fileId);
         return (stored >= repDgr);

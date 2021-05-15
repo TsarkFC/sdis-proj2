@@ -1,6 +1,5 @@
 package protocol;
 
-import chord.ChordPeer;
 import messages.Delete;
 import messages.PutChunk;
 import peer.Peer;
@@ -27,12 +26,12 @@ public class BackupProtocol extends Protocol {
     int reps = 1;
     String fileId;
 
-    public BackupProtocol(File file, ChordPeer peer, int repDgr) {
+    public BackupProtocol(File file, Peer peer, int repDgr) {
         super(file, peer);
         this.repDgr = repDgr;
     }
 
-    public BackupProtocol(String path, ChordPeer peer, int repDgr) {
+    public BackupProtocol(String path, Peer peer, int repDgr) {
         super(path, peer);
         this.repDgr = repDgr;
     }
@@ -59,8 +58,8 @@ public class BackupProtocol extends Protocol {
             Delete msg = new Delete(peerArgs.getVersion(), peerArgs.getPeerId(), previousFileId);
             List<byte[]> msgs = new ArrayList<>();
             msgs.add(msg.getBytes());
-            //TODO Send message by internet
-            
+            ThreadHandler.startMulticastThread(peerArgs.getAddressList().getMcAddr().getAddress(),
+                    peerArgs.getAddressList().getMcAddr().getPort(), msgs);
 
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
@@ -74,11 +73,34 @@ public class BackupProtocol extends Protocol {
                     chunk.getKey(), repDgr, chunk.getValue());
             messages.add(backupMsg.getBytes());
         }
+
+        execute();
+    }
+
+    private void execute() {
+        if (reps <= repsLimit) {
+            ThreadHandler.startMulticastThread(peer.getArgs().getAddressList().getMdbAddr().getAddress(),
+                    peer.getArgs().getAddressList().getMdbAddr().getPort(), messages);
+            executor.schedule(this::verify, timeWait, TimeUnit.SECONDS);
+            System.out.println("[BACKUP] Sent message, waiting " + timeWait + " seconds...");
+        } else {
+            System.out.println("[BACKUP] Reached reached limit of PUTCHUNK messages!");
+        }
+    }
+
+    private void verify() {
+        if (!peer.getMetadata().verifyRepDgr(fileId, repDgr, numOfChunks)) {
+            System.out.println("[BACKUP] Did not get expected replication degree after " + timeWait + " seconds. Resending...");
+            reps++;
+            timeWait *= 2;
+            execute();
+        } else {
+            System.out.println("[BACKUP] Got expected replication degree!");
+        }
     }
 
     public void backupChunk(String fileId, int chunkNo) {
         messages = new ArrayList<>();
-        this.fileId = fileId;
         FileHandler fileHandler = new FileHandler(file);
 
         //FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length());
@@ -87,5 +109,7 @@ public class BackupProtocol extends Protocol {
         PutChunk backupMsg = new PutChunk(peer.getArgs().getVersion(), peer.getArgs().getPeerId(), fileId,
                 chunkNo, repDgr, fileHandler.getChunkFileData());
         messages.add(backupMsg.getBytes());
+
+        execute();
     }
 }

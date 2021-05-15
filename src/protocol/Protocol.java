@@ -1,24 +1,31 @@
 package protocol;
 
-import chord.ChordPeer;
+import chord.Chord;
+import peer.Peer;
 import filehandler.FileHandler;
 
 import java.io.File;
+import java.io.IOException;
 
 public abstract class Protocol {
     protected final File file;
-    protected final ChordPeer peer;
+    protected final Peer peer;
     protected String path;
 
-    public Protocol(File file, ChordPeer peer) {
+    public Protocol(File file, Peer peer) {
         this.file = file;
         this.peer = peer;
     }
 
-    public Protocol(String path, ChordPeer peer) {
+    public Protocol(String path, Peer peer) {
         this.file = FileHandler.getFile(path);
         this.path = path;
         this.peer = peer;
+    }
+
+    public void initializeChord(int chordPort){
+        Chord chord = new Chord(chordPort);
+        chord.create();
     }
 
     public abstract void initialize();

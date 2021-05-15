@@ -1,4 +1,4 @@
-package rmi;
+package utils;
 
 public enum SubProtocol {
     BACKUP,

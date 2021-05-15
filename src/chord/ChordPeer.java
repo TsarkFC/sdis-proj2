@@ -1,7 +1,9 @@
 package chord;
 
 import constants.Constants;
+import peer.Peer;
 
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,8 +36,14 @@ public class ChordPeer {
 
     }
 
-    public ChordPeer(){
+    public ChordPeer(Peer peer){
+        this.ipAddr = peer.getArgs().getChordPeerIpAddr();
+        this.port =  peer.getArgs().getChordPort();
+        this.id = generateHash(ipAddr,port);
+        System.out.println("Chord Peer was created id: " +  id);
     }
+
+
 
     public void addSuccessor(ChordPeer chordPeer) {
     }
@@ -66,24 +74,33 @@ public class ChordPeer {
 
     }
 
+    public int generateHash(String ipAddr,int port) {
+        String id = ipAddr+port;
+        return generateHash(id);
+    }
+
     public int generateHash(String name) {
-        MessageDigest digest = null;
+        MessageDigest messageDigest = null;
         try {
-            digest = MessageDigest.getInstance("SHA-1");
-            System.out.println(digest);
+            messageDigest = MessageDigest.getInstance("SHA-1");
+            messageDigest.reset();
+            messageDigest.update(name.getBytes(StandardCharsets.UTF_8));
+
+
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
-
+        byte[] digest = messageDigest.digest();
+        String sha1 = String.format("%040x", new BigInteger(1, digest));
         if (digest == null) {
             System.out.println("Could not generate peer id with SHA-1 ");
             return -1;
         }
-
-        byte[] encodedhash = digest.digest(name.getBytes(StandardCharsets.UTF_8));
+        int hashCode = sha1.hashCode();
+        hashCode = hashCode < 0 ? - hashCode : hashCode;
 
         //Truncar ate ter m bits
-        return 0;
+        return (int) (hashCode % Math.pow(2, Chord.m)) ;
     }
 
     public int getId() {
