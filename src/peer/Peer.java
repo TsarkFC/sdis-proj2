@@ -207,5 +207,9 @@ public class Peer implements RemoteObject {
         //TODO sera que ele aqui ja devia ver se ja existe ou nao?
         //Se criarmos no protocol temos a certeza que ele e o primeiro right?
         this.chordPeer = new ChordPeer(this);
+        boolean isBoot = true;
+        if (isBoot) this.chordPeer.create();
+        else this.chordPeer.join(this.peerArgs.chordPeerIPAddr,this.peerArgs.getChordPort());
+
     }
 }

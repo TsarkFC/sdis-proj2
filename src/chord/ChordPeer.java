@@ -43,6 +43,25 @@ public class ChordPeer {
         System.out.println("Chord Peer was created id: " +  id);
     }
 
+    public void create() {
+        predecessor = null;
+        successor = this;
+    }
+    //Endereço de chord que ja esta no ring
+    public void join(String oldIpAddr,int oldChordPort) {
+        //Mandar mensagem ao outro gajo a perguntar pela tabela deles i guess?
+        predecessor = null;
+        //TODO aqui e para passar o id ou o peer mm?
+        successor = this.findSuccessor(this.getId());
+        //Se boot
+        //Cenas
+        //Senao
+        //Junta se ao boot
+        //Manda se mensagem ao boot
+        //
+    }
+
+
 
 
     public void addSuccessor(ChordPeer chordPeer) {
@@ -57,14 +76,23 @@ public class ChordPeer {
 
     public void stabilize() {
         System.out.println("Hello!");
+
+        ChordPeer x = successor.getPredecessor();
+        if(x.getId() > id  && x.getId() < successor.getId()){
+            successor = x;
+        }
+        successor.notifyPeer(this);
     }
 
     public void notifyPeer(ChordPeer peer) {
-
+        if(predecessor==null || (peer.getId() < predecessor.getId() && peer.getId() < id)){
+            predecessor = peer;
+        }
     }
 
     public void checkPredecessor() {
-
+        //if predecessor has failed
+        //predessore = null
     }
 
     /**
@@ -72,6 +100,36 @@ public class ChordPeer {
      */
     public void updateFingerTable() {
 
+    }
+
+    public void populateFingerTable(ChordPeer chordPeer) {
+        for (int i = 1; i <= Chord.m; i++) {
+            ChordPeer chordPeerI = findSuccessor(getId(chordPeer.getId(),i));
+            chordPeer.addToFingerTable(chordPeerI.getId(),i);
+        }
+    }
+
+    public int getId(int nodeId, int indexFingerTable){
+        return nodeId + 2^(indexFingerTable-1);
+    }
+
+    public ChordPeer findSuccessor(Integer id) {
+        //if(n < id && id <= sucessor) return succesor;
+        //else{
+        //  ns = closest.preceding_node(id);
+        //  return ns.findSuccessor(id)
+        //}
+        return new ChordPeer(1,"1",1);
+    }
+    public void closestPrecidingNode(int id){
+        for (int i = m; i > 1; i--) {
+            //if(finger[i] > n && finger[i] < id) return finger[i];
+        }
+        //return n;
+    }
+
+    public ChordPeer findPredecessor(Integer id) {
+        return new ChordPeer(1,"1",1);
     }
 
     public int generateHash(String ipAddr,int port) {

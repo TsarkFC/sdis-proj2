@@ -16,36 +16,14 @@ public class Chord {
     }
 
 
-    public void create() {
 
-    }
 
-    public void join(ChordPeer peer) {
-
-    }
 
     public void chordNotify() {
 
     }
 
-    public void populateFingerTable(ChordPeer chordPeer) {
-        for (int i = 1; i <= Chord.m; i++) {
-            ChordPeer chordPeerI = findSuccessor(getId(chordPeer.getId(),i));
-            chordPeer.addToFingerTable(chordPeerI.getId(),i);
-        }
-    }
 
-    public int getId(int nodeId, int indexFingerTable){
-        return nodeId + 2^(indexFingerTable-1);
-    }
-
-    public ChordPeer findSuccessor(Integer id) {
-        return new ChordPeer(1,"1",1);
-    }
-
-    public ChordPeer findPredecessor(Integer id) {
-        return new ChordPeer(1,"1",1);
-    }
 
 
 }

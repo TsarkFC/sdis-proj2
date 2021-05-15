@@ -23,10 +23,7 @@ public abstract class Protocol {
         this.peer = peer;
     }
 
-    public void initializeChord(int chordPort){
-        Chord chord = new Chord(chordPort);
-        chord.create();
-    }
+
 
     public abstract void initialize();
 }
