@@ -26,6 +26,7 @@ public class SslSender extends Ssl {
 
     private ByteBuffer packetBuffer;
 
+
     public SslSender(String protocol, String host, int port) {
         this.host = host;
         this.port = port;
@@ -73,7 +74,15 @@ public class SslSender extends Ssl {
         handshake(channel, engine);
     }
 
-    public void send() {
+    public void write(String message) {
+
+    }
+
+    public void read(){
+
+    }
+
+    public void shutdown(){
 
     }
 }

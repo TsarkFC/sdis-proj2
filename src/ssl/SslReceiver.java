@@ -6,7 +6,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-public class SslReceiver extends Ssl implements Runnable {
+public class SslReceiver extends Ssl {//implements Runnable {
 
     private SSLContext context;
     private SSLEngine engine;
@@ -22,9 +22,32 @@ public class SslReceiver extends Ssl implements Runnable {
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(false);
     }
+    //Starts listening to new connections
+    //Run in a loop as long the server is active
+    public void start(){
 
-    @Override
+    }
+
+    public void stop(){
+
+    }
+
+    public void accept(){
+
+    }
+
+    public void read(){
+
+    }
+
+    public void write(){
+
+    }
+
+
+
+    /*@Override
     public void run() {
         //TODO: receive and process requests
-    }
+    }*/
 }
