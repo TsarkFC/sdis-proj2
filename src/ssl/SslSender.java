@@ -12,7 +12,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-public class SslSender extends Ssl {
+public class SslSender extends Ssl implements Runnable{
 
     private SSLEngine engine;
 
@@ -21,10 +21,6 @@ public class SslSender extends Ssl {
     private String host;
 
     private int port;
-
-    private ByteBuffer applicationBuffer;
-
-    private ByteBuffer packetBuffer;
 
     public SslSender(String protocol, String host, int port) {
         this.host = host;
@@ -46,8 +42,8 @@ public class SslSender extends Ssl {
         SSLSession session = engine.getSession();
 
         // Determine the maximum buffer sizes for the application and network bytes that could be generated
-        applicationBuffer = ByteBuffer.allocate(session.getApplicationBufferSize());
-        packetBuffer = ByteBuffer.allocate(session.getPacketBufferSize());
+        myAppBuffer = ByteBuffer.allocate(session.getApplicationBufferSize());
+        myNetBuffer = ByteBuffer.allocate(session.getPacketBufferSize());
     }
 
     public void connect() {
@@ -65,7 +61,7 @@ public class SslSender extends Ssl {
             channel = SocketChannel.open();
             channel.configureBlocking(false);
             channel.connect(new InetSocketAddress(host, port));
-            while (!channel.finishConnect()) {}
+            while (!channel.finishConnect());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -73,7 +69,8 @@ public class SslSender extends Ssl {
         handshake(channel, engine);
     }
 
-    public void send() {
-
+    @Override
+    public void run() {
+        //TODO: send messages
     }
 }
