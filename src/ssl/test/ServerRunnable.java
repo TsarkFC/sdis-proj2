@@ -1,4 +1,6 @@
-package ssl;
+package ssl.test;
+
+import ssl.SslReceiver;
 
 public class ServerRunnable implements Runnable {
     SslReceiver server;

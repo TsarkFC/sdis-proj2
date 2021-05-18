@@ -1,4 +1,6 @@
-package ssl;
+package ssl.test;
+
+import ssl.SslSender;
 
 public class Demo {
 

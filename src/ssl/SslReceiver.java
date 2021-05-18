@@ -14,14 +14,13 @@ import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
-public class SslReceiver extends Ssl {//implements Runnable {
+public class SslReceiver extends Ssl {
 
     private SSLContext context;
     private SSLEngine engine;
 
     //It can be made more robust and scalable by using a Selector with the non-blocking SocketChannel
     private Selector selector;
-
 
 
     public SslReceiver(String protocol, String host, int port) {
@@ -32,8 +31,8 @@ public class SslReceiver extends Ssl {//implements Runnable {
         engine.setUseClientMode(false);
 
         SSLSession session = engine.getSession();
-        applicationBuffer = ByteBuffer.allocate(session.getApplicationBufferSize());
-        packetBuffer = ByteBuffer.allocate(session.getPacketBufferSize());
+        decryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
+        encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
 
         peerEncryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
         peerDecryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
@@ -105,7 +104,7 @@ public class SslReceiver extends Ssl {//implements Runnable {
                 new SecureRandom());
     }
 
-    public void createServerSocketChannel(String host, int port){
+    public void createServerSocketChannel(String host, int port) {
         try {
             selector = SelectorProvider.provider().openSelector();
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
@@ -113,40 +112,36 @@ public class SslReceiver extends Ssl {//implements Runnable {
             serverSocketChannel.socket().bind(new InetSocketAddress(host, port));
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
 
-
             System.out.println("Connection completed Successfully");
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-
     }
+
     //Starts listening to new connections
     //Run in a loop as long the server is active
-    public void start(){
+    public void start() {
 
     }
 
-    public void stop(){
+    public void stop() {
 
     }
 
-    public void accept(){
+    public void accept() {
 
     }
 
-    public void read(){
+    public void read() {
 
     }
 
-    public void write(){
+    public void write() {
 
     }
-
-
 
     /*@Override
     public void run() {
-        //TODO: receive and process requests
+        //TODO: receive and process requests -> implement when testing is complete
     }*/
 }
