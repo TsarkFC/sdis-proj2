@@ -122,9 +122,9 @@ public class ChordPeer {
         return new ChordPeer(1,"1",1);
     }
     public void closestPrecidingNode(int id){
-        for (int i = m; i > 1; i--) {
+        /*for (int i = m; i > 1; i--) {
             //if(finger[i] > n && finger[i] < id) return finger[i];
-        }
+        }*/
         //return n;
     }
 
