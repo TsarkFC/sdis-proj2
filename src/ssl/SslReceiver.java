@@ -1,8 +1,7 @@
 package ssl;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLSession;
+import javax.net.ssl.*;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -11,6 +10,7 @@ import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 
@@ -25,13 +25,9 @@ public class SslReceiver extends Ssl {//implements Runnable {
 
 
     public SslReceiver(String protocol, String host, int port) {
-        try {
-            context = SSLContext.getInstance(protocol);
-            context.init(createKeyManagers("./src/main/resources/client.jks", "123456", "123456"), createTrustManagers("./src/main/resources/trustedCerts.jks", "123456"), new SecureRandom());
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            e.printStackTrace();
-            return;
-        }
+        //Falta adicionar a outra password
+        initializeSslContext(protocol,"123456","./src/ssl/resources/client.keys","./src/ssl/resources/truststore");
+
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(false);
 
@@ -47,11 +43,66 @@ public class SslReceiver extends Ssl {//implements Runnable {
         this.createServerSocketChannel(host,port);
 
 
+    }
 
 
 
+    public KeyManagerFactory createKeyManagerFactory(char[] passphrase,String keysFilePAth) throws  Exception{
+        // First initialize the key and trust material.
+        KeyStore ksKeys = KeyStore.getInstance("JKS");
+        ksKeys.load(new FileInputStream(keysFilePAth), passphrase);
 
+        // KeyManager's decide which key material to use.
+        KeyManagerFactory kmf =
+                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(ksKeys, passphrase);
 
+        return kmf;
+    }
+
+    public TrustManagerFactory createTrustManagerFactory(char[] passphrase, String trustStorePath) throws Exception{
+        KeyStore trustStoreKey = KeyStore.getInstance("JKS");
+        trustStoreKey.load(new FileInputStream(trustStorePath), passphrase);
+
+        // TrustManager's decide whether to allow connections.
+        TrustManagerFactory tmf =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStoreKey);
+
+        return tmf;
+
+    }
+
+    public void initializeSslContext(String protocol,String keyStorePassword,String filePathKeys,String trustStorePath){
+        char[] passphrase = keyStorePassword.toCharArray();
+
+        KeyManagerFactory kmf;
+        try {
+            kmf = createKeyManagerFactory(passphrase,filePathKeys);
+            TrustManagerFactory tmf = createTrustManagerFactory(passphrase,trustStorePath);
+
+            //context = SSLContext.getInstance("TLS");
+            context = SSLContext.getInstance(protocol);
+            context.init(
+                    kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+
+        } catch (Exception e) {
+            System.out.println("Error Initializing SslContext");
+            e.printStackTrace();
+        }
+
+    }
+
+    public void initializeSSlContextSimple(String protocol) throws Exception{
+        context = SSLContext.getInstance(protocol);
+        context.init(createKeyManagers(
+                "./src/main/resources/client.jks",
+                "123456",
+                "123456"),
+                createTrustManagers(
+                        "./src/main/resources/trustedCerts.jks",
+                        "123456"),
+                new SecureRandom());
     }
 
     public void createServerSocketChannel(String host, int port){
