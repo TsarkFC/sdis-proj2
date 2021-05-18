@@ -44,7 +44,7 @@ public class Demo {
     public static void main(String[] args) throws Exception {
         Demo demo = new Demo();
         Thread.sleep(1000);	// Give the server some time to start.
-        demo.runDemo();
+        //demo.runDemo();
     }
 
 }

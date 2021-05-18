@@ -4,9 +4,26 @@ import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.TrustManager;
+import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 public abstract class Ssl {
+
+    /*Creation - ready to be configured.
+    Initial handshaking - perform authentication and negotiate communication parameters.
+    Application data - ready for application exchange.
+    Rehandshaking - renegotiate communications parameters/authentication; handshaking data may be mixed with application data.
+    Closure - ready to shut down connection.*/
+
+    protected ByteBuffer applicationBuffer;
+
+    protected ByteBuffer packetBuffer;
+
+    //Contains the other peer decrypted application data
+    protected ByteBuffer peerDecryptedData;
+
+    //Contein other peer encryptedData
+    protected ByteBuffer peerEncryptedData;
 
     protected void handshake(SocketChannel channel, SSLEngine engine) {
         HandshakeStatus status = engine.getHandshakeStatus();

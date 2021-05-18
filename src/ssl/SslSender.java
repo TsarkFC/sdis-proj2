@@ -22,10 +22,6 @@ public class SslSender extends Ssl {
 
     private int port;
 
-    private ByteBuffer applicationBuffer;
-
-    private ByteBuffer packetBuffer;
-
 
     public SslSender(String protocol, String host, int port) {
         this.host = host;
