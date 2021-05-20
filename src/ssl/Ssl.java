@@ -85,6 +85,7 @@ public abstract class Ssl {
                             break;
                         }
                     } catch (IOException e) {
+                        System.out.println("Estou a dar erro aqui 1");
                         e.printStackTrace();
                         return false;
                     }
@@ -143,7 +144,9 @@ public abstract class Ssl {
                 if (engine.getSession().getPacketBufferSize() >= peerEncryptedData.limit()) {
                     ByteBuffer newPeerNetBuffer = enlargeBuffer(peerEncryptedData, engine.getSession().getPacketBufferSize());
                     peerEncryptedData.flip();
+                    System.out.println("Estou a dar erro aqui");
                     newPeerNetBuffer.put(peerEncryptedData);
+                    System.out.println("Aqui ja nao chego");
                     peerEncryptedData = newPeerNetBuffer;
                 }
                 break;

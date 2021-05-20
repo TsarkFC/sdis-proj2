@@ -45,11 +45,6 @@ public class SslReceiver extends Ssl {
     }
 
 
-
-
-
-
-
     public void createServerSocketChannel(String host, int port) {
         try {
             selector = SelectorProvider.provider().openSelector();
@@ -100,12 +95,19 @@ public class SslReceiver extends Ssl {
         if (!key.isValid()) return;
         if (key.isAcceptable()) {
             try {
+                //Se nao for pelo handshake ele fica sempre a mostrar o accepting key
                 accept(key);
             } catch (IOException e) {
+                System.out.println("Exception accepting connection");
                 e.printStackTrace();
             }
         } else if (key.isReadable()) {
-            read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
+            try {
+                read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
+            } catch (IOException e) {
+                System.out.println("Exception Reading");
+                e.printStackTrace();
+            }
         }
     }
 
@@ -117,7 +119,6 @@ public class SslReceiver extends Ssl {
         SSLEngine sslEngine = context.createSSLEngine();
         sslEngine.setUseClientMode(false);
         sslEngine.beginHandshake();
-
         if (handshake(socketChannel, sslEngine)) {
             System.out.println("Handshake successful");
             socketChannel.register(selector, SelectionKey.OP_READ, sslEngine);
@@ -127,8 +128,43 @@ public class SslReceiver extends Ssl {
         }
     }
 
-    public void read(SocketChannel socketChannel, SSLEngine sslEngine) {
+    public void read(SocketChannel socketChannel, SSLEngine sslEngine) throws IOException {
         System.out.println("Reading key");
+        peerEncryptedData.clear();
+        //TODO This is just pseudocode
+        // Read SSL/TLS encoded data from peer
+        int num = socketChannel.read(peerEncryptedData);
+        if (num == -1) {
+            // Handle closed channel
+            System.out.println("Handle closed Channel");
+        } else if (num == 0) {
+            System.out.println("No bytes read, try again");
+        } else {
+            // Process incoming data
+            peerEncryptedData.flip();
+            while (peerDecryptedData.hasRemaining()) {
+                SSLEngineResult res = engine.unwrap(peerEncryptedData, peerDecryptedData);
+                switch (res.getStatus()) {
+                    case OK:
+                        peerEncryptedData.compact();
+                        //Aqui em vez de compact talvez seja flip
+                        System.out.println("Incoming message: " + new String(decryptedData.array()));
+                        //Use peer decrypted data
+                        break;
+                    // Handle other status:  BUFFER_OVERFLOW, BUFFER_UNDERFLOW, CLOSED
+                    case BUFFER_OVERFLOW:
+                        break;
+                    case BUFFER_UNDERFLOW:
+                        break;
+                    case CLOSED:
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+
+        }
     }
 
     public void write() {

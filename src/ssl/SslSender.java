@@ -1,9 +1,6 @@
 package ssl;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
+import javax.net.ssl.*;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -69,8 +66,36 @@ public class SslSender extends Ssl implements Runnable {
         //TODO: send messages
     }
 
-    public void write(String message) {
+    public void write(String message) throws IOException {
+        //TODO This is just pseudocode
 
+        decryptedData.put(message.getBytes());
+        decryptedData.flip();
+
+        while (decryptedData.hasRemaining()) {
+            // Generate SSL/TLS encoded data (handshake or application data)
+            SSLEngineResult res = null;
+
+            res = engine.wrap(decryptedData, encryptedData);
+
+            // Process status of call
+            if (res.getStatus() == SSLEngineResult.Status.OK) {
+                decryptedData.compact();
+
+                // Send SSL/TLS encoded data to peer
+                while (encryptedData.hasRemaining()) {
+                    int num = channel.write(encryptedData);
+                    if (num == -1) {
+                        // handle closed channel
+                    } else if (num == 0) {
+                        // no bytes written; try again later
+                    }
+                }
+            }
+
+            // Handle other status:  BUFFER_OVERFLOW, CLOSED
+
+        }
     }
 
     public void read() {
