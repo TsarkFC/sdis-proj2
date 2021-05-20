@@ -15,6 +15,7 @@ import java.security.SecureRandom;
 public class SslSender extends Ssl implements Runnable {
 
     private SSLEngine engine;
+    //SSLContext context;
 
     private SocketChannel channel;
 
@@ -26,24 +27,18 @@ public class SslSender extends Ssl implements Runnable {
         this.host = host;
         this.port = port;
 
-        // SSLEngine creation
-        SSLContext context;
-        try {
-            context = SSLContext.getInstance(protocol);
-            context.init(createKeyManagers("./src/main/resources/client.jks", "123456", "123456"), createTrustManagers("./src/main/resources/trustedCerts.jks", "123456"), new SecureRandom());
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            e.printStackTrace();
-            return;
-        }
+        //initializeSslContext(protocol, "123456", "./src/main/resources/client.jks", "./src/main/resources/trustedCerts.jks");
+        initializeSslContext(protocol, "123456", "./src/ssl/resources/client.keys", "./src/ssl/resources/truststore");
+
+        //context.init(createKeyManagers("./src/main/resources/client.jks", "123456", "123456"), createTrustManagers("./src/main/resources/trustedCerts.jks", "123456"), new SecureRandom());
+
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(true);
 
         // Obtain the currently empty SSLSession for the SSLEngine
         SSLSession session = engine.getSession();
 
-        // Determine the maximum buffer sizes for the application and network bytes that could be generated
-        decryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
-        encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
+        allocateData(session);
     }
 
     public void connect() {

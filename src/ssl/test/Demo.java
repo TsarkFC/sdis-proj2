@@ -14,7 +14,7 @@ public class Demo {
 
     public void runDemo() throws Exception {
 
-        // System.setProperty("javax.net.debug", "all");
+        System.setProperty("javax.net.debug", "all");
 
         SslSender client = new SslSender("TLSv1.2", "localhost", 9222);
         client.connect();
@@ -46,7 +46,7 @@ public class Demo {
     public static void main(String[] args) throws Exception {
         Demo demo = new Demo();
         Thread.sleep(1000);	// Give the server some time to start.
-        //demo.runDemo();
+        demo.runDemo();
     }
 
 }

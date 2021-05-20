@@ -3,10 +3,13 @@ package ssl;
 import javax.net.ssl.*;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import javax.net.ssl.SSLEngineResult;
+import java.io.FileInputStream;
 import java.io.IOException;
 import javax.net.ssl.TrustManager;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.security.KeyStore;
+import java.security.SecureRandom;
 
 public abstract class Ssl {
 
@@ -36,10 +39,11 @@ public abstract class Ssl {
      */
     protected ByteBuffer peerEncryptedData;
 
+    protected SSLContext context;
+
     protected boolean handshake(SocketChannel channel, SSLEngine engine) {
         HandshakeStatus status = engine.getHandshakeStatus();
         SSLEngineResult result;
-
         startBuffers(engine);
 
         while (!isFinished(status)) {
@@ -64,10 +68,20 @@ public abstract class Ssl {
                 case NEED_UNWRAP_AGAIN:
                     // Receive handshaking data from peer
                     try {
+                        System.out.println("Entrei no UNWRAP");
+
                         if (channel.read(peerEncryptedData) < 0) {
+                            System.out.println("Entrei no UNWRAP READ");
+
+                            if (engine.isOutboundDone() && engine.isInboundDone()) {
+                                return false;
+                            }
+
+                            System.out.println("PASSEI O IF");
                             engine.closeInbound();
                             engine.closeOutbound();
                             status = engine.getHandshakeStatus();
+                            System.out.println("FIM DO UNWRAP");
                             break;
                         }
                     } catch (IOException e) {
@@ -169,13 +183,72 @@ public abstract class Ssl {
         return buffer;
     }
 
-    protected KeyManager[] createKeyManagers(String filepath, String keystorePassword, String keyPassword) {
-        //TODO: check documentation code
-        return null;
+
+
+    public void initializeSslContext(String protocol, String keyStorePassword, String filePathKeys, String trustStorePath) {
+        char[] passphrase = keyStorePassword.toCharArray();
+
+        KeyManagerFactory kmf;
+        try {
+            kmf = createKeyManagerFactory(passphrase, filePathKeys);
+            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, trustStorePath);
+
+            //context = SSLContext.getInstance("TLS");
+            context = SSLContext.getInstance(protocol);
+            context.init(
+                    kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+
+        } catch (Exception e) {
+            System.out.println("Error Initializing SslContext");
+            e.printStackTrace();
+        }
     }
 
-    protected TrustManager[] createTrustManagers(String filepath, String keystorePassword) {
-        //TODO: check documentation code
-        return null;
+    /*public void initializeSSlContextSimple(String protocol) throws Exception {
+        context = SSLContext.getInstance(protocol);
+        context.init(createKeyManagers(
+                "./src/main/resources/client.jks",
+                "123456",
+                "123456"),
+                createTrustManagers(
+                        "./src/main/resources/trustedCerts.jks",
+                        "123456"),
+                new SecureRandom());
+    }*/
+
+    // Determine the maximum buffer sizes for the application and network bytes that could be generated
+    public void allocateData(SSLSession session){
+        decryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
+        encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
+
+        peerEncryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
+        peerDecryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
     }
+
+    public KeyManagerFactory createKeyManagerFactory(char[] passphrase, String keysFilePAth) throws Exception {
+        // First initialize the key and trust material.
+        KeyStore ksKeys = KeyStore.getInstance("JKS");
+        ksKeys.load(new FileInputStream(keysFilePAth), passphrase);
+
+        // KeyManager's decide which key material to use.
+        KeyManagerFactory kmf =
+                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(ksKeys, passphrase);
+
+        return kmf;
+    }
+
+    public TrustManagerFactory createTrustManagerFactory(char[] passphrase, String trustStorePath) throws Exception {
+        KeyStore trustStoreKey = KeyStore.getInstance("JKS");
+        trustStoreKey.load(new FileInputStream(trustStorePath), passphrase);
+
+        // TrustManager's decide whether to allow connections.
+        TrustManagerFactory tmf =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStoreKey);
+
+        return tmf;
+
+    }
+
 }
