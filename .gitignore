@@ -1,5 +1,3 @@
 .idea/
-src/build
-src/proj1.iml
-src/out/
-src/files/McastSnooper.jar
+out/
+*.iml

@@ -2,14 +2,14 @@ package ssl;
 
 import javax.net.ssl.*;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
-import javax.net.ssl.SSLEngineResult;
 import java.io.FileInputStream;
 import java.io.IOException;
-import javax.net.ssl.TrustManager;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public abstract class Ssl {
 
@@ -39,7 +39,15 @@ public abstract class Ssl {
      */
     protected ByteBuffer peerEncryptedData;
 
+    /**
+     * Context used to create the SSLEngine
+     */
     protected SSLContext context;
+
+    /**
+     * Executes tasks in NEED_TASK stage of handshake
+     */
+    private ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 
     protected boolean handshake(SocketChannel channel, SSLEngine engine) {
         HandshakeStatus status = engine.getHandshakeStatus();
@@ -52,7 +60,7 @@ public abstract class Ssl {
                     try {
                         encryptedData.clear();
                         result = engine.wrap(decryptedData, encryptedData);
-                        if (!handleWrap(result, engine, channel)) {
+                        if (!handleWrapResult(result, engine, channel)) {
                             System.out.println("Error during WRAP stage of handshake");
                             return false;
                         }
@@ -68,24 +76,16 @@ public abstract class Ssl {
                 case NEED_UNWRAP_AGAIN:
                     // Receive handshaking data from peer
                     try {
-                        System.out.println("Entrei no UNWRAP");
-
                         if (channel.read(peerEncryptedData) < 0) {
-                            System.out.println("Entrei no UNWRAP READ");
-
                             if (engine.isOutboundDone() && engine.isInboundDone()) {
                                 return false;
                             }
-
-                            System.out.println("PASSEI O IF");
                             engine.closeInbound();
                             engine.closeOutbound();
                             status = engine.getHandshakeStatus();
-                            System.out.println("FIM DO UNWRAP");
                             break;
                         }
                     } catch (IOException e) {
-                        System.out.println("Estou a dar erro aqui 1");
                         e.printStackTrace();
                         return false;
                     }
@@ -96,7 +96,7 @@ public abstract class Ssl {
                         result = engine.unwrap(peerEncryptedData, peerDecryptedData);
                         peerEncryptedData.compact();
 
-                        if (!handleUnwrap(result, engine)) {
+                        if (!handleUnwrapResult(result, engine)) {
                             System.out.println("Error during UNWRAP stage of handshake");
                             return false;
                         }
@@ -109,6 +109,11 @@ public abstract class Ssl {
                     break;
 
                 case NEED_TASK:
+                    Runnable task;
+                    while ((task = engine.getDelegatedTask()) != null) {
+                        taskExecutor.execute(task);
+                    }
+                    status = engine.getHandshakeStatus();
                     break;
 
                 case FINISHED:
@@ -130,7 +135,7 @@ public abstract class Ssl {
         peerEncryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
     }
 
-    private boolean handleUnwrap(SSLEngineResult result, SSLEngine engine) {
+    private boolean handleUnwrapResult(SSLEngineResult result, SSLEngine engine) {
         switch (result.getStatus()) {
             case OK:
                 break;
@@ -144,9 +149,7 @@ public abstract class Ssl {
                 if (engine.getSession().getPacketBufferSize() >= peerEncryptedData.limit()) {
                     ByteBuffer newPeerNetBuffer = enlargeBuffer(peerEncryptedData, engine.getSession().getPacketBufferSize());
                     peerEncryptedData.flip();
-                    System.out.println("Estou a dar erro aqui");
                     newPeerNetBuffer.put(peerEncryptedData);
-                    System.out.println("Aqui ja nao chego");
                     peerEncryptedData = newPeerNetBuffer;
                 }
                 break;
@@ -159,7 +162,7 @@ public abstract class Ssl {
         return true;
     }
 
-    private boolean handleWrap(SSLEngineResult result, SSLEngine engine, SocketChannel channel) {
+    private boolean handleWrapResult(SSLEngineResult result, SSLEngine engine, SocketChannel channel) {
         switch (result.getStatus()) {
             case OK, CLOSED -> {
                 encryptedData.flip();
@@ -181,12 +184,13 @@ public abstract class Ssl {
     }
 
     protected ByteBuffer enlargeBuffer(ByteBuffer buffer, int size) {
-        if (size > buffer.capacity()) buffer = ByteBuffer.allocate(size);
-        else buffer = buffer.clear();
+        if (size <= buffer.capacity()) {
+            buffer = ByteBuffer.allocate(buffer.capacity() * 2);
+        } else {
+            buffer = ByteBuffer.allocate(size);
+        }
         return buffer;
     }
-
-
 
 
     public void initializeSslContext(String protocol, String keyStorePassword, String filePathKeys, String trustStorePath) {
@@ -197,10 +201,8 @@ public abstract class Ssl {
             kmf = createKeyManagerFactory(passphrase, filePathKeys);
             TrustManagerFactory tmf = createTrustManagerFactory(passphrase, trustStorePath);
 
-            //context = SSLContext.getInstance("TLS");
             context = SSLContext.getInstance(protocol);
-            context.init(
-                    kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+            context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
 
         } catch (Exception e) {
             System.out.println("Error Initializing SslContext");
@@ -208,20 +210,8 @@ public abstract class Ssl {
         }
     }
 
-    /*public void initializeSSlContextSimple(String protocol) throws Exception {
-        context = SSLContext.getInstance(protocol);
-        context.init(createKeyManagers(
-                "./src/main/resources/client.jks",
-                "123456",
-                "123456"),
-                createTrustManagers(
-                        "./src/main/resources/trustedCerts.jks",
-                        "123456"),
-                new SecureRandom());
-    }*/
-
     // Determine the maximum buffer sizes for the application and network bytes that could be generated
-    public void allocateData(SSLSession session){
+    public void allocateData(SSLSession session) {
         decryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
         encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
 
@@ -235,8 +225,7 @@ public abstract class Ssl {
         ksKeys.load(new FileInputStream(keysFilePAth), passphrase);
 
         // KeyManager's decide which key material to use.
-        KeyManagerFactory kmf =
-                KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         kmf.init(ksKeys, passphrase);
 
         return kmf;
@@ -247,8 +236,7 @@ public abstract class Ssl {
         trustStoreKey.load(new FileInputStream(trustStorePath), passphrase);
 
         // TrustManager's decide whether to allow connections.
-        TrustManagerFactory tmf =
-                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init(trustStoreKey);
 
         return tmf;
@@ -283,7 +271,7 @@ public abstract class Ssl {
                         break;
                     // Handle other status:  BUFFER_OVERFLOW, BUFFER_UNDERFLOW, CLOSED
                     case BUFFER_OVERFLOW:
-                        peerDecryptedData = enlargeBuffer(peerDecryptedData,engine.getSession().getApplicationBufferSize());
+                        peerDecryptedData = enlargeBuffer(peerDecryptedData, engine.getSession().getApplicationBufferSize());
                         break;
                     case BUFFER_UNDERFLOW:
                         System.out.println("Buffer Underflow");
@@ -298,7 +286,8 @@ public abstract class Ssl {
             }
         }
     }
-    public void write(String message,SSLEngine engine,SocketChannel channel) throws IOException {
+
+    public void write(String message, SSLEngine engine, SocketChannel channel) throws IOException {
         //TODO This is just pseudocode
         decryptedData.clear();
         decryptedData.put(message.getBytes());
@@ -325,7 +314,7 @@ public abstract class Ssl {
                             // handle closed channel
                         } else if (num == 0) {
                             // no bytes written; try again later
-                        }else{
+                        } else {
                             System.out.println("Success writing  message:");
                             System.out.println("/t" + message);
                         }
@@ -347,7 +336,6 @@ public abstract class Ssl {
 
         }
     }
-
 
 
 }

@@ -12,7 +12,7 @@ public class Demo {
         server.start();
     }
 
-    public void runDemo() throws Exception {
+    public void runDemo() {
 
         System.setProperty("javax.net.debug", "all");
 

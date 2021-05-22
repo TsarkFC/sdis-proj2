@@ -1,23 +1,19 @@
 package ssl;
 
-import javax.net.ssl.*;
-import java.io.FileInputStream;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLEngineResult;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Iterator;
 
 public class SslReceiver extends Ssl {
-
 
     private SSLEngine engine;
 
@@ -40,8 +36,6 @@ public class SslReceiver extends Ssl {
         session.invalidate();
 
         this.createServerSocketChannel(host, port);
-
-
     }
 
 
@@ -105,7 +99,7 @@ public class SslReceiver extends Ssl {
             }
         } else if (key.isReadable()) {
             try {
-                read((SocketChannel) key.channel(),engine);
+                read((SocketChannel) key.channel(), engine);
                 handleMessage((SocketChannel) key.channel());
             } catch (IOException e) {
                 System.out.println("Exception Reading");
@@ -114,7 +108,7 @@ public class SslReceiver extends Ssl {
         }
     }
 
-    public void accept(SelectionKey key) throws IOException {
+    public String accept(SelectionKey key) throws IOException {
         System.out.println("Accepting key");
         SocketChannel socketChannel = ((ServerSocketChannel) key.channel()).accept();
         socketChannel.configureBlocking(false);
@@ -129,17 +123,18 @@ public class SslReceiver extends Ssl {
             System.out.println("Closing socket channel due to bad handshake");
             socketChannel.close();
         }
+        return "not";
     }
 
-    public void receiveMessage(String message){
-        System.out.println("Incoming message: " +message);
+    public void receiveMessage(String message) {
+        System.out.println("Incoming message: " + message);
 
     }
 
-    public void handleMessage(SocketChannel socketChannel){
+    public void handleMessage(SocketChannel socketChannel) {
         String response = "HeyHey";
         try {
-            write(socketChannel,response);
+            write(socketChannel, response);
         } catch (IOException e) {
             System.out.println("Error trying to respond to client");
             e.printStackTrace();
@@ -147,8 +142,7 @@ public class SslReceiver extends Ssl {
     }
 
 
-
-    public void write(SocketChannel socketChannel,String message) throws IOException {
+    public void write(SocketChannel socketChannel, String message) throws IOException {
         peerDecryptedData.clear();
         peerDecryptedData.put(message.getBytes());
         peerDecryptedData.flip();

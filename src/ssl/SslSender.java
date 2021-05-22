@@ -1,13 +1,11 @@
 package ssl;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.security.KeyManagementException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 
 public class SslSender extends Ssl implements Runnable {
 
@@ -26,8 +24,6 @@ public class SslSender extends Ssl implements Runnable {
 
         //initializeSslContext(protocol, "123456", "./src/main/resources/client.jks", "./src/main/resources/trustedCerts.jks");
         initializeSslContext(protocol, "123456", "./src/ssl/resources/client.keys", "./src/ssl/resources/truststore");
-
-        //context.init(createKeyManagers("./src/main/resources/client.jks", "123456", "123456"), createTrustManagers("./src/main/resources/trustedCerts.jks", "123456"), new SecureRandom());
 
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(true);
@@ -66,26 +62,23 @@ public class SslSender extends Ssl implements Runnable {
         //TODO: send messages
     }
 
-    public void read(){
+    public void read() {
         try {
-            read(channel,engine);
+            read(channel, engine);
         } catch (IOException e) {
             System.out.println("Error Reading message");
             e.printStackTrace();
         }
     }
 
-    public void write(String message){
+    public void write(String message) {
         try {
-            write(message,engine,channel);
+            write(message, engine, channel);
         } catch (IOException e) {
             System.out.println("Error writing message");
             e.printStackTrace();
         }
     }
-
-
-
 
 
     public void shutdown() {
