@@ -180,11 +180,12 @@ public abstract class Ssl {
         return true;
     }
 
-    private ByteBuffer enlargeBuffer(ByteBuffer buffer, int size) {
+    protected ByteBuffer enlargeBuffer(ByteBuffer buffer, int size) {
         if (size > buffer.capacity()) buffer = ByteBuffer.allocate(size);
         else buffer = buffer.clear();
         return buffer;
     }
+
 
 
 
@@ -253,5 +254,100 @@ public abstract class Ssl {
         return tmf;
 
     }
+
+    public abstract void receiveMessage(String message);
+
+    public void read(SocketChannel socketChannel, SSLEngine engine) throws IOException {
+        System.out.println("Reading key");
+        peerEncryptedData.clear();
+        //TODO This is just pseudocode
+        // Read SSL/TLS encoded data from peer
+        int num = socketChannel.read(peerEncryptedData);
+        if (num == -1) {
+            // Handle closed channel
+            System.out.println("Handle closed Channel");
+        } else if (num == 0) {
+            System.out.println("No bytes read, try again");
+        } else {
+            // Process incoming data
+            peerEncryptedData.flip();
+            while (peerEncryptedData.hasRemaining()) {
+                SSLEngineResult res = engine.unwrap(peerEncryptedData, peerDecryptedData);
+                switch (res.getStatus()) {
+                    case OK:
+                        peerDecryptedData.compact();
+                        //Aqui em vez de compact talvez seja flip
+
+                        receiveMessage(new String(decryptedData.array()));
+                        //Use peer decrypted data
+                        break;
+                    // Handle other status:  BUFFER_OVERFLOW, BUFFER_UNDERFLOW, CLOSED
+                    case BUFFER_OVERFLOW:
+                        peerDecryptedData = enlargeBuffer(peerDecryptedData,engine.getSession().getApplicationBufferSize());
+                        break;
+                    case BUFFER_UNDERFLOW:
+                        System.out.println("Buffer Underflow");
+                        break;
+                    case CLOSED:
+                        System.out.println("Request to close connection");
+                        break;
+                    default:
+                        break;
+
+                }
+            }
+        }
+    }
+    public void write(String message,SSLEngine engine,SocketChannel channel) throws IOException {
+        //TODO This is just pseudocode
+        decryptedData.clear();
+        decryptedData.put(message.getBytes());
+        decryptedData.flip();
+
+        while (decryptedData.hasRemaining()) {
+
+            encryptedData.clear();
+            // Generate SSL/TLS encoded data (handshake or application data)
+            SSLEngineResult res = null;
+
+            res = engine.wrap(decryptedData, encryptedData);
+
+            // Process status of call
+            switch (res.getStatus()) {
+                case OK:
+
+                    decryptedData.compact();
+
+                    // Send SSL/TLS encoded data to peer
+                    while (encryptedData.hasRemaining()) {
+                        int num = channel.write(encryptedData);
+                        if (num == -1) {
+                            // handle closed channel
+                        } else if (num == 0) {
+                            // no bytes written; try again later
+                        }else{
+                            System.out.println("Success writing  message:");
+                            System.out.println("/t" + message);
+                        }
+                    }
+                    break;
+                case BUFFER_OVERFLOW:
+                    System.out.println("Overflow writing to server");
+                    break;
+                case BUFFER_UNDERFLOW:
+                    System.out.println("Underflow writing to server");
+
+                    break;
+                case CLOSED:
+                    System.out.println("Close connection");
+                    break;
+            }
+
+            // Handle other status:  BUFFER_OVERFLOW, CLOSED
+
+        }
+    }
+
+
 
 }

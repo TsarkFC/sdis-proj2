@@ -66,44 +66,35 @@ public class SslSender extends Ssl implements Runnable {
         //TODO: send messages
     }
 
-    public void write(String message) throws IOException {
-        //TODO This is just pseudocode
-
-        decryptedData.put(message.getBytes());
-        decryptedData.flip();
-
-        while (decryptedData.hasRemaining()) {
-            // Generate SSL/TLS encoded data (handshake or application data)
-            SSLEngineResult res = null;
-
-            res = engine.wrap(decryptedData, encryptedData);
-
-            // Process status of call
-            if (res.getStatus() == SSLEngineResult.Status.OK) {
-                decryptedData.compact();
-
-                // Send SSL/TLS encoded data to peer
-                while (encryptedData.hasRemaining()) {
-                    int num = channel.write(encryptedData);
-                    if (num == -1) {
-                        // handle closed channel
-                    } else if (num == 0) {
-                        // no bytes written; try again later
-                    }
-                }
-            }
-
-            // Handle other status:  BUFFER_OVERFLOW, CLOSED
-
+    public void read(){
+        try {
+            read(channel,engine);
+        } catch (IOException e) {
+            System.out.println("Error Reading message");
+            e.printStackTrace();
         }
     }
 
-    public void read() {
-
+    public void write(String message){
+        try {
+            write(message,engine,channel);
+        } catch (IOException e) {
+            System.out.println("Error writing message");
+            e.printStackTrace();
+        }
     }
+
+
+
+
 
     public void shutdown() {
 
+    }
+
+    @Override
+    public void receiveMessage(String message) {
+        System.out.println("Server response: " + message);
     }
 
     /*@Override

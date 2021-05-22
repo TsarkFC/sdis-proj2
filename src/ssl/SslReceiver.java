@@ -87,7 +87,9 @@ public class SslReceiver extends Ssl {
 
 
     public void stop() {
-
+        isActive = false;
+        //executor.shutdown();
+        selector.wakeup();
     }
 
     public void handleKey(SelectionKey key) {
@@ -103,7 +105,8 @@ public class SslReceiver extends Ssl {
             }
         } else if (key.isReadable()) {
             try {
-                read((SocketChannel) key.channel(), (SSLEngine) key.attachment());
+                read((SocketChannel) key.channel(),engine);
+                handleMessage((SocketChannel) key.channel());
             } catch (IOException e) {
                 System.out.println("Exception Reading");
                 e.printStackTrace();
@@ -128,48 +131,62 @@ public class SslReceiver extends Ssl {
         }
     }
 
-    public void read(SocketChannel socketChannel, SSLEngine sslEngine) throws IOException {
-        System.out.println("Reading key");
-        peerEncryptedData.clear();
-        //TODO This is just pseudocode
-        // Read SSL/TLS encoded data from peer
-        int num = socketChannel.read(peerEncryptedData);
-        if (num == -1) {
-            // Handle closed channel
-            System.out.println("Handle closed Channel");
-        } else if (num == 0) {
-            System.out.println("No bytes read, try again");
-        } else {
-            // Process incoming data
-            peerEncryptedData.flip();
-            while (peerDecryptedData.hasRemaining()) {
-                SSLEngineResult res = engine.unwrap(peerEncryptedData, peerDecryptedData);
-                switch (res.getStatus()) {
-                    case OK:
-                        peerEncryptedData.compact();
-                        //Aqui em vez de compact talvez seja flip
-                        System.out.println("Incoming message: " + new String(decryptedData.array()));
-                        //Use peer decrypted data
-                        break;
-                    // Handle other status:  BUFFER_OVERFLOW, BUFFER_UNDERFLOW, CLOSED
-                    case BUFFER_OVERFLOW:
-                        break;
-                    case BUFFER_UNDERFLOW:
-                        break;
-                    case CLOSED:
-                        break;
-                    default:
-                        break;
+    public void receiveMessage(String message){
+        System.out.println("Incoming message: " +message);
 
-                }
-            }
+    }
 
+    public void handleMessage(SocketChannel socketChannel){
+        String response = "HeyHey";
+        try {
+            write(socketChannel,response);
+        } catch (IOException e) {
+            System.out.println("Error trying to respond to client");
+            e.printStackTrace();
         }
     }
 
-    public void write() {
+
+
+    public void write(SocketChannel socketChannel,String message) throws IOException {
+        peerDecryptedData.clear();
+        peerDecryptedData.put(message.getBytes());
+        peerDecryptedData.flip();
+
+        // The loop has a meaning for (outgoing) messages larger than 16KB.
+        // Every wrap call will remove 16KB from the original message and send it to the remote peer.
+        while (peerDecryptedData.hasRemaining()) {
+
+            peerEncryptedData.clear();
+            SSLEngineResult result = engine.wrap(peerDecryptedData, peerEncryptedData);
+            switch (result.getStatus()) {
+                case OK:
+                    peerEncryptedData.flip();
+                    while (peerEncryptedData.hasRemaining()) {
+                        socketChannel.write(peerEncryptedData);
+                    }
+                    break;
+                case BUFFER_OVERFLOW:
+                    System.out.println("Overflowing when writing");
+                    break;
+                case BUFFER_UNDERFLOW:
+                    throw new SSLException("Buffer underflow occured after a wrap. I don't think we should ever get here.");
+                case CLOSED:
+                    System.out.println("Close connection");
+                    return;
+                default:
+                    throw new IllegalStateException("Invalid SSL status: " + result.getStatus());
+            }
+        }
 
     }
+
+
+
+
+
+
+
 
     /*@Override
     public void run() {
