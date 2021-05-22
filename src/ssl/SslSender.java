@@ -9,14 +9,13 @@ import java.nio.channels.SocketChannel;
 
 public class SslSender extends Ssl implements Runnable {
 
-    private SSLEngine engine;
-    //SSLContext context;
+    private final SSLEngine engine;
 
     private SocketChannel channel;
 
-    private String host;
+    private final String host;
 
-    private int port;
+    private final int port;
 
     public SslSender(String protocol, String host, int port) {
         this.host = host;
@@ -35,26 +34,25 @@ public class SslSender extends Ssl implements Runnable {
     }
 
     public void connect() {
-        // Once you have configured the connection and the buffers, call the beginHandshake() method
-        // which moves the SSLEngine into the initial handshaking state.
         try {
             engine.beginHandshake();
         } catch (SSLException e) {
             e.printStackTrace();
             return;
         }
-
-        // Create the transport mechanism that the connection will use with (SocketChannel)
         try {
             channel = SocketChannel.open();
             channel.configureBlocking(false);
             channel.connect(new InetSocketAddress(host, port));
-            while (!channel.finishConnect()) ;
+            while (!channel.finishConnect());
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        handshake(channel, engine);
+        if (handshake(channel, engine)) {
+            System.out.println("[Client] Handshake successful");
+        } else {
+            System.out.println("[Client] Handshake error!");
+        }
     }
 
     @Override
@@ -62,8 +60,19 @@ public class SslSender extends Ssl implements Runnable {
         //TODO: send messages
     }
 
+    public void write(String message) {
+        try {
+            System.out.println("[Client] writing...");
+            write(message, channel, engine);
+        } catch (IOException e) {
+            System.out.println("Error writing message");
+            e.printStackTrace();
+        }
+    }
+
     public void read() {
         try {
+            System.out.println("[Client] reading...");
             read(channel, engine);
         } catch (IOException e) {
             System.out.println("Error Reading message");
@@ -71,27 +80,17 @@ public class SslSender extends Ssl implements Runnable {
         }
     }
 
-    public void write(String message) {
-        try {
-            write(message, engine, channel);
-        } catch (IOException e) {
-            System.out.println("Error writing message");
-            e.printStackTrace();
-        }
-    }
-
-
     public void shutdown() {
 
     }
 
     @Override
-    public void receiveMessage(String message) {
+    public void logReceivedMessage(String message) {
         System.out.println("Server response: " + message);
     }
 
-    /*@Override
-    public void run() {
-        //TODO: send request -> implement when testing is complete
-    }*/
+    @Override
+    protected void logSentMessage(String message) {
+        System.out.println("Sent message to server: " + message);
+    }
 }

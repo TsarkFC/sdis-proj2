@@ -1,8 +1,6 @@
 package ssl;
 
 import javax.net.ssl.SSLEngine;
-import javax.net.ssl.SSLEngineResult;
-import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,16 +13,18 @@ import java.util.Iterator;
 
 public class SslReceiver extends Ssl {
 
-    private SSLEngine engine;
+    private final SSLEngine engine;
 
-    //It can be made more robust and scalable by using a Selector with the non-blocking SocketChannel
+    /**
+     * It can be made more robust and scalable by using a Selector with the non-blocking SocketChannel
+     */
     private Selector selector;
 
     private boolean isActive = true;
 
 
     public SslReceiver(String protocol, String host, int port) {
-        //Falta adicionar a outra password
+        //TODO: Falta adicionar a outra password
         initializeSslContext(protocol, "123456", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore");
 
         engine = context.createSSLEngine(host, port);
@@ -56,7 +56,6 @@ public class SslReceiver extends Ssl {
     //Starts listening to new connections
     //Run in a loop as long the server is active
     public void start() {
-
         System.out.println("Initialized and waiting for new connections...");
 
         while (isActive) {
@@ -69,16 +68,13 @@ public class SslReceiver extends Ssl {
 
             Iterator<SelectionKey> selectedKeys = selector.selectedKeys().iterator();
             while (selectedKeys.hasNext()) {
-                //System.out.println("Ele estar a chegar aqui quer dizer que o client ja se concetou direito acho");
                 SelectionKey key = selectedKeys.next();
                 selectedKeys.remove();
                 handleKey(key);
             }
         }
         System.out.println("Goodbye!");
-
     }
-
 
     public void stop() {
         isActive = false;
@@ -87,103 +83,69 @@ public class SslReceiver extends Ssl {
     }
 
     public void handleKey(SelectionKey key) {
-
         if (!key.isValid()) return;
         if (key.isAcceptable()) {
             try {
-                //Se nao for pelo handshake ele fica sempre a mostrar o accepting key
                 accept(key);
             } catch (IOException e) {
                 System.out.println("Exception accepting connection");
                 e.printStackTrace();
             }
         } else if (key.isReadable()) {
-            try {
-                read((SocketChannel) key.channel(), engine);
-                handleMessage((SocketChannel) key.channel());
-            } catch (IOException e) {
-                System.out.println("Exception Reading");
-                e.printStackTrace();
-            }
+            read((SocketChannel) key.channel());
+            System.out.println("SERVER READ");
+            write((SocketChannel) key.channel());
+            System.out.println("SERVER WROTE");
         }
     }
 
-    public String accept(SelectionKey key) throws IOException {
+    public void accept(SelectionKey key) throws IOException {
         System.out.println("Accepting key");
-        SocketChannel socketChannel = ((ServerSocketChannel) key.channel()).accept();
-        socketChannel.configureBlocking(false);
+        SocketChannel channel = ((ServerSocketChannel) key.channel()).accept();
+        channel.configureBlocking(false);
 
-        SSLEngine sslEngine = context.createSSLEngine();
-        sslEngine.setUseClientMode(false);
-        sslEngine.beginHandshake();
-        if (handshake(socketChannel, sslEngine)) {
-            System.out.println("Handshake successful");
-            socketChannel.register(selector, SelectionKey.OP_READ, sslEngine);
+        SSLEngine engine = context.createSSLEngine();
+        engine.setUseClientMode(false);
+        engine.beginHandshake();
+        if (handshake(channel, engine)) {
+            System.out.println("[Server] Handshake successful");
+            channel.register(selector, SelectionKey.OP_READ, engine);
         } else {
-            System.out.println("Closing socket channel due to bad handshake");
-            socketChannel.close();
+            System.out.println("[Server] Closing socket channel due to bad handshake");
+            channel.close();
         }
-        return "not";
     }
 
-    public void receiveMessage(String message) {
+    @Override
+    protected void logReceivedMessage(String message) {
         System.out.println("Incoming message: " + message);
 
     }
 
-    public void handleMessage(SocketChannel socketChannel) {
+    @Override
+    protected void logSentMessage(String message) {
+        System.out.println("Sent response: " + message);
+    }
+
+    public void write(SocketChannel channel) {
         String response = "HeyHey";
+        System.out.println("[Server] attempting to write");
         try {
-            write(socketChannel, response);
+            System.out.println("[Server] writing...");
+            write(response, channel, engine);
         } catch (IOException e) {
             System.out.println("Error trying to respond to client");
             e.printStackTrace();
         }
     }
 
-
-    public void write(SocketChannel socketChannel, String message) throws IOException {
-        peerDecryptedData.clear();
-        peerDecryptedData.put(message.getBytes());
-        peerDecryptedData.flip();
-
-        // The loop has a meaning for (outgoing) messages larger than 16KB.
-        // Every wrap call will remove 16KB from the original message and send it to the remote peer.
-        while (peerDecryptedData.hasRemaining()) {
-
-            peerEncryptedData.clear();
-            SSLEngineResult result = engine.wrap(peerDecryptedData, peerEncryptedData);
-            switch (result.getStatus()) {
-                case OK:
-                    peerEncryptedData.flip();
-                    while (peerEncryptedData.hasRemaining()) {
-                        socketChannel.write(peerEncryptedData);
-                    }
-                    break;
-                case BUFFER_OVERFLOW:
-                    System.out.println("Overflowing when writing");
-                    break;
-                case BUFFER_UNDERFLOW:
-                    throw new SSLException("Buffer underflow occured after a wrap. I don't think we should ever get here.");
-                case CLOSED:
-                    System.out.println("Close connection");
-                    return;
-                default:
-                    throw new IllegalStateException("Invalid SSL status: " + result.getStatus());
-            }
+    public void read(SocketChannel channel) {
+        try {
+            System.out.println("[Server] reading...");
+            read(channel, engine);
+        } catch (IOException e) {
+            System.out.println("Error Reading message");
+            e.printStackTrace();
         }
-
     }
-
-
-
-
-
-
-
-
-    /*@Override
-    public void run() {
-        //TODO: receive and process requests -> implement when testing is complete
-    }*/
 }

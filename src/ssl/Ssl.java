@@ -47,16 +47,41 @@ public abstract class Ssl {
     /**
      * Executes tasks in NEED_TASK stage of handshake
      */
-    private ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
+
+    protected void initializeSslContext(String protocol, String keyStorePassword, String filePathKeys, String trustStorePath) {
+        char[] passphrase = keyStorePassword.toCharArray();
+
+        KeyManagerFactory kmf;
+        try {
+            kmf = createKeyManagerFactory(passphrase, filePathKeys);
+            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, trustStorePath);
+
+            context = SSLContext.getInstance(protocol);
+            context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
+
+        } catch (Exception e) {
+            System.out.println("Error Initializing SslContext");
+            e.printStackTrace();
+        }
+    }
+
+    // Determine the maximum buffer sizes for the application and network bytes that could be generated
+    protected void allocateData(SSLSession session) {
+        decryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
+        encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
+
+        peerEncryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
+        peerDecryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
+    }
 
     protected boolean handshake(SocketChannel channel, SSLEngine engine) {
         HandshakeStatus status = engine.getHandshakeStatus();
         SSLEngineResult result;
-        startBuffers(engine);
 
         while (!isFinished(status)) {
             switch (status) {
-                case NEED_WRAP:
+                case NEED_WRAP -> {
                     try {
                         encryptedData.clear();
                         result = engine.wrap(decryptedData, encryptedData);
@@ -68,12 +93,8 @@ public abstract class Ssl {
                         e.printStackTrace();
                         return false;
                     }
-
-                    status = engine.getHandshakeStatus();
-                    break;
-
-                case NEED_UNWRAP:
-                case NEED_UNWRAP_AGAIN:
+                }
+                case NEED_UNWRAP, NEED_UNWRAP_AGAIN -> {
                     // Receive handshaking data from peer
                     try {
                         if (channel.read(peerEncryptedData) < 0) {
@@ -82,7 +103,6 @@ public abstract class Ssl {
                             }
                             engine.closeInbound();
                             engine.closeOutbound();
-                            status = engine.getHandshakeStatus();
                             break;
                         }
                     } catch (IOException e) {
@@ -104,35 +124,20 @@ public abstract class Ssl {
                         e.printStackTrace();
                         return false;
                     }
-
-                    status = engine.getHandshakeStatus();
-                    break;
-
-                case NEED_TASK:
+                }
+                case NEED_TASK -> {
                     Runnable task;
                     while ((task = engine.getDelegatedTask()) != null) {
                         taskExecutor.execute(task);
                     }
-                    status = engine.getHandshakeStatus();
-                    break;
-
-                case FINISHED:
-                case NOT_HANDSHAKING:
-                    break;
+                }
+                case NOT_HANDSHAKING, FINISHED -> {
+                }
             }
+            status = engine.getHandshakeStatus();
         }
 
         return true;
-    }
-
-    private boolean isFinished(HandshakeStatus status) {
-        return status == HandshakeStatus.FINISHED || status == HandshakeStatus.NOT_HANDSHAKING;
-    }
-
-    private void startBuffers(SSLEngine engine) {
-        SSLSession session = engine.getSession();
-        peerDecryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
-        peerEncryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
     }
 
     private boolean handleUnwrapResult(SSLEngineResult result, SSLEngine engine) {
@@ -146,16 +151,11 @@ public abstract class Ssl {
 
             case BUFFER_UNDERFLOW:
                 // No data from peer or peerNetBuffer was too small
-                if (engine.getSession().getPacketBufferSize() >= peerEncryptedData.limit()) {
-                    ByteBuffer newPeerNetBuffer = enlargeBuffer(peerEncryptedData, engine.getSession().getPacketBufferSize());
-                    peerEncryptedData.flip();
-                    newPeerNetBuffer.put(peerEncryptedData);
-                    peerEncryptedData = newPeerNetBuffer;
-                }
+                peerEncryptedData = handleUnderflow(peerEncryptedData, engine.getSession().getPacketBufferSize());
                 break;
 
             case BUFFER_OVERFLOW:
-                peerDecryptedData = enlargeBuffer(peerDecryptedData, engine.getSession().getApplicationBufferSize());
+                peerDecryptedData = handleOverflow(peerDecryptedData, engine.getSession().getApplicationBufferSize());
                 break;
         }
 
@@ -177,80 +177,22 @@ public abstract class Ssl {
                 }
             }
             case BUFFER_UNDERFLOW -> throw new IllegalStateException("Underflow after wrap occurred!");
-            case BUFFER_OVERFLOW -> encryptedData = enlargeBuffer(encryptedData, engine.getSession().getPacketBufferSize());
+            case BUFFER_OVERFLOW -> encryptedData = handleOverflow(encryptedData, engine.getSession().getPacketBufferSize());
         }
 
         return true;
     }
 
-    protected ByteBuffer enlargeBuffer(ByteBuffer buffer, int size) {
-        if (size <= buffer.capacity()) {
-            buffer = ByteBuffer.allocate(buffer.capacity() * 2);
-        } else {
-            buffer = ByteBuffer.allocate(size);
-        }
-        return buffer;
-    }
+    protected abstract void logReceivedMessage(String message);
+    protected abstract void logSentMessage(String message);
 
-
-    public void initializeSslContext(String protocol, String keyStorePassword, String filePathKeys, String trustStorePath) {
-        char[] passphrase = keyStorePassword.toCharArray();
-
-        KeyManagerFactory kmf;
-        try {
-            kmf = createKeyManagerFactory(passphrase, filePathKeys);
-            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, trustStorePath);
-
-            context = SSLContext.getInstance(protocol);
-            context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
-
-        } catch (Exception e) {
-            System.out.println("Error Initializing SslContext");
-            e.printStackTrace();
-        }
-    }
-
-    // Determine the maximum buffer sizes for the application and network bytes that could be generated
-    public void allocateData(SSLSession session) {
-        decryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
-        encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
-
-        peerEncryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
-        peerDecryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
-    }
-
-    public KeyManagerFactory createKeyManagerFactory(char[] passphrase, String keysFilePAth) throws Exception {
-        // First initialize the key and trust material.
-        KeyStore ksKeys = KeyStore.getInstance("JKS");
-        ksKeys.load(new FileInputStream(keysFilePAth), passphrase);
-
-        // KeyManager's decide which key material to use.
-        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        kmf.init(ksKeys, passphrase);
-
-        return kmf;
-    }
-
-    public TrustManagerFactory createTrustManagerFactory(char[] passphrase, String trustStorePath) throws Exception {
-        KeyStore trustStoreKey = KeyStore.getInstance("JKS");
-        trustStoreKey.load(new FileInputStream(trustStorePath), passphrase);
-
-        // TrustManager's decide whether to allow connections.
-        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        tmf.init(trustStoreKey);
-
-        return tmf;
-
-    }
-
-    public abstract void receiveMessage(String message);
-
-    public void read(SocketChannel socketChannel, SSLEngine engine) throws IOException {
+    protected void read(SocketChannel channel, SSLEngine engine) throws IOException {
         System.out.println("Reading key");
         peerEncryptedData.clear();
-        //TODO This is just pseudocode
+
         // Read SSL/TLS encoded data from peer
-        int num = socketChannel.read(peerEncryptedData);
+        int num = channel.read(peerEncryptedData);
+        System.out.println("READ: " + num);
         if (num == -1) {
             // Handle closed channel
             System.out.println("Handle closed Channel");
@@ -262,80 +204,110 @@ public abstract class Ssl {
             while (peerEncryptedData.hasRemaining()) {
                 SSLEngineResult res = engine.unwrap(peerEncryptedData, peerDecryptedData);
                 switch (res.getStatus()) {
-                    case OK:
-                        peerDecryptedData.compact();
-                        //Aqui em vez de compact talvez seja flip
-
-                        receiveMessage(new String(decryptedData.array()));
-                        //Use peer decrypted data
-                        break;
-                    // Handle other status:  BUFFER_OVERFLOW, BUFFER_UNDERFLOW, CLOSED
-                    case BUFFER_OVERFLOW:
-                        peerDecryptedData = enlargeBuffer(peerDecryptedData, engine.getSession().getApplicationBufferSize());
-                        break;
-                    case BUFFER_UNDERFLOW:
-                        System.out.println("Buffer Underflow");
-                        break;
-                    case CLOSED:
-                        System.out.println("Request to close connection");
-                        break;
-                    default:
-                        break;
-
+                    case OK -> {
+                        peerDecryptedData.flip();
+                        logReceivedMessage(new String(peerDecryptedData.array()));
+                    }
+                    case BUFFER_OVERFLOW -> peerDecryptedData = handleOverflow(peerDecryptedData, engine.getSession().getApplicationBufferSize());
+                    case BUFFER_UNDERFLOW -> peerEncryptedData = handleUnderflow(peerEncryptedData, engine.getSession().getPacketBufferSize());
+                    case CLOSED -> disconnect(channel, engine);
                 }
             }
         }
     }
 
-    public void write(String message, SSLEngine engine, SocketChannel channel) throws IOException {
-        //TODO This is just pseudocode
+    protected void write(String message, SocketChannel channel, SSLEngine engine) throws IOException {
         decryptedData.clear();
         decryptedData.put(message.getBytes());
         decryptedData.flip();
 
         while (decryptedData.hasRemaining()) {
-
             encryptedData.clear();
-            // Generate SSL/TLS encoded data (handshake or application data)
-            SSLEngineResult res = null;
-
-            res = engine.wrap(decryptedData, encryptedData);
+            SSLEngineResult res = engine.wrap(decryptedData, encryptedData);
 
             // Process status of call
             switch (res.getStatus()) {
-                case OK:
-
-                    decryptedData.compact();
+                case OK -> {
+                    encryptedData.flip();
 
                     // Send SSL/TLS encoded data to peer
                     while (encryptedData.hasRemaining()) {
                         int num = channel.write(encryptedData);
+                        System.out.println("Wrote " + num + " bytes");
                         if (num == -1) {
                             // handle closed channel
                         } else if (num == 0) {
                             // no bytes written; try again later
                         } else {
-                            System.out.println("Success writing  message:");
-                            System.out.println("/t" + message);
+                            logSentMessage(message);
                         }
                     }
-                    break;
-                case BUFFER_OVERFLOW:
-                    System.out.println("Overflow writing to server");
-                    break;
-                case BUFFER_UNDERFLOW:
-                    System.out.println("Underflow writing to server");
-
-                    break;
-                case CLOSED:
-                    System.out.println("Close connection");
-                    break;
+                }
+                case BUFFER_OVERFLOW -> encryptedData = handleOverflow(encryptedData, engine.getSession().getPacketBufferSize());
+                case BUFFER_UNDERFLOW -> throw new IllegalStateException("Underflow after wrap occurred!");
+                case CLOSED -> disconnect(channel, engine);
             }
-
-            // Handle other status:  BUFFER_OVERFLOW, CLOSED
-
         }
     }
 
+    protected void disconnect(SocketChannel channel, SSLEngine engine) {
+        engine.closeOutbound();
+        handshake(channel, engine);
+        try {
+            channel.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isFinished(HandshakeStatus status) {
+        return status == HandshakeStatus.FINISHED || status == HandshakeStatus.NOT_HANDSHAKING;
+    }
+
+    protected ByteBuffer enlargeBuffer(ByteBuffer buffer, int size) {
+        if (size <= buffer.capacity()) {
+            buffer = ByteBuffer.allocate(buffer.capacity() * 2);
+        } else {
+            buffer = ByteBuffer.allocate(size);
+        }
+        return buffer;
+    }
+
+    protected ByteBuffer handleOverflow(ByteBuffer buffer, int size) {
+        return enlargeBuffer(buffer, size);
+    }
+
+    protected ByteBuffer handleUnderflow(ByteBuffer buffer, int size) {
+        if (size >= peerEncryptedData.limit()) {
+            ByteBuffer newBuffer = enlargeBuffer(peerEncryptedData, size);
+            peerEncryptedData.flip();
+            newBuffer.put(peerEncryptedData);
+            return newBuffer;
+        }
+        return buffer;
+    }
+
+    protected KeyManagerFactory createKeyManagerFactory(char[] passphrase, String keysFilePAth) throws Exception {
+        // First initialize the key and trust material.
+        KeyStore ksKeys = KeyStore.getInstance("JKS");
+        ksKeys.load(new FileInputStream(keysFilePAth), passphrase);
+
+        // KeyManager's decide which key material to use.
+        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        kmf.init(ksKeys, passphrase);
+
+        return kmf;
+    }
+
+    protected TrustManagerFactory createTrustManagerFactory(char[] passphrase, String trustStorePath) throws Exception {
+        KeyStore trustStoreKey = KeyStore.getInstance("JKS");
+        trustStoreKey.load(new FileInputStream(trustStorePath), passphrase);
+
+        // TrustManager's decide whether to allow connections.
+        TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        tmf.init(trustStoreKey);
+
+        return tmf;
+    }
 
 }
