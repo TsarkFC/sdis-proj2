@@ -187,15 +187,13 @@ public abstract class Ssl {
     protected abstract void logSentMessage(String message);
 
     protected int read(SocketChannel channel, SSLEngine engine) throws IOException {
-        System.out.println("Reading key");
         peerEncryptedData.clear();
 
         // Read SSL/TLS encoded data from peer
         int num = channel.read(peerEncryptedData);
-        System.out.println("read: " + num);
         if (num == -1) {
-            //TODO: Handle closed channel
-            System.out.println("Handle closed Channel");
+            engine.closeInbound();
+            disconnect(channel, engine);
         } else if (num == 0) {
             System.out.println("No bytes read, try again");
         } else {
@@ -216,10 +214,8 @@ public abstract class Ssl {
                         return 0;
                     }
                 }
-                System.out.println("### end of read");
             }
         }
-        System.out.println("## read return");
         return num;
     }
 
@@ -241,11 +237,10 @@ public abstract class Ssl {
                     while (encryptedData.hasRemaining()) {
                         int num = channel.write(encryptedData);
                         System.out.println("Wrote " + num + " bytes");
-                        if (num == -1) {
-                            // handle closed channel
-                        } else if (num == 0) {
-                            // no bytes written; try again later
-                        } else {
+                        if (num < 0) {
+                            engine.closeInbound();
+                            disconnect(channel, engine);
+                        } else if (num > 0) {
                             logSentMessage(message);
                         }
                     }

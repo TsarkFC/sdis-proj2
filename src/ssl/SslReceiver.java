@@ -13,8 +13,6 @@ import java.util.Iterator;
 
 public class SslReceiver extends Ssl {
 
-    private final SSLEngine engine;
-
     /**
      * It can be made more robust and scalable by using a Selector with the non-blocking SocketChannel
      */
@@ -27,7 +25,7 @@ public class SslReceiver extends Ssl {
         //TODO: Falta adicionar a outra password
         initializeSslContext(protocol, "123456", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore");
 
-        engine = context.createSSLEngine(host, port);
+        SSLEngine engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(false);
 
         SSLSession session = engine.getSession();
@@ -92,8 +90,10 @@ public class SslReceiver extends Ssl {
                 e.printStackTrace();
             }
         } else if (key.isReadable()) {
-            read((SocketChannel) key.channel());
-            write((SocketChannel) key.channel());
+            SocketChannel channel = (SocketChannel) key.channel();
+            SSLEngine engine = (SSLEngine) key.attachment();
+            receive(channel, engine);
+            send(channel, engine);
         }
     }
 
@@ -126,9 +126,9 @@ public class SslReceiver extends Ssl {
         System.out.println("Sent response: " + message);
     }
 
-    public void write(SocketChannel channel) {
+    public void send(SocketChannel channel, SSLEngine engine) {
         String response = "HeyHey";
-        System.out.println("[Server] attempting to write");
+        System.out.println("[Server] attempting to write...");
         try {
             System.out.println("[Server] writing...");
             write(response, channel, engine);
@@ -138,7 +138,8 @@ public class SslReceiver extends Ssl {
         }
     }
 
-    public void read(SocketChannel channel) {
+    public void receive(SocketChannel channel, SSLEngine engine) {
+        System.out.println("[Server] attempting to read...");
         try {
             System.out.println("[Server] reading...");
             System.out.println("[Server] read " + read(channel, engine) + " bytes");
