@@ -6,6 +6,8 @@ import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class SslSender extends Ssl implements Runnable {
 
@@ -17,6 +19,12 @@ public class SslSender extends Ssl implements Runnable {
 
     private final int port;
 
+    private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+
+    private int readAttempt = 0;
+
+    private final int maxReadAttempts = 5;
+
     public SslSender(String protocol, String host, int port) {
         this.host = host;
         this.port = port;
@@ -27,10 +35,7 @@ public class SslSender extends Ssl implements Runnable {
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(true);
 
-        // Obtain the currently empty SSLSession for the SSLEngine
-        SSLSession session = engine.getSession();
-
-        allocateData(session);
+        allocateData(engine.getSession());
     }
 
     public void connect() {
@@ -50,6 +55,7 @@ public class SslSender extends Ssl implements Runnable {
         }
         if (handshake(channel, engine)) {
             System.out.println("[Client] Handshake successful");
+            allocateData(engine.getSession());
         } else {
             System.out.println("[Client] Handshake error!");
         }
@@ -71,17 +77,28 @@ public class SslSender extends Ssl implements Runnable {
     }
 
     public void read() {
+        int read = 0;
+        System.out.println("[Client] read attempt no " + readAttempt);
+        readAttempt++;
+
         try {
-            System.out.println("[Client] reading...");
-            read(channel, engine);
+            read = read(channel, engine);
         } catch (IOException e) {
             System.out.println("Error Reading message");
             e.printStackTrace();
         }
+
+        if (read == 0 && readAttempt < maxReadAttempts) {
+            executor.schedule((Runnable) this::read, 1, TimeUnit.SECONDS);
+        }
+        else if (readAttempt >= maxReadAttempts) {
+            System.out.println("[Client] got no response from the server!");
+        }
     }
 
     public void shutdown() {
-
+        disconnect(channel, engine);
+        executor.shutdown();
     }
 
     @Override

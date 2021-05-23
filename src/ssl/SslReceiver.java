@@ -33,7 +33,7 @@ public class SslReceiver extends Ssl {
         SSLSession session = engine.getSession();
         allocateData(session);
 
-        session.invalidate();
+        //session.invalidate();
 
         this.createServerSocketChannel(host, port);
     }
@@ -93,9 +93,7 @@ public class SslReceiver extends Ssl {
             }
         } else if (key.isReadable()) {
             read((SocketChannel) key.channel());
-            System.out.println("SERVER READ");
             write((SocketChannel) key.channel());
-            System.out.println("SERVER WROTE");
         }
     }
 
@@ -110,6 +108,7 @@ public class SslReceiver extends Ssl {
         if (handshake(channel, engine)) {
             System.out.println("[Server] Handshake successful");
             channel.register(selector, SelectionKey.OP_READ, engine);
+            allocateData(engine.getSession());
         } else {
             System.out.println("[Server] Closing socket channel due to bad handshake");
             channel.close();
@@ -142,7 +141,7 @@ public class SslReceiver extends Ssl {
     public void read(SocketChannel channel) {
         try {
             System.out.println("[Server] reading...");
-            read(channel, engine);
+            System.out.println("[Server] read " + read(channel, engine) + " bytes");
         } catch (IOException e) {
             System.out.println("Error Reading message");
             e.printStackTrace();

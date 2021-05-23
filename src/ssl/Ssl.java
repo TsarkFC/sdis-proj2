@@ -186,15 +186,15 @@ public abstract class Ssl {
     protected abstract void logReceivedMessage(String message);
     protected abstract void logSentMessage(String message);
 
-    protected void read(SocketChannel channel, SSLEngine engine) throws IOException {
+    protected int read(SocketChannel channel, SSLEngine engine) throws IOException {
         System.out.println("Reading key");
         peerEncryptedData.clear();
 
         // Read SSL/TLS encoded data from peer
         int num = channel.read(peerEncryptedData);
-        System.out.println("READ: " + num);
+        System.out.println("read: " + num);
         if (num == -1) {
-            // Handle closed channel
+            //TODO: Handle closed channel
             System.out.println("Handle closed Channel");
         } else if (num == 0) {
             System.out.println("No bytes read, try again");
@@ -202,6 +202,7 @@ public abstract class Ssl {
             // Process incoming data
             peerEncryptedData.flip();
             while (peerEncryptedData.hasRemaining()) {
+                peerDecryptedData.clear();
                 SSLEngineResult res = engine.unwrap(peerEncryptedData, peerDecryptedData);
                 switch (res.getStatus()) {
                     case OK -> {
@@ -210,10 +211,16 @@ public abstract class Ssl {
                     }
                     case BUFFER_OVERFLOW -> peerDecryptedData = handleOverflow(peerDecryptedData, engine.getSession().getApplicationBufferSize());
                     case BUFFER_UNDERFLOW -> peerEncryptedData = handleUnderflow(peerEncryptedData, engine.getSession().getPacketBufferSize());
-                    case CLOSED -> disconnect(channel, engine);
+                    case CLOSED -> {
+                        disconnect(channel, engine);
+                        return 0;
+                    }
                 }
+                System.out.println("### end of read");
             }
         }
+        System.out.println("## read return");
+        return num;
     }
 
     protected void write(String message, SocketChannel channel, SSLEngine engine) throws IOException {
@@ -245,12 +252,16 @@ public abstract class Ssl {
                 }
                 case BUFFER_OVERFLOW -> encryptedData = handleOverflow(encryptedData, engine.getSession().getPacketBufferSize());
                 case BUFFER_UNDERFLOW -> throw new IllegalStateException("Underflow after wrap occurred!");
-                case CLOSED -> disconnect(channel, engine);
+                case CLOSED -> {
+                    disconnect(channel, engine);
+                    return;
+                }
             }
         }
     }
 
     protected void disconnect(SocketChannel channel, SSLEngine engine) {
+        System.out.println("### disconnect");
         engine.closeOutbound();
         handshake(channel, engine);
         try {
