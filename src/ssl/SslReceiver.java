@@ -11,7 +11,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
-public class SslReceiver extends Ssl {
+public class SslReceiver extends Ssl implements Runnable {
 
     /**
      * It can be made more robust and scalable by using a Selector with the non-blocking SocketChannel
@@ -72,7 +72,6 @@ public class SslReceiver extends Ssl {
 
     public void stop() {
         isActive = false;
-        //executor.shutdown();
         selector.wakeup();
     }
 
@@ -148,5 +147,14 @@ public class SslReceiver extends Ssl {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    @Override
+    public void run() {
+        try {
+            start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

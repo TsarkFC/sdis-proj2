@@ -1,15 +1,15 @@
 package ssl.test;
 
+import ssl.SslReceiver;
 import ssl.SslSender;
 
 public class Demo {
 
-    ServerRunnable serverRunnable;
+    SslReceiver server;
 
     public Demo() {
-        serverRunnable = new ServerRunnable();
-        Thread server = new Thread(serverRunnable);
-        server.start();
+        server = new SslReceiver("TLSv1.2", "localhost", 9222);
+        new Thread(server).start();
     }
 
     public void runDemo() {
@@ -40,7 +40,7 @@ public class Demo {
         client3.shutdown();
         client4.shutdown();
 
-        serverRunnable.stop();
+        server.stop();
     }
 
     public static void main(String[] args) throws Exception {

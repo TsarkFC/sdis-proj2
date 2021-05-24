@@ -12,13 +12,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public abstract class Ssl {
-
-    /*Creation - ready to be configured.
-    Initial handshaking - perform authentication and negotiate communication parameters.
-    Application data - ready for application exchange.
-    Rehandshaking - renegotiate communications parameters/authentication; handshaking data may be mixed with application data.
-    Closure - ready to shut down connection.*/
-
     /**
      * Contains this peer decrypted/original application data
      */
