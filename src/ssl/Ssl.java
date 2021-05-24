@@ -79,6 +79,11 @@ public abstract class Ssl {
         HandshakeStatus status = engine.getHandshakeStatus();
         SSLEngineResult result;
 
+        decryptedData.clear();
+        encryptedData.clear();
+        peerEncryptedData.clear();
+        peerDecryptedData.clear();
+
         while (!isFinished(status)) {
             switch (status) {
                 case NEED_WRAP -> {
@@ -184,6 +189,7 @@ public abstract class Ssl {
     }
 
     protected abstract void logReceivedMessage(String message);
+
     protected abstract void logSentMessage(String message);
 
     protected int read(SocketChannel channel, SSLEngine engine) throws IOException {
@@ -191,11 +197,9 @@ public abstract class Ssl {
 
         // Read SSL/TLS encoded data from peer
         int num = channel.read(peerEncryptedData);
-        if (num == -1) {
+        if (num < 0) {
             engine.closeInbound();
             disconnect(channel, engine);
-        } else if (num == 0) {
-            System.out.println("No bytes read, try again");
         } else {
             // Process incoming data
             peerEncryptedData.flip();
@@ -256,7 +260,6 @@ public abstract class Ssl {
     }
 
     protected void disconnect(SocketChannel channel, SSLEngine engine) {
-        System.out.println("### disconnect");
         engine.closeOutbound();
         handshake(channel, engine);
         try {

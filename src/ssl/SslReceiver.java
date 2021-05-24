@@ -20,7 +20,6 @@ public class SslReceiver extends Ssl {
 
     private boolean isActive = true;
 
-
     public SslReceiver(String protocol, String host, int port) {
         //TODO: Falta adicionar a outra password
         initializeSslContext(protocol, "123456", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore");
@@ -31,11 +30,8 @@ public class SslReceiver extends Ssl {
         SSLSession session = engine.getSession();
         allocateData(session);
 
-        //session.invalidate();
-
         this.createServerSocketChannel(host, port);
     }
-
 
     public void createServerSocketChannel(String host, int port) {
         try {
@@ -54,7 +50,7 @@ public class SslReceiver extends Ssl {
     //Starts listening to new connections
     //Run in a loop as long the server is active
     public void start() {
-        System.out.println("Initialized and waiting for new connections...");
+        System.out.println("[Server] Initialized and waiting for new connections...");
 
         while (isActive) {
             try {
@@ -92,13 +88,16 @@ public class SslReceiver extends Ssl {
         } else if (key.isReadable()) {
             SocketChannel channel = (SocketChannel) key.channel();
             SSLEngine engine = (SSLEngine) key.attachment();
-            receive(channel, engine);
-            send(channel, engine);
+            int nBytes = receive(channel, engine);
+            System.out.println("[Server] nBytes = " + nBytes);
+            if (nBytes > 0) {
+                System.out.println("[Server] sending...");
+                send(channel, engine);
+            }
         }
     }
 
     public void accept(SelectionKey key) throws IOException {
-        System.out.println("Accepting key");
         SocketChannel channel = ((ServerSocketChannel) key.channel()).accept();
         channel.configureBlocking(false);
 
@@ -118,7 +117,6 @@ public class SslReceiver extends Ssl {
     @Override
     protected void logReceivedMessage(String message) {
         System.out.println("Incoming message: " + message);
-
     }
 
     @Override
@@ -138,14 +136,17 @@ public class SslReceiver extends Ssl {
         }
     }
 
-    public void receive(SocketChannel channel, SSLEngine engine) {
+    public int receive(SocketChannel channel, SSLEngine engine) {
         System.out.println("[Server] attempting to read...");
         try {
             System.out.println("[Server] reading...");
-            System.out.println("[Server] read " + read(channel, engine) + " bytes");
+            int nBytes = read(channel, engine);
+            System.out.println("[Server] read " + nBytes + " bytes");
+            return nBytes;
         } catch (IOException e) {
             System.out.println("Error Reading message");
             e.printStackTrace();
         }
+        return 0;
     }
 }

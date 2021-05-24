@@ -21,10 +21,6 @@ public class SslSender extends Ssl implements Runnable {
 
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
-    private int readAttempt = 0;
-
-    private final int maxReadAttempts = 5;
-
     public SslSender(String protocol, String host, int port) {
         this.host = host;
         this.port = port;
@@ -49,7 +45,7 @@ public class SslSender extends Ssl implements Runnable {
             channel = SocketChannel.open();
             channel.configureBlocking(false);
             channel.connect(new InetSocketAddress(host, port));
-            while (!channel.finishConnect());
+            while (!channel.finishConnect()) ;
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -77,22 +73,25 @@ public class SslSender extends Ssl implements Runnable {
     }
 
     public void read() {
-        int read = 0;
-        System.out.println("[Client] read attempt no " + readAttempt);
-        readAttempt++;
+        System.out.println("[Client] attempting to read...");
+        int tries = 0;
 
-        try {
-            read = read(channel, engine);
-        } catch (IOException e) {
-            System.out.println("Error Reading message");
-            e.printStackTrace();
-        }
-
-        if (read == 0 && readAttempt < maxReadAttempts) {
-            executor.schedule((Runnable) this::read, 1, TimeUnit.SECONDS);
-        }
-        else if (readAttempt >= maxReadAttempts) {
-            System.out.println("[Client] got no response from the server!");
+        while (tries < 5) {
+            tries++;
+            try {
+                System.out.println("[Client] reading...");
+                int nBytes = read(channel, engine);
+                System.out.println("[Client] read " + nBytes + " bytes");
+                if (nBytes > 0) break;
+            } catch (IOException e) {
+                System.out.println("Error Reading message");
+                e.printStackTrace();
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
