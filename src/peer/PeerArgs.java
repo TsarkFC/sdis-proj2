@@ -1,5 +1,6 @@
 package peer;
 
+import ssl.SSLInformation;
 import utils.AddressList;
 import utils.MulticastAddress;
 
@@ -24,6 +25,12 @@ public class PeerArgs {
     //TODO Receber isto como argumento e mudar valores
     final int chordPort = 1873;
     final String chordPeerIPAddr = "228.25.25.25";
+    final SSLInformation sslInformation = new SSLInformation();
+
+
+
+
+
 
     public Double getVersion() {
         return Double.parseDouble(version);
@@ -48,6 +55,12 @@ public class PeerArgs {
     public int getChordPort() {return chordPort;}
 
     public String getChordPeerIpAddr(){return chordPeerIPAddr;}
+
+    public SSLInformation getSslInformation() {
+        return sslInformation;
+    }
+
+
 
 
 

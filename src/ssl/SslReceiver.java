@@ -20,22 +20,31 @@ public class SslReceiver extends Ssl implements Runnable {
 
     private boolean isActive = true;
 
-    public SslReceiver(String protocol, String host, int port) {
+    //TODO tirar o decrypted data e isso dali
+    public SslReceiver(String protocol,String serverKeys,String truststore,String password) {
         //TODO: Falta adicionar a outra password
-        initializeSslContext(protocol, "123456", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore");
+        initializeSslContext(protocol, password, serverKeys, truststore);
 
+
+        try {
+            selector = SelectorProvider.provider().openSelector();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //this.createServerSocketChannel(host, port);
+    }
+
+    public void createServerSocketChannel(String host, int port) {
+
+        //TODO Tirar isto daqui
         SSLEngine engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(false);
 
         SSLSession session = engine.getSession();
         allocateData(session);
 
-        this.createServerSocketChannel(host, port);
-    }
-
-    public void createServerSocketChannel(String host, int port) {
         try {
-            selector = SelectorProvider.provider().openSelector();
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
             serverSocketChannel.socket().bind(new InetSocketAddress(host, port));
@@ -45,6 +54,13 @@ public class SslReceiver extends Ssl implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void addServer(String ipAddress, int port) throws IOException {
+        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+        serverSocketChannel.configureBlocking(false);
+        serverSocketChannel.socket().bind(new InetSocketAddress(ipAddress, port));
+        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
     }
 
     //Starts listening to new connections

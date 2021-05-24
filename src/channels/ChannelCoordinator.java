@@ -2,6 +2,8 @@ package channels;
 
 import peer.Peer;
 import protocol.BackupProtocolInitiator;
+import ssl.SSLInformation;
+import ssl.SslReceiver;
 import utils.AddressList;
 
 import java.util.concurrent.*;
@@ -13,9 +15,18 @@ public class ChannelCoordinator {
     public ChannelCoordinator(Peer peer) {
         this.peer = peer;
         AddressList addressList = peer.getArgs().getAddressList();
+        initializeReceiver(peer.getArgs().getSslInformation(),addressList);
         this.createMDBChannel(addressList);
         this.createMCChannel(addressList);
         this.createMDRChannel(addressList);
+    }
+
+    public void initializeReceiver(SSLInformation sslInformation,AddressList addressList){
+        SslReceiver receiverThread = new SslReceiver(sslInformation.getProtocol(), sslInformation.getServerKeys(), sslInformation.getTrustStore(), sslInformation.getPassword());
+        receiverThread.createServerSocketChannel(addressList.getMcAddr().getAddress(), addressList.getMcAddr().getPort());
+        receiverThread.createServerSocketChannel(addressList.getMdbAddr().getAddress(), addressList.getMdbAddr().getPort());
+        receiverThread.createServerSocketChannel(addressList.getMdrAddr().getAddress(), addressList.getMdrAddr().getPort());
+        receiverThread.createServerSocketChannel(peer.getArgs().getChordPeerIpAddr(), peer.getArgs().getChordPort());
     }
 
     public void createMDBChannel(AddressList addressList) {

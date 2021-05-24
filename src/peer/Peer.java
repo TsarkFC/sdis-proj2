@@ -45,6 +45,7 @@ public class Peer implements RemoteObject {
         peer.startFileSystem();
         peer.createMetadata();
         peer.connectToRmi();
+        peer.createChannels();
         peer.createChordPeer();
 
     }
@@ -172,7 +173,10 @@ public class Peer implements RemoteObject {
 
     public void createChannels() {
         channelCoordinator = new ChannelCoordinator(this);
+        StartProtocol startProtocol = new StartProtocol(this);
+        startProtocol.sendStartingMessage();
     }
+
 
     public void startFileSystem() {
         fileSystem = "../filesystem/" + peerArgs.getPeerId();
@@ -195,9 +199,7 @@ public class Peer implements RemoteObject {
             Registry registry = LocateRegistry.getRegistry();
             registry.bind(remoteObjName, stub);
             System.err.println("Peer with name: " + remoteObjName + " ready");
-            this.createChannels();
-            StartProtocol startProtocol = new StartProtocol(this);
-            startProtocol.sendStartingMessage();
+
         } catch (Exception e) {
             System.out.println("Error creating peer and connecting to RMI: " + e);
         }

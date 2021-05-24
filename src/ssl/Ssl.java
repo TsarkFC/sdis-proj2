@@ -186,6 +186,8 @@ public abstract class Ssl {
     protected abstract void logSentMessage(String message);
 
     protected int read(SocketChannel channel, SSLEngine engine) throws IOException {
+
+        //TODO CRIAR AQUI A SESSION E TAl
         peerEncryptedData.clear();
 
         // Read SSL/TLS encoded data from peer
@@ -217,6 +219,7 @@ public abstract class Ssl {
     }
 
     protected void write(String message, SocketChannel channel, SSLEngine engine) throws IOException {
+        //TODO CRIAR AQUI SESSION E TAL
         decryptedData.clear();
         decryptedData.put(message.getBytes());
         decryptedData.flip();

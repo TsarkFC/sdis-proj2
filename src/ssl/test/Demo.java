@@ -8,7 +8,8 @@ public class Demo {
     SslReceiver server;
 
     public Demo() {
-        server = new SslReceiver("TLSv1.2", "localhost", 9222);
+        server = new SslReceiver("TLSv1.2", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore","123456");
+        server.createServerSocketChannel("localhost",9222);
         new Thread(server).start();
     }
 
