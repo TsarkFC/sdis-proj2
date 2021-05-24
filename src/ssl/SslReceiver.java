@@ -21,7 +21,6 @@ public class SslReceiver extends Ssl implements Runnable {
     private boolean isActive = true;
 
     public SslReceiver(String protocol, String host, int port) {
-        //TODO: Falta adicionar a outra password
         initializeSslContext(protocol, "123456", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore");
 
         SSLEngine engine = context.createSSLEngine(host, port);
@@ -113,16 +112,6 @@ public class SslReceiver extends Ssl implements Runnable {
         }
     }
 
-    @Override
-    protected void logReceivedMessage(String message) {
-        System.out.println("Incoming message: " + message);
-    }
-
-    @Override
-    protected void logSentMessage(String message) {
-        System.out.println("Sent response: " + message);
-    }
-
     public void send(SocketChannel channel, SSLEngine engine) {
         String response = "HeyHey";
         System.out.println("[Server] attempting to write...");
@@ -147,6 +136,16 @@ public class SslReceiver extends Ssl implements Runnable {
             e.printStackTrace();
         }
         return 0;
+    }
+
+    @Override
+    protected void logReceivedMessage(String message) {
+        System.out.println("Incoming message: " + message);
+    }
+
+    @Override
+    protected void logSentMessage(String message) {
+        System.out.println("Sent response: " + message);
     }
 
     @Override

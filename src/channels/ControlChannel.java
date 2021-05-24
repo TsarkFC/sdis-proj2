@@ -1,5 +1,6 @@
 package channels;
 
+import filehandler.FileHandler;
 import messages.*;
 import messages.handlers.DeleteHandler;
 import messages.handlers.GetChunkHandler;
@@ -9,10 +10,8 @@ import peer.metadata.FileMetadata;
 import peer.metadata.StoredChunksMetadata;
 import protocol.BackupProtocolInitiator;
 import utils.AddressList;
-import filehandler.FileHandler;
 import utils.Utils;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;

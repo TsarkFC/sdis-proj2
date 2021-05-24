@@ -1,7 +1,7 @@
 package peer;
 
 import channels.ChannelCoordinator;
-import chord.ChordPeer;
+import chord.ChordNode;
 import filehandler.FileHandler;
 import peer.metadata.Metadata;
 import protocol.*;
@@ -28,7 +28,7 @@ public class Peer implements RemoteObject {
     private Protocol protocol;
     private String restoreDir;
     private String filesDir;
-    private ChordPeer chordPeer;
+    private ChordNode chordNode;
 
     private ConcurrentSkipListSet<String> chunksReceived = new ConcurrentSkipListSet<>();
     private final ConcurrentHashMap<String, ConcurrentHashMap<Integer, byte[]>> activeRestores = new ConcurrentHashMap<>();
@@ -45,8 +45,7 @@ public class Peer implements RemoteObject {
         peer.startFileSystem();
         peer.createMetadata();
         peer.connectToRmi();
-        peer.createChordPeer();
-
+        peer.createChordNode();
     }
 
     // Estas sao as funçoes do Initiator peer, entao na classe Protocol e que ele vai começar o RING right?
@@ -83,59 +82,6 @@ public class Peer implements RemoteObject {
         this.protocol = new ReclaimProtocol(maxDiskSpace, this);
         this.protocol.initialize();
     }
-
-    public String getFileSystem() {
-        return fileSystem;
-    }
-
-    public Protocol getProtocol() {
-        return protocol;
-    }
-
-    public Metadata getMetadata() {
-        return metadata;
-    }
-
-    public void setMetadata(Metadata metadata) {
-        this.metadata = metadata;
-    }
-
-    public PeerArgs getArgs() {
-        return peerArgs;
-    }
-
-    public String getRestoreDir() {
-        return restoreDir;
-    }
-
-    public ChannelCoordinator getChannelCoordinator() {
-        return channelCoordinator;
-    }
-
-    public boolean isVanillaVersion() {
-        return peerArgs.getVersion() == 1.0;
-    }
-
-    public boolean hasReceivedChunk(String chunkId) {
-        return chunksReceived.contains(chunkId);
-    }
-
-    public void addChunkReceived(String chunkId) {
-        this.chunksReceived.add(chunkId);
-    }
-
-    public void resetChunksReceived() {
-        this.chunksReceived = new ConcurrentSkipListSet<>();
-    }
-
-    public void addRestoreEntry(String fileId) {
-        activeRestores.put(fileId, new ConcurrentHashMap<>());
-    }
-
-    public boolean hasRestoreEntry(String fileId) {
-        return activeRestores.get(fileId) != null;
-    }
-
 
     public void addChunk(String fileId, Integer chunkNo, byte[] chunk) {
         ConcurrentHashMap<Integer, byte[]> restore = activeRestores.get(fileId);
@@ -187,8 +133,6 @@ public class Peer implements RemoteObject {
     }
 
     public void connectToRmi() {
-        // RMI connection
-
         try {
             String remoteObjName = this.peerArgs.getAccessPoint();
             RemoteObject stub = (RemoteObject) UnicastRemoteObject.exportObject(this, 0);
@@ -203,13 +147,58 @@ public class Peer implements RemoteObject {
         }
     }
 
-    public void createChordPeer(){
-        //TODO sera que ele aqui ja devia ver se ja existe ou nao?
-        //Se criarmos no protocol temos a certeza que ele e o primeiro right?
-        this.chordPeer = new ChordPeer(this);
-        boolean isBoot = true;
-        if (isBoot) this.chordPeer.create();
-        else this.chordPeer.join(this.peerArgs.chordPeerIPAddr,this.peerArgs.getChordPort());
+    public void createChordNode() {
+        this.chordNode = new ChordNode(this);
+        if (this.peerArgs.isBoot) this.chordNode.create();
+        else this.chordNode.join(this.peerArgs.address, this.peerArgs.getPort());
 
+    }
+
+    public String getFileSystem() {
+        return fileSystem;
+    }
+
+    public Protocol getProtocol() {
+        return protocol;
+    }
+
+    public Metadata getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
+    }
+
+    public PeerArgs getArgs() {
+        return peerArgs;
+    }
+
+    public String getRestoreDir() {
+        return restoreDir;
+    }
+
+    public ChannelCoordinator getChannelCoordinator() {
+        return channelCoordinator;
+    }
+
+    public boolean hasReceivedChunk(String chunkId) {
+        return chunksReceived.contains(chunkId);
+    }
+
+    public void addChunkReceived(String chunkId) {
+        this.chunksReceived.add(chunkId);
+    }
+
+    public void resetChunksReceived() {
+        this.chunksReceived = new ConcurrentSkipListSet<>();
+    }
+
+    public void addRestoreEntry(String fileId) {
+        activeRestores.put(fileId, new ConcurrentHashMap<>());
+    }
+
+    public boolean hasRestoreEntry(String fileId) {
+        return activeRestores.get(fileId) != null;
     }
 }
