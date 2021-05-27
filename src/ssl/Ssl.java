@@ -164,7 +164,7 @@ public abstract class Ssl {
         return true;
     }
 
-    protected abstract void logReceivedMessage(String message);
+    protected abstract void logReceivedMessage(byte[] message);
 
     protected abstract void logSentMessage(String message);
 
@@ -190,7 +190,9 @@ public abstract class Ssl {
                 switch (res.getStatus()) {
                     case OK -> {
                         byteBuffers.getPeerDecryptedData().flip();
-                        logReceivedMessage(new String(byteBuffers.getPeerDecryptedData().array()));
+                        //String msg = new String(byteBuffers.getPeerDecryptedData().array());
+                        byte[] msg = byteBuffers.getPeerDecryptedData().array();
+                        handleSSlMsg(msg);
                     }
                     case BUFFER_OVERFLOW -> byteBuffers.setPeerDecryptedData( handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
                     case BUFFER_UNDERFLOW -> byteBuffers.setPeerEncryptedData( handleUnderflow(byteBuffers.getPeerEncryptedData(), engine.getSession().getPacketBufferSize()));
@@ -203,6 +205,9 @@ public abstract class Ssl {
         }
         return num;
     }
+
+    //public abstract void handleSSlMsg(String msg);
+    public abstract void handleSSlMsg(byte[] msg);
 
     protected void write(String message, SocketChannel channel, SSLEngine engine) throws IOException {
         //TODO CRIAR AQUI SESSION E TAL

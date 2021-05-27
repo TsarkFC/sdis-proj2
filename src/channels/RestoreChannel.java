@@ -17,15 +17,28 @@ public class RestoreChannel extends Channel{
 
     public RestoreChannel(AddressList addressList, Peer peer) {
         super(addressList, peer);
+        addServer(addressList.getMdrAddr().getAddress(),addressList.getMdrAddr().getPort());
         super.currentAddr = addressList.getMdrAddr();
     }
 
     @Override
     public void handle(DatagramPacket packet) {
+
         byte[] packetData = packet.getData();
+        parseMsg(packetData);
+    }
+
+    @Override
+    public void handle(byte[] message) {
+        parseMsg(message);
+    }
+
+    public void parseMsg(byte[] packetData){
         int bodyStartPos = getBodyStartPos(packetData);
         byte[] header = Arrays.copyOfRange(packetData, 0, bodyStartPos - 4);
-        byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packet.getLength());
+        //TODO sel alguma coisa der shit pode ser por estar a usar o packetData.length em vez de packet.getLength()
+        //byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packet.getLength());
+        byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packetData.length);
 
         String headerString = new String(header);
         System.out.println("[RECEIVED MESSAGE MDR] " + headerString);
@@ -51,6 +64,8 @@ public class RestoreChannel extends Channel{
 
         }
     }
+
+
 
     public void handleChunkMsg(Chunk rcvdMsg) {
         peer.addChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getBody());

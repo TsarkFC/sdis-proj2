@@ -1,6 +1,6 @@
 package utils;
 
-public class MulticastAddress {
+public class ChannelAddress {
     public String getAddress() {
         return address;
     }
@@ -12,7 +12,7 @@ public class MulticastAddress {
     final String address;
     final Integer port;
 
-    public MulticastAddress(String address, Integer port) {
+    public ChannelAddress(String address, Integer port) {
         this.address = address;
         this.port = port;
     }

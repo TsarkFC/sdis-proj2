@@ -11,7 +11,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
-public class SslReceiver extends Ssl implements Runnable {
+public abstract class SslReceiver extends Ssl implements Runnable {
 
     /**
      * It can be made more robust and scalable by using a Selector with the non-blocking SocketChannel
@@ -21,9 +21,8 @@ public class SslReceiver extends Ssl implements Runnable {
     private boolean isActive = true;
 
     //TODO tirar o decrypted data e isso dali
-    public SslReceiver(String protocol,String serverKeys,String truststore,String password) {
-        initializeSslContext(protocol, password, serverKeys, truststore);
-
+    public SslReceiver(SSLInformation sslInformation) {
+        initializeSslContext(sslInformation.getProtocol(), sslInformation.getPassword(), sslInformation.getServerKeys(), sslInformation.getTrustStore());
         try {
             selector = SelectorProvider.provider().openSelector();
         } catch (IOException e) {
@@ -31,6 +30,15 @@ public class SslReceiver extends Ssl implements Runnable {
         }
 
         //this.createServerSocketChannel(host, port);
+    }
+
+    public  SslReceiver(String protocol, String serverKeys, String trustStore, String password){
+        initializeSslContext(protocol, password, serverKeys, trustStore);
+        try {
+            selector = SelectorProvider.provider().openSelector();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void createServerSocketChannel(String host, int port) {
@@ -134,14 +142,22 @@ public class SslReceiver extends Ssl implements Runnable {
     }
 
     @Override
-    protected void logReceivedMessage(String message) {
-        System.out.println("Incoming message: " + message);
+    protected void logReceivedMessage(byte[] message) {
+        System.out.println("Incoming message: " + new String(message));
     }
 
     @Override
     protected void logSentMessage(String message) {
         System.out.println("Sent response: " + message);
     }
+
+    @Override
+    public void handleSSlMsg(byte[] msg) {
+        logReceivedMessage(msg);
+        handleMsg(msg);
+    }
+
+    public abstract void handleMsg(byte[] message);
 
     public void send(SocketChannel channel, SSLEngine engine) {
         String response = "HeyHey";

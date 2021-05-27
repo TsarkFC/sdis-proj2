@@ -1,21 +1,19 @@
 package channels;
 
 import peer.Peer;
+import ssl.SSlArgs;
+import ssl.SslReceiver;
 import utils.AddressList;
-import utils.MulticastAddress;
+import utils.ChannelAddress;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
-public abstract class Channel implements Runnable {
+public abstract class Channel extends SslReceiver {
     protected final AddressList addrList;
-    protected MulticastAddress currentAddr;
+    protected ChannelAddress currentAddr;
     protected Peer peer;
     protected int numOfThreads = 20;
     protected ThreadPoolExecutor executor;
@@ -26,14 +24,21 @@ public abstract class Channel implements Runnable {
     }
 
     public Channel(AddressList addrList, Peer peer) {
+        super(peer.getArgs().getSslInformation());
         this.addrList = addrList;
         this.peer = peer;
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numOfThreads);
     }
 
+    public void handleMsg(byte[] message){
+        handle(message);
+    }
+
     public abstract void handle(DatagramPacket packet) throws IOException;
 
-    @Override
+    public abstract void handle(byte[] message);
+
+    /*@Override
     public void run() {
         try {
             InetAddress mcastAddr = InetAddress.getByName(this.currentAddr.getAddress());
@@ -57,7 +62,7 @@ public abstract class Channel implements Runnable {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
+    }*/
 
     protected int getBodyStartPos(byte[] msg) {
         int crlf = 0;

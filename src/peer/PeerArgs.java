@@ -1,8 +1,9 @@
 package peer;
 
 import ssl.SSLInformation;
+import ssl.SSlArgs;
 import utils.AddressList;
-import utils.MulticastAddress;
+import utils.ChannelAddress;
 
 public class PeerArgs {
     public static final Integer VERSION = 0;
@@ -26,9 +27,6 @@ public class PeerArgs {
     final int chordPort = 1873;
     final String chordPeerIPAddr = "228.25.25.25";
     final SSLInformation sslInformation = new SSLInformation();
-
-
-
 
 
 
@@ -68,11 +66,12 @@ public class PeerArgs {
         version = args[VERSION];
         peerId = Integer.parseInt(args[PEER_ID]);
         accessPoint = args[ACCESS_POINT];
-        MulticastAddress mcAddr = new MulticastAddress(args[MC_ADDR], Integer.parseInt(args[MC_PORT]));
-        MulticastAddress mdbAddr = new MulticastAddress(args[MDB_ADDR], Integer.parseInt(args[MDB_PORT]));
-        MulticastAddress mdrAddr = new MulticastAddress(args[MDR_ADDR], Integer.parseInt(args[MDR_PORT]));
+        ChannelAddress mcAddr = new ChannelAddress(args[MC_ADDR], Integer.parseInt(args[MC_PORT]));
+        ChannelAddress mdbAddr = new ChannelAddress(args[MDB_ADDR], Integer.parseInt(args[MDB_PORT]));
+        ChannelAddress mdrAddr = new ChannelAddress(args[MDR_ADDR], Integer.parseInt(args[MDR_PORT]));
         addressList = new AddressList(mcAddr, mdbAddr, mdrAddr);
         metadataPath = "../filesystem/" + peerId + "/metadata";
+
     }
 
 }

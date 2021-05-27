@@ -21,16 +21,26 @@ public class BackupChannel extends Channel {
 
     public BackupChannel(AddressList addressList, Peer peer) {
         super(addressList, peer);
+        addServer(addressList.getMdbAddr().getAddress(),addressList.getMdbAddr().getPort());
         super.currentAddr = addressList.getMdbAddr();
     }
-
+    //TODO APAGAR ESTE
     @Override
     public void handle(DatagramPacket packet) {
 
         byte[] packetData = packet.getData();
+        parseMsg(packetData);
+    }
+
+    @Override
+    public void handle(byte[] message) {
+        parseMsg(message);
+    }
+
+    public void parseMsg(byte[] packetData){
         int bodyStartPos = getBodyStartPos(packetData);
         byte[] header = Arrays.copyOfRange(packetData, 0, bodyStartPos - 4);
-        byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packet.getLength());
+        byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packetData.length);
 
         String rcvd = new String(header, 0, header.length);
         System.out.println("[RECEIVED MESSAGE MDB] " + rcvd);
@@ -51,6 +61,7 @@ public class BackupChannel extends Channel {
                 peer.getMetadata().writeMetadata();
             }
         }
+
     }
 
     private boolean shouldSaveFile(PutChunk rcvdMsg) {

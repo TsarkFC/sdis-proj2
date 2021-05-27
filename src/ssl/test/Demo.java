@@ -1,5 +1,7 @@
 package ssl.test;
 
+import ssl.SSlArgs;
+import ssl.SSlReceiverTest;
 import ssl.SslReceiver;
 import ssl.SslSender;
 
@@ -8,7 +10,7 @@ public class Demo {
     SslReceiver server;
 
     public Demo() {
-        server = new SslReceiver("TLSv1.2", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore","123456");
+        server = new SSlReceiverTest("TLSv1.2", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore","123456");
         server.addServer("localhost",9222);
         new Thread(server).start();
     }

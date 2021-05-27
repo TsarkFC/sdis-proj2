@@ -22,6 +22,7 @@ public class ControlChannel extends Channel {
 
     public ControlChannel(AddressList addressList, Peer peer) {
         super(addressList, peer);
+        addServer(addressList.getMcAddr().getAddress(),addressList.getMcAddr().getPort());
         super.currentAddr = addressList.getMcAddr();
     }
 
@@ -29,6 +30,11 @@ public class ControlChannel extends Channel {
     public void handle(DatagramPacket packet) {
         String rcvd = new String(packet.getData(), 0, packet.getLength());
         parseMsg(rcvd);
+    }
+
+    @Override
+    public void handle(byte[] message) {
+        parseMsg(new String(message));
     }
 
     public void parseMsg(String msgString) {
