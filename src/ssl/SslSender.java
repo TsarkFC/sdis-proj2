@@ -2,6 +2,7 @@ package ssl;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
@@ -29,7 +30,7 @@ public class SslSender extends Ssl implements Runnable {
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(true);
 
-        allocateData(engine.getSession());
+        //allocateData(engine.getSession());
     }
 
     public void connect() {
@@ -49,7 +50,7 @@ public class SslSender extends Ssl implements Runnable {
         }
         if (handshake(channel, engine)) {
             System.out.println("[Client] Handshake successful");
-            allocateData(engine.getSession());
+            //allocateData(engine.getSession());
         } else {
             System.out.println("[Client] Handshake error!");
         }
@@ -61,6 +62,12 @@ public class SslSender extends Ssl implements Runnable {
     }
 
     public void write(String message) {
+        /*SSLSession session = engine.getSession();
+        byte[] msg = message.getBytes();
+        int encryptedBufferSize = session.getPacketBufferSize();
+        int decryptedBufferSize =Math.max(session.getApplicationBufferSize(), msg.length);
+
+        ByteBuffers byteBuffers = new ByteBuffers(encryptedBufferSize,decryptedBufferSize,false);*/
         try {
             System.out.println("[Client] writing...");
             write(message, channel, engine);

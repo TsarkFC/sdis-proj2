@@ -22,9 +22,7 @@ public class SslReceiver extends Ssl implements Runnable {
 
     //TODO tirar o decrypted data e isso dali
     public SslReceiver(String protocol,String serverKeys,String truststore,String password) {
-        //TODO: Falta adicionar a outra password
         initializeSslContext(protocol, password, serverKeys, truststore);
-
 
         try {
             selector = SelectorProvider.provider().openSelector();
@@ -42,7 +40,7 @@ public class SslReceiver extends Ssl implements Runnable {
         engine.setUseClientMode(false);
 
         SSLSession session = engine.getSession();
-        allocateData(session);
+        //allocateData(session);
 
         try {
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
@@ -56,11 +54,17 @@ public class SslReceiver extends Ssl implements Runnable {
         }
     }
 
-    public void addServer(String ipAddress, int port) throws IOException {
-        ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
-        serverSocketChannel.configureBlocking(false);
-        serverSocketChannel.socket().bind(new InetSocketAddress(ipAddress, port));
-        serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+    public void addServer(String ipAddress, int port) {
+        try {
+            ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
+            serverSocketChannel.configureBlocking(false);
+            serverSocketChannel.socket().bind(new InetSocketAddress(ipAddress, port));
+            serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
+        } catch (IOException e) {
+            System.out.println("Error Adding server");
+            //e.printStackTrace();
+        }
+
     }
 
     //Starts listening to new connections
@@ -122,7 +126,7 @@ public class SslReceiver extends Ssl implements Runnable {
         if (handshake(channel, engine)) {
             System.out.println("[Server] Handshake successful");
             channel.register(selector, SelectionKey.OP_READ, engine);
-            allocateData(engine.getSession());
+            //allocateData(engine.getSession());
         } else {
             System.out.println("[Server] Closing socket channel due to bad handshake");
             channel.close();
