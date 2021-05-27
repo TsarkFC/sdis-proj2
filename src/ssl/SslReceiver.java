@@ -63,6 +63,7 @@ public abstract class SslReceiver extends Ssl implements Runnable {
     }
 
     public void addServer(String ipAddress, int port) {
+        System.out.println("Adding server in ip: " + ipAddress + " port: " + port);
         try {
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
@@ -70,7 +71,7 @@ public abstract class SslReceiver extends Ssl implements Runnable {
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
         } catch (IOException e) {
             System.out.println("Error Adding server");
-            //e.printStackTrace();
+            e.printStackTrace();
         }
 
     }

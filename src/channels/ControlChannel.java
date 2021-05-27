@@ -22,8 +22,9 @@ public class ControlChannel extends Channel {
 
     public ControlChannel(AddressList addressList, Peer peer) {
         super(addressList, peer);
-        addServer(addressList.getMcAddr().getAddress(),addressList.getMcAddr().getPort());
         super.currentAddr = addressList.getMcAddr();
+        addServer(currentAddr.getAddress(),currentAddr.getPort());
+
     }
 
     @Override

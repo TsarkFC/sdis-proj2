@@ -21,8 +21,9 @@ public class BackupChannel extends Channel {
 
     public BackupChannel(AddressList addressList, Peer peer) {
         super(addressList, peer);
-        addServer(addressList.getMdbAddr().getAddress(),addressList.getMdbAddr().getPort());
         super.currentAddr = addressList.getMdbAddr();
+        addServer(currentAddr.getAddress(),currentAddr.getPort());
+
     }
     //TODO APAGAR ESTE
     @Override

@@ -17,8 +17,9 @@ public class RestoreChannel extends Channel{
 
     public RestoreChannel(AddressList addressList, Peer peer) {
         super(addressList, peer);
-        addServer(addressList.getMdrAddr().getAddress(),addressList.getMdrAddr().getPort());
         super.currentAddr = addressList.getMdrAddr();
+        addServer(currentAddr.getAddress(),currentAddr.getPort());
+
     }
 
     @Override

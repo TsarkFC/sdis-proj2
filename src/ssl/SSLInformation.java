@@ -3,9 +3,9 @@ package ssl;
 public class SSLInformation {
     final String ipAddress = "localhost";
     final String protocol = "TLSv1.2";
-    final String serverKeys = "./src/ssl/resources/server.keys";
-    final String clientKeys = "./src/ssl/resources/client.keys";
-    final String trustStore = "./src/ssl/resources/truststore";
+    final String serverKeys = "../ssl/resources/server.keys";
+    final String clientKeys = "../ssl/resources/client.keys";
+    final String trustStore = "../ssl/resources/truststore";
     final String password = "123456";
     final String otherPeerIp = "localhost";
     final int otherPeerPort = 9222;

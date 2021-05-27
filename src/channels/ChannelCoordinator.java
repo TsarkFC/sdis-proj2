@@ -33,18 +33,22 @@ public class ChannelCoordinator {
     }
 
     public void createMDBChannel(AddressList addressList) {
+        System.out.println("Creating mdb Channel");
         ExecutorService executor = Executors.newFixedThreadPool(1);
         BackupChannel backupChannel = new BackupChannel(addressList, peer);
         executor.execute(backupChannel);
     }
 
     public void createMCChannel(AddressList addressList) {
+        System.out.println("Creating mc Channel");
+
         ExecutorService executor = Executors.newFixedThreadPool(1);
         ControlChannel controlChannel = new ControlChannel(addressList, peer);
         executor.execute(controlChannel);
     }
 
     public void createMDRChannel(AddressList addressList) {
+        System.out.println("Creating mdr Channel");
         ExecutorService executor = Executors.newFixedThreadPool(1);
         RestoreChannel restoreChannel = new RestoreChannel(addressList, peer);
         executor.execute(restoreChannel);
