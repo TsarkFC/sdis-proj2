@@ -1,15 +1,14 @@
 package channels;
 
-import messages.PutChunk;
-import messages.Stored;
+import messages.protocol.PutChunk;
+import messages.protocol.Stored;
 import peer.Peer;
 import protocol.BackupProtocolInitiator;
-import utils.AddressList;
+import utils.AddressPortList;
 import filehandler.FileHandler;
 import utils.ThreadHandler;
 import utils.Utils;
 
-import java.io.IOException;
 import java.net.DatagramPacket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,9 +18,9 @@ import java.util.concurrent.TimeUnit;
 
 public class BackupChannel extends Channel {
 
-    public BackupChannel(AddressList addressList, Peer peer) {
-        super(addressList, peer);
-        super.currentAddr = addressList.getMdbAddr();
+    public BackupChannel(AddressPortList addressPortList, Peer peer) {
+        super(addressPortList, peer);
+        super.currentAddr = addressPortList.getMdbAddressPort();
     }
 
     @Override
@@ -92,7 +91,7 @@ public class BackupChannel extends Channel {
     private void sendStoredMsg(byte[] msg) {
         List<byte[]> msgs = new ArrayList<>();
         msgs.add(msg);
-        ThreadHandler.startMulticastThread(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
+        ThreadHandler.startMulticastThread(addressPortList.getMcAddressPort().getAddress(), addressPortList.getMcAddressPort().getPort(), msgs);
     }
 
     private void preventReclaim(PutChunk rcvdMsg) {

@@ -1,6 +1,6 @@
 package filehandler;
 
-import messages.GetChunk;
+import messages.protocol.GetChunk;
 
 import java.io.File;
 import java.io.IOException;

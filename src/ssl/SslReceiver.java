@@ -1,5 +1,7 @@
 package ssl;
 
+import channels.ChordChannel;
+
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
@@ -18,10 +20,32 @@ public class SslReceiver extends Ssl implements Runnable {
      */
     private Selector selector;
 
+    /**
+     * States whether the receiving thread is active or not
+     */
     private boolean isActive = true;
 
+    /**
+     * The peer receiving the messages
+     */
+    private ChordChannel handlerChannel;
+
+    public SslReceiver(String protocol, String host, int port, ChordChannel handlerChannel) {
+        initializeSslContext(protocol, "../ssl/resources/server.keys");
+
+        SSLEngine engine = context.createSSLEngine(host, port);
+        engine.setUseClientMode(false);
+
+        SSLSession session = engine.getSession();
+        allocateData(session);
+
+        this.createServerSocketChannel(host, port);
+
+        this.handlerChannel = handlerChannel;
+    }
+
     public SslReceiver(String protocol, String host, int port) {
-        initializeSslContext(protocol, "123456", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore");
+        initializeSslContext(protocol, "../ssl/resources/server.keys");
 
         SSLEngine engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(false);
@@ -86,11 +110,11 @@ public class SslReceiver extends Ssl implements Runnable {
         } else if (key.isReadable()) {
             SocketChannel channel = (SocketChannel) key.channel();
             SSLEngine engine = (SSLEngine) key.attachment();
-            int nBytes = receive(channel, engine);
-            System.out.println("[Server] nBytes = " + nBytes);
-            if (nBytes > 0) {
+            byte[] message = receive(channel, engine);
+
+            if (message != null) {
                 System.out.println("[Server] sending...");
-                send(channel, engine);
+                send(channel, engine, handlerChannel.handle(message));
             }
         }
     }
@@ -112,8 +136,7 @@ public class SslReceiver extends Ssl implements Runnable {
         }
     }
 
-    public void send(SocketChannel channel, SSLEngine engine) {
-        String response = "HeyHey";
+    public void send(SocketChannel channel, SSLEngine engine, byte[] response) {
         System.out.println("[Server] attempting to write...");
         try {
             System.out.println("[Server] writing...");
@@ -124,18 +147,16 @@ public class SslReceiver extends Ssl implements Runnable {
         }
     }
 
-    public int receive(SocketChannel channel, SSLEngine engine) {
+    public byte[] receive(SocketChannel channel, SSLEngine engine) {
         System.out.println("[Server] attempting to read...");
         try {
             System.out.println("[Server] reading...");
-            int nBytes = read(channel, engine);
-            System.out.println("[Server] read " + nBytes + " bytes");
-            return nBytes;
+            return read(channel, engine);
         } catch (IOException e) {
             System.out.println("Error Reading message");
             e.printStackTrace();
         }
-        return 0;
+        return null;
     }
 
     @Override

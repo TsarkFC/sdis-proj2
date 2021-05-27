@@ -1,37 +1,45 @@
 package peer;
 
+import constants.Constants;
+import utils.AddressPort;
+import utils.AddressPortList;
+
 public class PeerArgs {
     public static final Integer PEER_ID = 0;
     public static final Integer ACCESS_POINT = 1;
     public static final Integer ADDRESS = 2;
-    public static final Integer PORT = 3;
-    public static final Integer BOOT_ADDRESS = 4;
-    public static final Integer BOOT_PORT = 5;
+    public static final Integer CHORD_PORT = 3;
+    public static final Integer MC_PORT = 4;
+    public static final Integer MDB_PORT = 5;
+    public static final Integer MDR_PORT = 6;
+    public static final Integer OTHER_ADDRESS = 7;
+    public static final Integer OTHER_PORT = 8;
 
-    //BOOT PEER: java Peer <peer_id> <service_access_point> <address> <port> <boot_address> <boot_port>
-    //PEER: java Peer <peer_id> <service_access_point> <address> <port>
+    //BOOT PEER: java Peer <peerId> <accessPoint> <host> <chordPort> <mcPort> <mdbPort> <mdrPort>
+    //PEER: java Peer <peerId> <accessPoint> <host> <chordPort> <mcPort> <mdbPort> <mdrPort> <otherAddress> <otherPort>
     final boolean isBoot;
     final Integer peerId;
     final String accessPoint;
     final String metadataPath;
-    final String address;
-    final Integer port;
-    final String bootAddress;
-    final Integer bootPort;
+    final AddressPortList addressPortList;
+    AddressPort otherPeerAddressPort;
 
     public PeerArgs(String[] args) throws NumberFormatException {
         peerId = Integer.parseInt(args[PEER_ID]);
         accessPoint = args[ACCESS_POINT];
-        address = args[ADDRESS];
-        port = Integer.parseInt(args[PORT]);
-        if (args.length > 4) {
+
+        AddressPort chordAddressPort = new AddressPort(args[ADDRESS], Integer.parseInt(args[CHORD_PORT]));
+        AddressPort mcAddressPort = new AddressPort(args[ADDRESS], Integer.parseInt(args[MC_PORT]));
+        AddressPort mdbAddressPort = new AddressPort(args[ADDRESS], Integer.parseInt(args[MDB_PORT]));
+        AddressPort mdrAddressPort = new AddressPort(args[ADDRESS], Integer.parseInt(args[MDR_PORT]));
+        addressPortList = new AddressPortList(chordAddressPort, mcAddressPort, mdbAddressPort, mdrAddressPort);
+
+        if (args.length == Constants.isBootArgsLen) {
             isBoot = true;
-            bootAddress = null;
-            bootPort = null;
+            otherPeerAddressPort = null;
         } else {
             isBoot = false;
-            bootAddress = args[BOOT_ADDRESS];
-            bootPort = Integer.parseInt(args[BOOT_PORT]);
+            otherPeerAddressPort = new AddressPort(args[OTHER_ADDRESS], Integer.parseInt(args[OTHER_PORT]));
         }
         metadataPath = "../filesystem/" + peerId + "/metadata";
     }
@@ -52,19 +60,12 @@ public class PeerArgs {
         return metadataPath;
     }
 
-    public int getPort() {
-        return port;
+    public AddressPortList getAddressPortList() { return addressPortList; }
+    
+    public AddressPort getOtherPeerAddressPort() {
+        return otherPeerAddressPort;
     }
 
-    public String getAddress() {
-        return address;
-    }
-
-    public int getBootPort() {
-        return port;
-    }
-
-    public String getBootAddress() {
-        return address;
-    }
+    //TODO: remove
+    public Double getVersion() { return 0.0; }
 }

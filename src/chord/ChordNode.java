@@ -2,63 +2,38 @@ package chord;
 
 import constants.Constants;
 import peer.Peer;
+import ssl.SslSender;
+import utils.AddressPortList;
+import utils.SerializeChordNode;
+import utils.Utils;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
-public class ChordNode {
+public class ChordNode implements Serializable {
     private boolean isBoot;
 
     private final int id;
     private HashMap<Integer, ChordNode> fingerTable = new HashMap<>();
-
     private ChordNode predecessor;
     private ChordNode successor;
-
-    private final String address;
-    private final Integer port;
-    private String bootAddress;
-    private Integer bootPort;
-
+    private final AddressPortList addressPortList;
     private ScheduledThreadPoolExecutor executor;
 
     public ChordNode(Peer peer) {
-        this.address = peer.getArgs().getAddress();
-        this.port = peer.getArgs().getPort();
-        this.bootAddress = peer.getArgs().getBootAddress();
-        this.bootPort = peer.getArgs().getBootPort();
-        this.id = generateHash(address, port);
+        this.addressPortList = peer.getArgs().getAddressPortList();
+        this.id = generateHash(addressPortList.getChordAddressPort().getAddress(), addressPortList.getChordAddressPort().getPort());
         this.isBoot = peer.getArgs().isBoot();
         System.out.println("Chord Peer was created id: " + id);
-    }
-
-    public ChordNode(int id, String address, Integer port) {
-        this.id = id;
-        this.address = address;
-        this.port = port;
-        this.isBoot = true;
 
         // Schedule stabilize
-        this.executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
-        executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.SECONDS);
-    }
-
-    public ChordNode(int id, String address, Integer port, String bootAddress, Integer bootPort) {
-        this.id = id;
-        this.address = address;
-        this.port = port;
-        this.bootAddress = bootAddress;
-        this.bootPort = bootPort;
-        this.isBoot = false;
-
-        // Schedule stabilize
-        this.executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
-        executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.SECONDS);
+        //this.executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
+        //executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.SECONDS);
     }
 
     public void create() {
@@ -67,19 +42,21 @@ public class ChordNode {
     }
 
     //Endereço de chord que ja esta no ring
-    public void join(String bootAddress, int bootPort) {
+    public void join(String chordAddress, int chordPort) {
         predecessor = null;
-        // send message to peer ()
-        // peer finds successor
-        // receives successor
-        successor = this.findSuccessor(this.getId());
-    }
 
+        String message = "JOIN " + this.id + "\r\n\r\n";
 
-    public void addSuccessor(ChordNode chordNode) {
-    }
+        //TODO: place in executor for better concurrency
+        SslSender sender = new SslSender(Constants.sslProtocol, chordAddress, chordPort);
+        sender.connect();
+        sender.write(message.getBytes());
+        byte[] successorInfoCRLF = sender.read();
+        sender.shutdown();
 
-    public void removeFromFingerTable(ChordNode chordNode) {
+        byte[] successorInfo = Utils.readUntilCRLF(successorInfoCRLF);
+        successor = new SerializeChordNode().deserialize(successorInfo);
+        System.out.println("Successor id: " + successor.id);
     }
 
     public void addToFingerTable(int id, ChordNode node) {
@@ -126,23 +103,27 @@ public class ChordNode {
     }
 
     public ChordNode findSuccessor(Integer id) {
-        //if(n < id && id <= sucessor) return succesor;
-        //else{
-        //  ns = closest.preceding_node(id);
-        //  return ns.findSuccessor(id)
-        //}
-        return new ChordNode(1, "1", 1);
+        if (this.id < id && id <= this.successor.id) {
+            return this.successor;
+        } else {
+            ChordNode ns = closestPrecedingNode(id);
+            if (ns == null) return this;
+            return ns.findSuccessor(id);
+        }
     }
 
-    public void closestPrecedingNode(int id) {
-        /*for (int i = m; i > 1; i--) {
-            //if(finger[i] > n && finger[i] < id) return finger[i];
-        }*/
-        //return n;
-    }
+    public ChordNode closestPrecedingNode(int id) {
+        for (int i = Chord.m; i > 0; i--) {
+            System.out.println("LOOP: " + i);
+            ChordNode node = fingerTable.get(i);
+            System.out.println("NODE: " + node);
 
-    public ChordNode findPredecessor(Integer id) {
-        return new ChordNode(1, "1", 1);
+            if (node == null) continue;
+            if (node.id > this.id && node.id < id)
+                return node;
+        }
+
+        return null;
     }
 
     public int generateHash(String ipAddr, int port) {
@@ -190,5 +171,9 @@ public class ChordNode {
 
     public void setSuccessor(ChordNode successor) {
         this.successor = successor;
+    }
+
+    public AddressPortList getAddressPortList() {
+        return addressPortList;
     }
 }

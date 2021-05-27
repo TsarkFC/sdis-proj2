@@ -23,8 +23,7 @@ public class SslSender extends Ssl implements Runnable {
         this.host = host;
         this.port = port;
 
-        //initializeSslContext(protocol, "123456", "./src/main/resources/client.jks", "./src/main/resources/trustedCerts.jks");
-        initializeSslContext(protocol, "123456", "./src/ssl/resources/client.keys", "./src/ssl/resources/truststore");
+        initializeSslContext(protocol, "../ssl/resources/client.keys");
 
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(true);
@@ -60,7 +59,7 @@ public class SslSender extends Ssl implements Runnable {
         //TODO: send messages
     }
 
-    public void write(String message) {
+    public void write(byte[] message) {
         try {
             System.out.println("[Client] writing...");
             write(message, channel, engine);
@@ -70,7 +69,7 @@ public class SslSender extends Ssl implements Runnable {
         }
     }
 
-    public void read() {
+    public byte[] read() {
         System.out.println("[Client] attempting to read...");
         int tries = 0;
 
@@ -78,9 +77,9 @@ public class SslSender extends Ssl implements Runnable {
             tries++;
             try {
                 System.out.println("[Client] reading...");
-                int nBytes = read(channel, engine);
-                System.out.println("[Client] read " + nBytes + " bytes");
-                if (nBytes > 0) break;
+                byte[] message = read(channel, engine);
+                System.out.println("[Client] read " + (message == null ? 0 : message.length) + " bytes");
+                if (message != null) return message;
             } catch (IOException e) {
                 System.out.println("Error Reading message");
                 e.printStackTrace();
@@ -91,6 +90,8 @@ public class SslSender extends Ssl implements Runnable {
                 e.printStackTrace();
             }
         }
+
+        return null;
     }
 
     public void shutdown() {

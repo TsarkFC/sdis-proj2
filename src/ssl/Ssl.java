@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.concurrent.ExecutorService;
@@ -42,13 +43,13 @@ public abstract class Ssl {
      */
     private final ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 
-    protected void initializeSslContext(String protocol, String keyStorePassword, String filePathKeys, String trustStorePath) {
-        char[] passphrase = keyStorePassword.toCharArray();
+    protected void initializeSslContext(String protocol, String filePathKeys) {
+        char[] passphrase = "123456".toCharArray();
 
         KeyManagerFactory kmf;
         try {
             kmf = createKeyManagerFactory(passphrase, filePathKeys);
-            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, trustStorePath);
+            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, "../ssl/resources/truststore");
 
             context = SSLContext.getInstance(protocol);
             context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
@@ -185,7 +186,7 @@ public abstract class Ssl {
 
     protected abstract void logSentMessage(String message);
 
-    protected int read(SocketChannel channel, SSLEngine engine) throws IOException {
+    protected byte[] read(SocketChannel channel, SSLEngine engine) throws IOException {
         peerEncryptedData.clear();
 
         // Read SSL/TLS encoded data from peer
@@ -202,23 +203,25 @@ public abstract class Ssl {
                 switch (res.getStatus()) {
                     case OK -> {
                         peerDecryptedData.flip();
-                        logReceivedMessage(new String(peerDecryptedData.array()));
+                        String message = new String(peerDecryptedData.array(), 0, peerDecryptedData.remaining());
+                        logReceivedMessage(message);
+                        return peerDecryptedData.array();
                     }
                     case BUFFER_OVERFLOW -> peerDecryptedData = handleOverflow(peerDecryptedData, engine.getSession().getApplicationBufferSize());
                     case BUFFER_UNDERFLOW -> peerEncryptedData = handleUnderflow(peerEncryptedData, engine.getSession().getPacketBufferSize());
                     case CLOSED -> {
                         disconnect(channel, engine);
-                        return 0;
+                        return null;
                     }
                 }
             }
         }
-        return num;
+        return null;
     }
 
-    protected void write(String message, SocketChannel channel, SSLEngine engine) throws IOException {
+    protected void write(byte[] message, SocketChannel channel, SSLEngine engine) throws IOException {
         decryptedData.clear();
-        decryptedData.put(message.getBytes());
+        decryptedData.put(message);
         decryptedData.flip();
 
         while (decryptedData.hasRemaining()) {
@@ -238,7 +241,7 @@ public abstract class Ssl {
                             engine.closeInbound();
                             disconnect(channel, engine);
                         } else if (num > 0) {
-                            logSentMessage(message);
+                            logSentMessage(new String(message));
                         }
                     }
                 }

@@ -1,11 +1,11 @@
 package protocol;
 
 import filehandler.FileHandler;
-import messages.GetChunk;
+import messages.protocol.GetChunk;
 import peer.Peer;
 import peer.PeerArgs;
 import peer.metadata.Metadata;
-import utils.AddressList;
+import utils.AddressPortList;
 import utils.ThreadHandler;
 
 import java.util.ArrayList;
@@ -50,8 +50,8 @@ public class RestoreProtocol extends Protocol {
 
     private void execute(List<byte[]> messages, String fileId) {
         if (reps <= repsLimit) {
-            AddressList addrList = peer.getArgs().getAddressList();
-            ThreadHandler.startMulticastThread(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), messages);
+            AddressPortList addrList = peer.getArgs().getAddressPortList();
+            ThreadHandler.startMulticastThread(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), messages);
             executor.schedule(() -> verify(messages, fileId), timeWait, TimeUnit.SECONDS);
             System.out.println("[RESTORE] Sent message, waiting " + timeWait + " seconds...");
         } else {

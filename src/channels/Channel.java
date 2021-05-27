@@ -1,32 +1,24 @@
 package channels;
 
 import peer.Peer;
-import utils.AddressList;
-import utils.MulticastAddress;
+import utils.AddressPort;
+import utils.AddressPortList;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public abstract class Channel implements Runnable {
-    protected final AddressList addrList;
-    protected MulticastAddress currentAddr;
+    protected final AddressPortList addressPortList;
+    protected AddressPort currentAddr;
     protected Peer peer;
     protected int numOfThreads = 20;
     protected ThreadPoolExecutor executor;
     private final double MAX_SIZE = Math.pow(2, 16);
 
-    public AddressList getAddrList() {
-        return addrList;
-    }
-
-    public Channel(AddressList addrList, Peer peer) {
-        this.addrList = addrList;
+    public Channel(AddressPortList addressPortList, Peer peer) {
+        this.addressPortList = addressPortList;
         this.peer = peer;
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numOfThreads);
     }
@@ -35,7 +27,7 @@ public abstract class Channel implements Runnable {
 
     @Override
     public void run() {
-        try {
+        /*try {
             InetAddress mcastAddr = InetAddress.getByName(this.currentAddr.getAddress());
             MulticastSocket mcastSocket;
             mcastSocket = new MulticastSocket(currentAddr.getPort());
@@ -56,7 +48,7 @@ public abstract class Channel implements Runnable {
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
+        }*/
     }
 
     protected int getBodyStartPos(byte[] msg) {
@@ -72,5 +64,9 @@ public abstract class Channel implements Runnable {
             } else crlf = 0;
         }
         return 0;
+    }
+
+    public AddressPortList getAddressPortList() {
+        return addressPortList;
     }
 }

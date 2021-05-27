@@ -1,8 +1,8 @@
 package filehandler;
 
-import messages.GetChunk;
-import messages.Message;
-import messages.PutChunk;
+import messages.protocol.GetChunk;
+import messages.protocol.Message;
+import messages.protocol.PutChunk;
 
 import java.io.File;
 import java.io.FileInputStream;

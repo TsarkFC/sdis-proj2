@@ -1,10 +1,10 @@
 package messages.handlers;
 
-import messages.Delete;
-import messages.Deleted;
+import messages.protocol.Delete;
+import messages.protocol.Deleted;
 import peer.Peer;
 import peer.PeerArgs;
-import utils.AddressList;
+import utils.AddressPortList;
 import utils.ThreadHandler;
 
 import java.util.ArrayList;
@@ -16,18 +16,17 @@ public class DeleteHandler {
         List<byte[]> messages = new ArrayList<>();
         Delete msg = new Delete(peerArgs.getVersion(), peerArgs.getPeerId(), fileId);
         messages.add(msg.getBytes());
-        ThreadHandler.startMulticastThread(peerArgs.getAddressList().getMcAddr().getAddress(),
-                peerArgs.getAddressList().getMcAddr().getPort(), messages);
+        ThreadHandler.startMulticastThread(peerArgs.getAddressPortList().getMcAddressPort().getAddress(),
+                peerArgs.getAddressPortList().getMcAddressPort().getPort(), messages);
     }
 
     public void sendDeletedMessage(Peer peer, Delete deleteMsg) {
-        AddressList addrList = peer.getArgs().getAddressList();
+        AddressPortList addrList = peer.getArgs().getAddressPortList();
         if (!peer.isVanillaVersion()) {
             Deleted msg = new Deleted(deleteMsg.getVersion(), peer.getArgs().getPeerId(), deleteMsg.getFileId());
             List<byte[]> msgs = new ArrayList<>();
             msgs.add(msg.getBytes());
-            ThreadHandler.startMulticastThread(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
+            ThreadHandler.startMulticastThread(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), msgs);
         }
     }
-
 }
