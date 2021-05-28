@@ -1,14 +1,14 @@
 package utils;
 
-import chord.ChordNode;
+import chord.ChordNodeData;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
-public class SerializeChordNode {
-    public byte[] serialize(ChordNode node) {
+public class SerializeChordData {
+    public byte[] serialize(ChordNodeData node) {
         try {
             ByteArrayOutputStream bo = new ByteArrayOutputStream();
             ObjectOutputStream so = new ObjectOutputStream(bo);
@@ -21,11 +21,11 @@ public class SerializeChordNode {
         return null;
     }
 
-    public ChordNode deserialize(byte[] serializedObject) {
+    public ChordNodeData deserialize(byte[] serializedObject) {
         try {
             ByteArrayInputStream bi = new ByteArrayInputStream(serializedObject);
             ObjectInputStream si = new ObjectInputStream(bi);
-            return (ChordNode) si.readObject();
+            return (ChordNodeData) si.readObject();
         } catch (Exception e) {
             System.out.println(e);
         }

@@ -73,7 +73,7 @@ public class SslReceiver extends Ssl implements Runnable {
     //Starts listening to new connections
     //Run in a loop as long the server is active
     public void start() {
-        System.out.println("[Server] Initialized and waiting for new connections...");
+        //System.out.println("[Server] Initialized and waiting for new connections...");
 
         while (isActive) {
             try {
@@ -113,7 +113,7 @@ public class SslReceiver extends Ssl implements Runnable {
             byte[] message = receive(channel, engine);
 
             if (message != null) {
-                System.out.println("[Server] sending...");
+                //System.out.println("[Server] sending...");
                 send(channel, engine, handlerChannel.handle(message));
             }
         }
@@ -127,19 +127,19 @@ public class SslReceiver extends Ssl implements Runnable {
         engine.setUseClientMode(false);
         engine.beginHandshake();
         if (handshake(channel, engine)) {
-            System.out.println("[Server] Handshake successful");
+            //System.out.println("[Server] Handshake successful");
             channel.register(selector, SelectionKey.OP_READ, engine);
             allocateData(engine.getSession());
         } else {
-            System.out.println("[Server] Closing socket channel due to bad handshake");
+            //System.out.println("[Server] Closing socket channel due to bad handshake");
             channel.close();
         }
     }
 
     public void send(SocketChannel channel, SSLEngine engine, byte[] response) {
-        System.out.println("[Server] attempting to write...");
+        //System.out.println("[Server] attempting to write...");
         try {
-            System.out.println("[Server] writing...");
+            //System.out.println("[Server] writing...");
             write(response, channel, engine);
         } catch (IOException e) {
             System.out.println("Error trying to respond to client");
@@ -148,9 +148,9 @@ public class SslReceiver extends Ssl implements Runnable {
     }
 
     public byte[] receive(SocketChannel channel, SSLEngine engine) {
-        System.out.println("[Server] attempting to read...");
+        //System.out.println("[Server] attempting to read...");
         try {
-            System.out.println("[Server] reading...");
+            //System.out.println("[Server] reading...");
             return read(channel, engine);
         } catch (IOException e) {
             System.out.println("Error Reading message");

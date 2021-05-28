@@ -34,7 +34,7 @@ public class Utils {
         return messageBytes;
     }
 
-    private static byte[] getDoubleCRLF() {
+    public static byte[] getDoubleCRLF() {
         return new byte[]{(byte) 0xD, (byte) 0xA, (byte) 0xD, (byte) 0xA};
     }
 }

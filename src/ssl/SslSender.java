@@ -47,10 +47,10 @@ public class SslSender extends Ssl implements Runnable {
             e.printStackTrace();
         }
         if (handshake(channel, engine)) {
-            System.out.println("[Client] Handshake successful");
+            //System.out.println("[Client] Handshake successful");
             allocateData(engine.getSession());
         } else {
-            System.out.println("[Client] Handshake error!");
+            //System.out.println("[Client] Handshake error!");
         }
     }
 
@@ -61,24 +61,24 @@ public class SslSender extends Ssl implements Runnable {
 
     public void write(byte[] message) {
         try {
-            System.out.println("[Client] writing...");
+            //System.out.println("[Client] writing...");
             write(message, channel, engine);
         } catch (IOException e) {
-            System.out.println("Error writing message");
+            //System.out.println("Error writing message");
             e.printStackTrace();
         }
     }
 
     public byte[] read() {
-        System.out.println("[Client] attempting to read...");
+        //System.out.println("[Client] attempting to read...");
         int tries = 0;
 
         while (tries < 5) {
             tries++;
             try {
-                System.out.println("[Client] reading...");
+                //System.out.println("[Client] reading...");
                 byte[] message = read(channel, engine);
-                System.out.println("[Client] read " + (message == null ? 0 : message.length) + " bytes");
+                //System.out.println("[Client] read " + (message == null ? 0 : message.length) + " bytes");
                 if (message != null) return message;
             } catch (IOException e) {
                 System.out.println("Error Reading message");

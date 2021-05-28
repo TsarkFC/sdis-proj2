@@ -204,7 +204,7 @@ public abstract class Ssl {
                     case OK -> {
                         peerDecryptedData.flip();
                         String message = new String(peerDecryptedData.array(), 0, peerDecryptedData.remaining());
-                        logReceivedMessage(message);
+                        //logReceivedMessage(message);
                         return peerDecryptedData.array();
                     }
                     case BUFFER_OVERFLOW -> peerDecryptedData = handleOverflow(peerDecryptedData, engine.getSession().getApplicationBufferSize());
@@ -236,12 +236,12 @@ public abstract class Ssl {
                     // Send SSL/TLS encoded data to peer
                     while (encryptedData.hasRemaining()) {
                         int num = channel.write(encryptedData);
-                        System.out.println("Wrote " + num + " bytes");
+                        //System.out.println("Wrote " + num + " bytes");
                         if (num < 0) {
                             engine.closeInbound();
                             disconnect(channel, engine);
                         } else if (num > 0) {
-                            logSentMessage(new String(message));
+                            //logSentMessage(new String(message));
                         }
                     }
                 }
