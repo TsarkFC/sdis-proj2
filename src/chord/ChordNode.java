@@ -12,18 +12,46 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class ChordNode implements Serializable {
+    /**
+     * True if peer is the started the chord ring
+     */
     private boolean isBoot;
 
+    /**
+     * The id of the peer in the ring
+     */
     private final int id;
-    private HashMap<Integer, ChordNode> fingerTable = new HashMap<>();
+
+    /**
+     * Finger table containing peer's successors
+     */
+    private List<ChordNode> fingerTable = new ArrayList<>();
+
+    /**
+     * Peer predecessor on the ring
+     */
     private ChordNode predecessor;
+
+    /**
+     * Peer successor on the ring
+     */
     private ChordNode successor;
+
+    /**
+     * Object containing ip addresses and ports of all the 4 channels
+     */
     private final AddressPortList addressPortList;
-    private ScheduledThreadPoolExecutor executor;
+
+    /**
+     * Used in fixFingers, to know which entry to update
+     */
+    private int next = 0;
 
     public ChordNode(Peer peer) {
         this.addressPortList = peer.getArgs().getAddressPortList();
@@ -31,9 +59,10 @@ public class ChordNode implements Serializable {
         this.isBoot = peer.getArgs().isBoot();
         System.out.println("Chord Peer was created id: " + id);
 
-        // Schedule stabilize
-        //this.executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
-        //executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.SECONDS);
+        ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
+        executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(this::fixFingers, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        System.out.println("Executors ready!");
     }
 
     public void create() {
@@ -41,7 +70,6 @@ public class ChordNode implements Serializable {
         successor = this;
     }
 
-    //Endereço de chord que ja esta no ring
     public void join(String chordAddress, int chordPort) {
         predecessor = null;
 
@@ -59,36 +87,40 @@ public class ChordNode implements Serializable {
         System.out.println("Successor id: " + successor.id);
     }
 
-    public void addToFingerTable(int id, ChordNode node) {
-        this.fingerTable.put(id, node);
-    }
-
     public void stabilize() {
-        System.out.println("Hello!");
+        if (successor == null) return;
 
-        ChordNode x = successor.getPredecessor();
-        if (x.getId() > id && x.getId() < successor.getId()) {
+        ChordNode x = successor.predecessor;
+        if (x != null && x.id > id && x.id < successor.id) {
             successor = x;
+            System.out.println("[Stabilize] updated successor");
         }
-        successor.notifyPeer(this);
+        successor.notify(this);
     }
 
-    public void notifyPeer(ChordNode peer) {
+    public void notify(ChordNode peer) {
         if (predecessor == null || (peer.getId() < predecessor.getId() && peer.getId() < id)) {
             predecessor = peer;
+            System.out.println("[Notify] updated predecessor");
         }
-    }
-
-    public void checkPredecessor() {
-        //if predecessor has failed
-        //predessore = null
     }
 
     /**
-     * Equivalent to function fix_fingers() in paper
+     * Updates finger table periodically
      */
-    public void updateFingerTable() {
+    public void fixFingers() {
+        next++;
+        if (next > Chord.m - 1) next = 0;
 
+        ChordNode node = findSuccessor(id + (int) Math.pow(2, next));
+        if (fingerTable.size() > next) fingerTable.set(next, node);
+        else fingerTable.add(node);
+    }
+
+    public void checkPredecessor() {
+        //TODO: connect to peer
+        //if predecessor has failed
+        //predecessor = null
     }
 
     public void populateFingerTable(ChordNode chordNode) {
@@ -114,9 +146,8 @@ public class ChordNode implements Serializable {
 
     public ChordNode closestPrecedingNode(int id) {
         for (int i = Chord.m; i > 0; i--) {
-            System.out.println("LOOP: " + i);
+            if (i >= fingerTable.size()) return null;
             ChordNode node = fingerTable.get(i);
-            System.out.println("NODE: " + node);
 
             if (node == null) continue;
             if (node.id > this.id && node.id < id)

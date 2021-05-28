@@ -150,7 +150,6 @@ public class Peer implements RemoteObject {
         if (this.peerArgs.isBoot) this.chordNode.create();
         else {
             AddressPort addressPort = this.peerArgs.getOtherPeerAddressPort();
-            System.out.println("->  " + addressPort.getAddress() + " " + addressPort.getPort());
             this.chordNode.join(addressPort.getAddress(), addressPort.getPort());
         }
     }

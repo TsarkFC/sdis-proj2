@@ -39,9 +39,8 @@ public class ChordChannel extends Channel {
 
         switch (messageInfo[0]) {
             case Messages.JOIN -> {
-                System.out.println("Got JOIN message from peer with id: " + messageInfo[1]);
-                String number = messageInfo[1];
-                Integer chordNodeId = Integer.parseInt(number);
+                System.out.println("[ChordChannel] Got JOIN message from peer with id: " + messageInfo[1]);
+                Integer chordNodeId = Integer.parseInt(messageInfo[1]);
                 ChordNode node = peer.getChordNode();
                 ChordNode successor = node.findSuccessor(chordNodeId);
 
