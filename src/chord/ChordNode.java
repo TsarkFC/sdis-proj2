@@ -107,14 +107,17 @@ public class ChordNode {
     public void stabilize() {
         if (successor == null) return;
 
-        //ChordNode x = successor.predecessor;
+        System.out.println("stabilize...");
+
         String message = Messages.GET_PREDECESSOR + "\r\n\r\n";
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
         byte[] predecessorInfoCRLF = sendMessage(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
         byte[] predecessorInfo = Utils.readUntilCRLF(predecessorInfoCRLF);
         ChordNodeData x = new SerializeChordData().deserialize(predecessorInfo);
 
-        if (x != null && isInInterval(x.getId(), id, successor.getId())) {
+        System.out.println("#### successor.predecessor = " + (x == null ? "null" : x.getId()));
+
+        if (x != null && isInInterval(x.getId(), this.id, successor.getId())) {
             successor = x;
             System.out.println("[Stabilize] peer " + id + ": updated successor, is now: " + successor.getId());
         }
@@ -135,6 +138,9 @@ public class ChordNode {
     }
 
     public void receiveNotify(ChordNodeData n) {
+        if (this.id == n.getId()) return;
+
+        System.out.println("#### Notified by peer " + n.getId());
         if (predecessor == null || isInInterval(n.getId(), predecessor.getId(), this.id)) {
             predecessor = n;
             System.out.println("[Notify] peer " + this.id + ": updated predecessor, is now: " + predecessor.getId());
@@ -273,7 +279,7 @@ public class ChordNode {
     }
 
     private boolean isInInterval(int element, int lowerBound, int upperBound) {
-        if (lowerBound <= upperBound)
+        if (lowerBound < upperBound)
             return element > lowerBound && element < upperBound;
         return element > lowerBound || element < upperBound;
     }
