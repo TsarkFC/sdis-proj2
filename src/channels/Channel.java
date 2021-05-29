@@ -16,7 +16,7 @@ public abstract class Channel extends SslReceiver {
     protected ChannelAddress currentAddr;
     protected Peer peer;
     protected int numOfThreads = 20;
-    protected ThreadPoolExecutor executor;
+   protected ThreadPoolExecutor executor;
     private final double MAX_SIZE = Math.pow(2, 16);
 
     public AddressList getAddrList() {

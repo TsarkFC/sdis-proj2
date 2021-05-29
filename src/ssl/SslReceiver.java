@@ -148,8 +148,8 @@ public abstract class SslReceiver extends Ssl implements Runnable {
     }
 
     @Override
-    protected void logSentMessage(String message) {
-        System.out.println("Sent response: " + message);
+    protected void logSentMessage(byte[] message) {
+        System.out.println("Sent response: " + new String(message));
     }
 
     @Override

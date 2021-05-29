@@ -166,7 +166,7 @@ public abstract class Ssl {
 
     protected abstract void logReceivedMessage(byte[] message);
 
-    protected abstract void logSentMessage(String message);
+    protected abstract void logSentMessage(byte[] message);
 
     protected int read(SocketChannel channel, SSLEngine engine) throws IOException {
 
@@ -210,16 +210,19 @@ public abstract class Ssl {
     public abstract void handleSSlMsg(byte[] msg);
 
     protected void write(String message, SocketChannel channel, SSLEngine engine) throws IOException {
-        //TODO CRIAR AQUI SESSION E TAL
+        byte[] msg = message.getBytes();
+        write(msg,channel,engine);
+    }
+
+    protected void write(byte[] message, SocketChannel channel, SSLEngine engine) throws IOException {
 
         SSLSession session = engine.getSession();
-        byte[] msg = message.getBytes();
         int encryptedBufferSize = session.getPacketBufferSize();
-        int decryptedBufferSize =Math.max(session.getApplicationBufferSize(),msg.length);
+        int decryptedBufferSize =Math.max(session.getApplicationBufferSize(),message.length);
         ByteBuffers byteBuffers = new ByteBuffers(encryptedBufferSize, decryptedBufferSize,false);
 
         byteBuffers.getDecryptedData().clear();
-        byteBuffers.getDecryptedData().put(message.getBytes());
+        byteBuffers.getDecryptedData().put(message);
         byteBuffers.getDecryptedData().flip();
 
         while (byteBuffers.getDecryptedData().hasRemaining()) {

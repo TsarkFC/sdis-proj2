@@ -6,6 +6,8 @@ import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class SslSender extends Ssl implements Runnable {
@@ -18,19 +20,31 @@ public class SslSender extends Ssl implements Runnable {
 
     private final int port;
 
+    private static String protocol;
+
+    private final List<byte[]> messages;
+
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
-    public SslSender(String protocol, String host, int port) {
+    public SslSender(String host, int port,List<byte[]> messages) {
         this.host = host;
         this.port = port;
-
+        this.messages = messages;
         //initializeSslContext(protocol, "123456", "./src/main/resources/client.jks", "./src/main/resources/trustedCerts.jks");
         initializeSslContext(protocol, "123456", "./src/ssl/resources/client.keys", "./src/ssl/resources/truststore");
-
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(true);
-
         //allocateData(engine.getSession());
+
+
+    }
+
+    public static String getProtocol() {
+        return protocol;
+    }
+
+    public static void setProtocol(String protocol) {
+        SslSender.protocol = protocol;
     }
 
     public void connect() {
@@ -56,9 +70,36 @@ public class SslSender extends Ssl implements Runnable {
         }
     }
 
+    public void start(){
+        connect();
+        writePeer();
+        //TODO acho que nao e suposto ter aqui o read right? read();
+        shutdown();
+    }
+
     @Override
     public void run() {
-        //TODO: send messages
+        start();
+    }
+
+    public void write(byte[] message){
+        try {
+            System.out.println("[Client] writing...");
+            write(message, channel, engine);
+        } catch (IOException e) {
+            System.out.println("Error writing message");
+            e.printStackTrace();
+        }
+    }
+
+    public void writePeer(){
+        if(messages == null){
+            System.out.println("Error no messages to send");
+            return;
+        }
+        for (byte[] message: messages ) {
+            write(message);
+        }
     }
 
     public void write(String message) {
@@ -111,8 +152,8 @@ public class SslSender extends Ssl implements Runnable {
     }
 
     @Override
-    protected void logSentMessage(String message) {
-        System.out.println("Sent message to server: " + message);
+    protected void logSentMessage(byte[] message) {
+        System.out.println("Sent message to server: " +  new String(message));
     }
 
     @Override

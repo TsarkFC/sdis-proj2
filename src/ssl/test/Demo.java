@@ -5,6 +5,9 @@ import ssl.SSlReceiverTest;
 import ssl.SslReceiver;
 import ssl.SslSender;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Demo {
 
     SslReceiver server;
@@ -17,17 +20,18 @@ public class Demo {
 
     public void runDemo() {
 
-        System.setProperty("javax.net.debug", "all");
+        /*System.setProperty("javax.net.debug", "all");
+        SslSender.setProtocol("TLSv1.2");
 
-        SslSender client = new SslSender("TLSv1.2", "localhost", 9222);
+        SslSender client = new SslSender("localhost", 9222);
         client.connect();
         client.write("Hello! I am a client!");
         client.read();
         client.shutdown();
 
-        SslSender client2 = new SslSender("TLSv1.2", "localhost", 9222);
-        SslSender client3 = new SslSender("TLSv1.2", "localhost", 9222);
-        SslSender client4 = new SslSender("TLSv1.2", "localhost", 9222);
+        SslSender client2 = new SslSender("localhost", 9222);
+        SslSender client3 = new SslSender("localhost", 9222);
+        SslSender client4 = new SslSender("localhost", 9222);
 
         client2.connect();
         client2.write("Hello! I am another client!");
@@ -43,13 +47,30 @@ public class Demo {
         client3.shutdown();
         client4.shutdown();
 
+        server.stop();*/
+    }
+
+    public void runTest(){
+        System.setProperty("javax.net.debug", "all");
+        SslSender.setProtocol("TLSv1.2");
+        List<byte[]> messages = new ArrayList<>();
+        messages.add("Hello I am client 1".getBytes());
+        messages.add("Pleased to meet you".getBytes());
+
+        SslSender client = new SslSender("localhost", 9222,messages);
+        client.connect();
+        client.writePeer();
+        client.read();
+        client.shutdown();
+
         server.stop();
+
     }
 
     public static void main(String[] args) throws Exception {
         Demo demo = new Demo();
         Thread.sleep(1000);	// Give the server some time to start.
-        demo.runDemo();
+        demo.runTest();
     }
 
 }

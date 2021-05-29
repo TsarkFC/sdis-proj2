@@ -2,6 +2,7 @@ package peer;
 
 import ssl.SSLInformation;
 import ssl.SSlArgs;
+import ssl.SslSender;
 import utils.AddressList;
 import utils.ChannelAddress;
 
@@ -71,6 +72,7 @@ public class PeerArgs {
         ChannelAddress mdrAddr = new ChannelAddress(args[MDR_ADDR], Integer.parseInt(args[MDR_PORT]));
         addressList = new AddressList(mcAddr, mdbAddr, mdrAddr);
         metadataPath = "../filesystem/" + peerId + "/metadata";
+        SslSender.setProtocol(sslInformation.getProtocol());
 
     }
 
