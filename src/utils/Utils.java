@@ -37,4 +37,10 @@ public class Utils {
     public static byte[] getDoubleCRLF() {
         return new byte[]{(byte) 0xD, (byte) 0xA, (byte) 0xD, (byte) 0xA};
     }
+
+    public static byte[] discard() {
+        String discard = "DISCARD";
+        byte[] toDiscard = discard.getBytes();
+        return Utils.addCRLF(toDiscard);
+    }
 }

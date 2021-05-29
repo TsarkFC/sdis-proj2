@@ -1,8 +1,8 @@
 package chord;
 
 import constants.Constants;
-import peer.Peer;
 import messages.Messages;
+import peer.Peer;
 import ssl.SslSender;
 import utils.AddressPort;
 import utils.AddressPortList;
@@ -13,7 +13,6 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -215,7 +214,7 @@ public class ChordNode {
      * @return The response received from SSLEngine server
      */
     private byte[] sendMessage(byte[] message, String address, Integer port) {
-        SslSender sender = new SslSender(Constants.sslProtocol, address, port);
+        SslSender sender = new SslSender(address, port, message);
         sender.connect();
         sender.write(message);
         byte[] response = sender.read();

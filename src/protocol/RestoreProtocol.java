@@ -51,7 +51,9 @@ public class RestoreProtocol extends Protocol {
     private void execute(List<byte[]> messages, String fileId) {
         if (reps <= repsLimit) {
             AddressPortList addrList = peer.getArgs().getAddressPortList();
-            ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), messages);
+            for (byte[] message : messages) {
+                ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), message);
+            }
             executor.schedule(() -> verify(messages, fileId), timeWait, TimeUnit.SECONDS);
             System.out.println("[RESTORE] Sent message, waiting " + timeWait + " seconds...");
         } else {

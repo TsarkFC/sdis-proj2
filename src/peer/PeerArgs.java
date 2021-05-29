@@ -1,11 +1,8 @@
 package peer;
 
-import ssl.SSLInformation;
-import ssl.SSlArgs;
-import ssl.SslSender;
-import utils.AddressList;
-import utils.ChannelAddress;
 import constants.Constants;
+import ssl.SSLInformation;
+import ssl.SslSender;
 import utils.AddressPort;
 import utils.AddressPortList;
 
@@ -48,7 +45,7 @@ public class PeerArgs {
             otherPeerAddressPort = new AddressPort(args[OTHER_ADDRESS], Integer.parseInt(args[OTHER_PORT]));
         }
         metadataPath = "../filesystem/" + peerId + "/metadata";
-        SslSender.setProtocol(sslInformation.getProtocol());
+        SslSender.setProtocol(SSLInformation.protocol);
     }
 
     public boolean isBoot() {

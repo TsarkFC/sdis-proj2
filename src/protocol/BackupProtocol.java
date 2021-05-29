@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 public class BackupProtocol extends Protocol {
     final int repDgr;
     final int repsLimit = 5;
-    List<byte[]> messages;
+    byte[] message;
     final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     int numOfChunks = 0;
     int timeWait = 1;
@@ -39,7 +39,6 @@ public class BackupProtocol extends Protocol {
     @Override
     public void initialize()  {
         System.out.println("[BACKUP] Initializing Backup protocol of file " + file.getName() + " with size: " + file.length()/1000.0 + "Kb");
-        messages = new ArrayList<>();
         FileHandler fileHandler = new FileHandler(file);
         ConcurrentHashMap<Integer, byte[]> chunks = fileHandler.getFileChunks();
         fileId = fileHandler.createFileId();
@@ -58,7 +57,7 @@ public class BackupProtocol extends Protocol {
             List<byte[]> msgs = new ArrayList<>();
             msgs.add(msg.getBytes());
             ThreadHandler.sendTCPMessage(peerArgs.getAddressPortList().getMcAddressPort().getAddress(),
-                    peerArgs.getAddressPortList().getMcAddressPort().getPort(), msgs);
+                    peerArgs.getAddressPortList().getMcAddressPort().getPort(), message);
 
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
@@ -70,7 +69,7 @@ public class BackupProtocol extends Protocol {
         for (ConcurrentHashMap.Entry<Integer, byte[]> chunk : chunks.entrySet()) {
             PutChunk backupMsg = new PutChunk(peer.getArgs().getVersion(), peer.getArgs().getPeerId(), fileId,
                     chunk.getKey(), repDgr, chunk.getValue());
-            messages.add(backupMsg.getBytes());
+            message = backupMsg.getBytes();
         }
 
         execute();
@@ -79,7 +78,7 @@ public class BackupProtocol extends Protocol {
     private void execute() {
         if (reps <= repsLimit) {
             ThreadHandler.sendTCPMessage(peer.getArgs().getAddressPortList().getMdbAddressPort().getAddress(),
-                    peer.getArgs().getAddressPortList().getMdbAddressPort().getPort(), messages);
+                    peer.getArgs().getAddressPortList().getMdbAddressPort().getPort(), message);
             executor.schedule(this::verify, timeWait, TimeUnit.SECONDS);
             System.out.println("[BACKUP] Sent message, waiting " + timeWait + " seconds...");
         } else {
@@ -99,7 +98,6 @@ public class BackupProtocol extends Protocol {
     }
 
     public void backupChunk(String fileId, int chunkNo) {
-        messages = new ArrayList<>();
         FileHandler fileHandler = new FileHandler(file);
 
         //FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length());
@@ -107,7 +105,7 @@ public class BackupProtocol extends Protocol {
 
         PutChunk backupMsg = new PutChunk(peer.getArgs().getVersion(), peer.getArgs().getPeerId(), fileId,
                 chunkNo, repDgr, fileHandler.getChunkFileData());
-        messages.add(backupMsg.getBytes());
+        message = backupMsg.getBytes();
 
         execute();
     }

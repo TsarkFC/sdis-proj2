@@ -1,7 +1,6 @@
 package channels;
 
 import filehandler.FileHandler;
-import messages.*;
 import messages.handlers.DeleteHandler;
 import messages.handlers.GetChunkHandler;
 import messages.protocol.*;
@@ -10,11 +9,10 @@ import peer.metadata.ChunkMetadata;
 import peer.metadata.FileMetadata;
 import peer.metadata.StoredChunksMetadata;
 import protocol.BackupProtocolInitiator;
-import utils.AddressList;
+import ssl.SslReceiver;
 import utils.AddressPortList;
 import utils.Utils;
 
-import java.net.DatagramPacket;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -24,22 +22,17 @@ public class ControlChannel extends Channel {
     public ControlChannel(AddressPortList addressPortList, Peer peer) {
         super(addressPortList, peer);
         super.currentAddr = addressPortList.getMcAddressPort();
-        addServer(currentAddr.getAddress(),currentAddr.getPort());
 
+        SslReceiver receiver = new SslReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
+        new Thread(receiver).start();
     }
 
     @Override
-    public void handle(DatagramPacket packet) {
-        String rcvd = new String(packet.getData(), 0, packet.getLength());
-        parseMsg(rcvd);
+    public byte[] handle(byte[] message) {
+        return parseMsg(new String(message));
     }
 
-    @Override
-    public void handle(byte[] message) {
-        parseMsg(new String(message));
-    }
-
-    public void parseMsg(String msgString) {
+    public byte[] parseMsg(String msgString) {
         String msgType = Message.getTypeStatic(msgString);
         switch (msgType) {
             case "STORED" -> handleBackup(msgString);
@@ -50,6 +43,7 @@ public class ControlChannel extends Channel {
             case "STARTING" -> handleStart(msgString);
             default -> System.out.println("\nERROR NOT PARSING THAT MESSAGE " + msgType);
         }
+        return Utils.discard();
     }
 
     public void handleBackup(String msgString) {

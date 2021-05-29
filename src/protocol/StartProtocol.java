@@ -19,9 +19,7 @@ public class StartProtocol {
         if (!peer.isVanillaVersion()) {
             AddressPortList addrList = peer.getArgs().getAddressPortList();
             Starting msg = new Starting(peer.getArgs().getVersion(), peer.getArgs().getPeerId());
-            List<byte[]> msgs = new ArrayList<>();
-            msgs.add(msg.getBytes());
-            ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), msgs);
+            ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), msg.getBytes());
         }
     }
 }

@@ -3,7 +3,9 @@ package channels;
 import messages.protocol.Chunk;
 import messages.protocol.ChunkEnhanced;
 import peer.Peer;
+import ssl.SslReceiver;
 import utils.AddressPortList;
+import utils.Utils;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -13,28 +15,22 @@ import java.util.Arrays;
 
 import static filehandler.FileHandler.CHUNK_SIZE;
 
-public class RestoreChannel extends Channel{
+public class RestoreChannel extends Channel {
 
     public RestoreChannel(AddressPortList addressPortList, Peer peer) {
         super(addressPortList, peer);
         super.currentAddr = addressPortList.getMdrAddressPort();
-        addServer(currentAddr.getAddress(),currentAddr.getPort());
 
+        SslReceiver receiver = new SslReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
+        new Thread(receiver).start();
     }
 
     @Override
-    public void handle(DatagramPacket packet) {
-
-        byte[] packetData = packet.getData();
-        parseMsg(packetData);
+    public byte[] handle(byte[] message) {
+        return parseMsg(message);
     }
 
-    @Override
-    public void handle(byte[] message) {
-        parseMsg(message);
-    }
-
-    public void parseMsg(byte[] packetData){
+    public byte[] parseMsg(byte[] packetData) {
         int bodyStartPos = getBodyStartPos(packetData);
         byte[] header = Arrays.copyOfRange(packetData, 0, bodyStartPos - 4);
         //TODO sel alguma coisa der shit pode ser por estar a usar o packetData.length em vez de packet.getLength()
@@ -44,28 +40,12 @@ public class RestoreChannel extends Channel{
         String headerString = new String(header);
         System.out.println("[RECEIVED MESSAGE MDR] " + headerString);
 
-        if (peer.getArgs().getVersion() == 1.0) {
-            Chunk msg = new Chunk(headerString, body);
-            if (msg.getVersion() > 1.0) return;
-
-            String chunkId = msg.getFileId() + "-" + msg.getChunkNo();
-            peer.addChunkReceived(chunkId);
-            handleChunkMsg(msg);
-        }
-        else {
-            ChunkEnhanced msg = new ChunkEnhanced(headerString, body);
-            String chunkId = msg.getFileId() + "-" + msg.getChunkNo();
-            peer.addChunkReceived(chunkId);
-
-            if (msg.getVersion() != 1.0) {
-                handleChunkEnhancedMsg(msg);
-            }
-            else
-                handleChunkMsg(new Chunk(headerString, body));
-
-        }
+        Chunk msg = new Chunk(headerString, body);
+        String chunkId = msg.getFileId() + "-" + msg.getChunkNo();
+        peer.addChunkReceived(chunkId);
+        handleChunkMsg(msg);
+        return Utils.discard();
     }
-
 
 
     public void handleChunkMsg(Chunk rcvdMsg) {

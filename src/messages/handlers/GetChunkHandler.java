@@ -28,13 +28,13 @@ public class GetChunkHandler {
         byte[] chunk = FileHandler.getChunk(rcvdMsg, peer.getFileSystem());
         if (chunk == null) return;
 
-        List<byte[]> msgs = new ArrayList<>();
+        byte[] message;
         ServerSocket socket = null;
 
         if (peer.getArgs().getVersion() == 1.0) {
             Chunk msg = new Chunk(rcvdMsg.getVersion(), peer.getArgs().getPeerId(), rcvdMsg.getFileId(),
                     rcvdMsg.getChunkNo(), chunk);
-            msgs.add(msg.getBytes());
+            message = msg.getBytes();
         } else {
             socket = startTcpServer();
             if (socket == null) {
@@ -44,14 +44,14 @@ public class GetChunkHandler {
             int portNumber = socket.getLocalPort();
             ChunkEnhanced msg = new ChunkEnhanced(rcvdMsg.getVersion(), peer.getArgs().getPeerId(), rcvdMsg.getFileId(),
                     rcvdMsg.getChunkNo(), portNumber);
-            msgs.add(msg.getBytes());
+            message = msg.getBytes();
         }
 
         String chunkId = rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo();
         if (peer.hasReceivedChunk(chunkId)) return;
 
         AddressPortList addrList = peer.getArgs().getAddressPortList();
-        ThreadHandler.sendTCPMessage(addrList.getMdrAddressPort().getAddress(), addrList.getMdrAddressPort().getPort(), msgs);
+        ThreadHandler.sendTCPMessage(addrList.getMdrAddressPort().getAddress(), addrList.getMdrAddressPort().getPort(), message);
 
         if (socket == null) return;
         if (peer.getArgs().getVersion() != 1.0) handleRestoreTcp(socket, chunk);

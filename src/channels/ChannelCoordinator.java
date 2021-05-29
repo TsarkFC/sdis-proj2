@@ -3,12 +3,11 @@ package channels;
 import peer.Peer;
 import protocol.BackupProtocolInitiator;
 import ssl.SSLInformation;
-import ssl.SSlArgs;
-import ssl.SslReceiver;
 import utils.AddressList;
 import utils.AddressPortList;
 
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ChannelCoordinator {
     private final Peer peer;
@@ -23,6 +22,7 @@ public class ChannelCoordinator {
         this.createMDRChannel(addressPortList);
         this.createChordChannel(addressPortList);
     }
+
     //TODO Alterar a classe Channel
     //TODO Acho que ja nao e preciso, esta a ser inicializado no channel right?
     public void initializeReceiver(SSLInformation sslInformation,AddressList addressList){
@@ -37,25 +37,25 @@ public class ChannelCoordinator {
     public void createMDBChannel(AddressPortList addressPortList) {
         ExecutorService executor = Executors.newFixedThreadPool(1);
         BackupChannel backupChannel = new BackupChannel(addressPortList, peer);
-        executor.execute(backupChannel);
+        //executor.execute(backupChannel);
     }
 
     public void createMCChannel(AddressPortList addressPortList) {
         ExecutorService executor = Executors.newFixedThreadPool(1);
         ControlChannel controlChannel = new ControlChannel(addressPortList, peer);
-        executor.execute(controlChannel);
+        //executor.execute(controlChannel);
     }
 
     public void createMDRChannel(AddressPortList addressPortList) {
         ExecutorService executor = Executors.newFixedThreadPool(1);
         RestoreChannel restoreChannel = new RestoreChannel(addressPortList, peer);
-        executor.execute(restoreChannel);
+        //executor.execute(restoreChannel);
     }
 
     public void createChordChannel(AddressPortList addressPortList) {
         ExecutorService executor = Executors.newFixedThreadPool(1);
         ChordChannel chordChannel = new ChordChannel(addressPortList, peer);
-        executor.execute(chordChannel);
+        //executor.execute(chordChannel);
     }
 
     public BackupProtocolInitiator getBackupInitiator() {

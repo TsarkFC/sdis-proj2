@@ -2,6 +2,7 @@ package channels;
 
 import chord.ChordNodeData;
 import constants.Constants;
+import jdk.jshell.execution.Util;
 import messages.Messages;
 import peer.Peer;
 import ssl.SslReceiver;
@@ -18,23 +19,19 @@ public class ChordChannel extends Channel {
 
     public ChordChannel(AddressPortList addressPortList, Peer peer) {
         super(addressPortList, peer);
+        super.currentAddr = addressPortList.getChordAddressPort();
 
-        SslReceiver receiver = new SslReceiver(Constants.sslProtocol, addressPortList.getChordAddressPort().getAddress(),
-                addressPortList.getChordAddressPort().getPort(), this);
-
+        SslReceiver receiver = new SslReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
         new Thread(receiver).start();
     }
 
-    @Override
-    public void handle(DatagramPacket packet) throws IOException {
-
-    }
 
     /**
      * Handles message received as parameter and returns the adequate response
      *
      * @param message
      */
+    @Override
     public byte[] handle(byte[] message) {
         byte[] parsedMessage = Utils.readUntilCRLF(message);
         int firstSpacePos = new String(parsedMessage).indexOf(" ");
@@ -60,9 +57,7 @@ public class ChordChannel extends Channel {
             case Messages.NOTIFY -> {
                 ChordNodeData x = new SerializeChordData().deserialize(data);
                 peer.getChordNode().receiveNotify(x);
-                String discard = "DISCARD";
-                byte[] toDiscard = discard.getBytes();
-                return Utils.addCRLF(toDiscard);
+                return Utils.discard();
             }
 
             case Messages.GET_PREDECESSOR -> {

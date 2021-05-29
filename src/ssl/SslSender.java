@@ -22,21 +22,18 @@ public class SslSender extends Ssl implements Runnable {
 
     private static String protocol;
 
-    private final List<byte[]> messages;
+    private final byte[] message;
 
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
-    public SslSender(String host, int port,List<byte[]> messages) {
+    public SslSender(String host, int port, byte[] message) {
         this.host = host;
         this.port = port;
-        this.messages = messages;
+        this.message = message;
 
         initializeSslContext(protocol, "../ssl/resources/client.keys");
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(true);
-        //allocateData(engine.getSession());
-
-
     }
 
     public static String getProtocol() {
@@ -63,18 +60,15 @@ public class SslSender extends Ssl implements Runnable {
             e.printStackTrace();
         }
         if (handshake(channel, engine)) {
-            System.out.println("[Client] Handshake successful");
-            //allocateData(engine.getSession());
+            //System.out.println("[Client] Handshake successful");
         } else {
-            //System.out.println("[Client] Handshake error!");
+            System.out.println("[Client] Handshake error!");
         }
     }
 
-    public void start(){
+    public void start() {
         connect();
-        writePeer();
-        //TODO acho que nao e suposto ter aqui o read right? read();
-        shutdown();
+        write(message);
     }
 
     @Override
@@ -83,16 +77,6 @@ public class SslSender extends Ssl implements Runnable {
     }
 
 
-    public void writePeer(){
-        if(messages == null){
-            System.out.println("Error no messages to send");
-            return;
-        }
-        for (byte[] message: messages ) {
-            write(message);
-        }
-    }
-    
     public void write(byte[] message) {
         try {
             //System.out.println("[Client] writing...");
@@ -141,7 +125,7 @@ public class SslSender extends Ssl implements Runnable {
 
     @Override
     protected void logSentMessage(byte[] message) {
-        System.out.println("Sent message to server: " +  new String(message));
+        System.out.println("Sent message to server: " + new String(message));
     }
 
     @Override

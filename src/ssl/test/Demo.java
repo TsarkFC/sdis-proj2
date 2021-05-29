@@ -1,6 +1,5 @@
 package ssl.test;
 
-import ssl.SSlArgs;
 import ssl.SSlReceiverTest;
 import ssl.SslReceiver;
 import ssl.SslSender;
@@ -13,8 +12,8 @@ public class Demo {
     SslReceiver server;
 
     public Demo() {
-        server = new SSlReceiverTest("TLSv1.2", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore","123456");
-        server.addServer("localhost",9222);
+        server = new SSlReceiverTest("TLSv1.2", "./src/ssl/resources/server.keys", "./src/ssl/resources/truststore", "123456");
+        server.createServer("localhost", 9222);
         new Thread(server).start();
     }
 
@@ -50,16 +49,14 @@ public class Demo {
         server.stop();*/
     }
 
-    public void runTest(){
+    public void runTest() {
         System.setProperty("javax.net.debug", "all");
         SslSender.setProtocol("TLSv1.2");
-        List<byte[]> messages = new ArrayList<>();
-        messages.add("Hello I am client 1".getBytes());
-        messages.add("Pleased to meet you".getBytes());
 
-        SslSender client = new SslSender("localhost", 9222,messages);
+        byte[] message = "Hello I am client 1".getBytes();
+        SslSender client = new SslSender("localhost", 9222, message);
         client.connect();
-        client.writePeer();
+        client.write(message);
         client.read();
         client.shutdown();
 
@@ -69,7 +66,7 @@ public class Demo {
 
     public static void main(String[] args) throws Exception {
         Demo demo = new Demo();
-        Thread.sleep(1000);	// Give the server some time to start.
+        Thread.sleep(1000);    // Give the server some time to start.
         demo.runTest();
     }
 

@@ -24,6 +24,9 @@ public abstract class Ssl {
      */
     private final ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 
+    /**
+     *
+     */
     private static final int MESSAGE_SIZE = 64500;
 
     protected void initializeSslContext(String protocol, String filePathKeys) {
@@ -43,15 +46,6 @@ public abstract class Ssl {
         }
     }
 
-    // Determine the maximum buffer sizes for the application and network bytes that could be generated
-    /*protected void allocateData(SSLSession session) {
-        decryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
-        encryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
-
-        peerEncryptedData = ByteBuffer.allocate(session.getApplicationBufferSize());
-        peerDecryptedData = ByteBuffer.allocate(session.getPacketBufferSize());
-    }*/
-
     protected boolean handshake(SocketChannel channel, SSLEngine engine) {
         HandshakeStatus status = engine.getHandshakeStatus();
         SSLEngineResult result;
@@ -66,7 +60,7 @@ public abstract class Ssl {
                     try {
                         byteBuffers.getEncryptedData().clear();
                         result = engine.wrap(byteBuffers.getDecryptedData(), byteBuffers.getEncryptedData());
-                        if (!handleWrapResult(result, engine, channel,byteBuffers)) {
+                        if (!handleWrapResult(result, engine, channel, byteBuffers)) {
                             System.out.println("Error during WRAP stage of handshake");
                             return false;
                         }
@@ -97,7 +91,7 @@ public abstract class Ssl {
                         result = engine.unwrap(byteBuffers.getPeerEncryptedData(), byteBuffers.getPeerDecryptedData());
                         byteBuffers.getPeerEncryptedData().compact();
 
-                        if (!handleUnwrapResult(result, engine,byteBuffers)) {
+                        if (!handleUnwrapResult(result, engine, byteBuffers)) {
                             System.out.println("Error during UNWRAP stage of handshake");
                             return false;
                         }
@@ -133,14 +127,14 @@ public abstract class Ssl {
                 byteBuffers.setPeerEncryptedData(handleUnderflow(byteBuffers.getPeerEncryptedData(), engine.getSession().getPacketBufferSize()));
                 break;
             case BUFFER_OVERFLOW:
-                byteBuffers.setPeerDecryptedData( handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
+                byteBuffers.setPeerDecryptedData(handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
                 break;
         }
 
         return true;
     }
 
-    private boolean handleWrapResult(SSLEngineResult result, SSLEngine engine, SocketChannel channel,ByteBuffers byteBuffers) {
+    private boolean handleWrapResult(SSLEngineResult result, SSLEngine engine, SocketChannel channel, ByteBuffers byteBuffers) {
         switch (result.getStatus()) {
             case OK, CLOSED -> {
                 byteBuffers.getEncryptedData().flip();
@@ -155,7 +149,7 @@ public abstract class Ssl {
                 }
             }
             case BUFFER_UNDERFLOW -> throw new IllegalStateException("Underflow after wrap occurred!");
-            case BUFFER_OVERFLOW -> byteBuffers.setEncryptedData( handleOverflow(byteBuffers.getEncryptedData(), engine.getSession().getPacketBufferSize()));
+            case BUFFER_OVERFLOW -> byteBuffers.setEncryptedData(handleOverflow(byteBuffers.getEncryptedData(), engine.getSession().getPacketBufferSize()));
         }
 
         return true;
@@ -170,10 +164,11 @@ public abstract class Ssl {
         SSLSession session = engine.getSession();
         int peerDecryptedSize = Math.max(session.getApplicationBufferSize(), MESSAGE_SIZE) + 500;
         int peerEncryptedSize = Math.max(session.getPacketBufferSize(), MESSAGE_SIZE) + 500;
-        ByteBuffers byteBuffers = new ByteBuffers(peerEncryptedSize,peerDecryptedSize,true);
+        ByteBuffers byteBuffers = new ByteBuffers(peerEncryptedSize, peerDecryptedSize, true);
         byteBuffers.getPeerEncryptedData().clear();
-        //TODO: surround with try catch to now if read failed on disconnect
+
         // Read SSL/TLS encoded data from peer
+        // TODO: surround with try catch to now if read failed on disconnect
         int num = channel.read(byteBuffers.getPeerEncryptedData());
         if (num < 0) {
             engine.closeInbound();
@@ -187,15 +182,12 @@ public abstract class Ssl {
                 switch (res.getStatus()) {
                     case OK -> {
                         byteBuffers.getPeerDecryptedData().flip();
-                        //String msg = new String(byteBuffers.getPeerDecryptedData().array());
                         byte[] msg = byteBuffers.getPeerDecryptedData().array();
-                        return byteBuffers.getPeerDecryptedData();
                         //handleSSlMsg(msg);
-
-                        
+                        return msg;
                     }
-                    case BUFFER_OVERFLOW -> byteBuffers.setPeerDecryptedData( handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
-                    case BUFFER_UNDERFLOW -> byteBuffers.setPeerEncryptedData( handleUnderflow(byteBuffers.getPeerEncryptedData(), engine.getSession().getPacketBufferSize()));
+                    case BUFFER_OVERFLOW -> byteBuffers.setPeerDecryptedData(handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
+                    case BUFFER_UNDERFLOW -> byteBuffers.setPeerEncryptedData(handleUnderflow(byteBuffers.getPeerEncryptedData(), engine.getSession().getPacketBufferSize()));
                     case CLOSED -> {
                         disconnect(channel, engine);
                         return null;
@@ -211,15 +203,15 @@ public abstract class Ssl {
 
     protected void write(String message, SocketChannel channel, SSLEngine engine) throws IOException {
         byte[] msg = message.getBytes();
-        write(msg,channel,engine);
+        write(msg, channel, engine);
     }
 
     protected void write(byte[] message, SocketChannel channel, SSLEngine engine) throws IOException {
 
         SSLSession session = engine.getSession();
         int encryptedBufferSize = session.getPacketBufferSize();
-        int decryptedBufferSize =Math.max(session.getApplicationBufferSize(),message.length);
-        ByteBuffers byteBuffers = new ByteBuffers(encryptedBufferSize, decryptedBufferSize,false);
+        int decryptedBufferSize = Math.max(session.getApplicationBufferSize(), message.length);
+        ByteBuffers byteBuffers = new ByteBuffers(encryptedBufferSize, decryptedBufferSize, false);
 
         byteBuffers.getDecryptedData().clear();
         byteBuffers.getDecryptedData().put(message);
@@ -237,7 +229,7 @@ public abstract class Ssl {
                     // Send SSL/TLS encoded data to peer
                     while (byteBuffers.getEncryptedData().hasRemaining()) {
                         int num = channel.write(byteBuffers.getEncryptedData());
-                        System.out.println("Wrote " + num + " bytes");
+                        //System.out.println("Wrote " + num + " bytes");
                         if (num < 0) {
                             engine.closeInbound();
                             disconnect(channel, engine);
@@ -246,7 +238,7 @@ public abstract class Ssl {
                         }
                     }
                 }
-                case BUFFER_OVERFLOW -> byteBuffers.setEncryptedData( handleOverflow(byteBuffers.getEncryptedData(), engine.getSession().getPacketBufferSize()));
+                case BUFFER_OVERFLOW -> byteBuffers.setEncryptedData(handleOverflow(byteBuffers.getEncryptedData(), engine.getSession().getPacketBufferSize()));
                 case BUFFER_UNDERFLOW -> throw new IllegalStateException("Underflow after wrap occurred!");
                 case CLOSED -> {
                     disconnect(channel, engine);

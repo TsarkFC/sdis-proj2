@@ -4,6 +4,7 @@ import messages.protocol.PutChunk;
 import messages.protocol.Stored;
 import peer.Peer;
 import protocol.BackupProtocolInitiator;
+import ssl.SslReceiver;
 import utils.AddressPortList;
 import filehandler.FileHandler;
 import utils.ThreadHandler;
@@ -21,22 +22,17 @@ public class BackupChannel extends Channel {
     public BackupChannel(AddressPortList addressPortList, Peer peer) {
         super(addressPortList, peer);
         super.currentAddr = addressPortList.getMdbAddressPort();
-        addServer(currentAddr.getAddress(),currentAddr.getPort());
-    }
-    //TODO APAGAR ESTE
-    @Override
-    public void handle(DatagramPacket packet) {
 
-        byte[] packetData = packet.getData();
-        parseMsg(packetData);
+        SslReceiver receiver = new SslReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
+        new Thread(receiver).start();
     }
 
     @Override
-    public void handle(byte[] message) {
-        parseMsg(message);
+    public byte[] handle(byte[] message) {
+        return parseMsg(message);
     }
 
-    public void parseMsg(byte[] packetData){
+    public byte[] parseMsg(byte[] packetData){
         int bodyStartPos = getBodyStartPos(packetData);
         byte[] header = Arrays.copyOfRange(packetData, 0, bodyStartPos - 4);
         byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packetData.length);
@@ -60,7 +56,7 @@ public class BackupChannel extends Channel {
                 peer.getMetadata().writeMetadata();
             }
         }
-
+        return Utils.discard();
     }
 
     private boolean shouldSaveFile(PutChunk rcvdMsg) {
@@ -100,9 +96,7 @@ public class BackupChannel extends Channel {
     }
 
     private void sendStoredMsg(byte[] msg) {
-        List<byte[]> msgs = new ArrayList<>();
-        msgs.add(msg);
-        ThreadHandler.sendTCPMessage(addressPortList.getMcAddressPort().getAddress(), addressPortList.getMcAddressPort().getPort(), msgs);
+        ThreadHandler.sendTCPMessage(addressPortList.getMcAddressPort().getAddress(), addressPortList.getMcAddressPort().getPort(), msg);
     }
 
     private void preventReclaim(PutChunk rcvdMsg) {
