@@ -74,7 +74,7 @@ public class Metadata implements Serializable {
 
     public void deleteFileHosting(String fileID, Peer peer) {
         FileMetadata fileMetadata = hostingFileInfo.get(fileID);
-        if(fileMetadata == null) return;
+        if (fileMetadata == null) return;
         if (!peer.isVanillaVersion() && fileMetadata.deletedAllChunksAllPeers()) {
             hostingFileInfo.remove(fileID);
             writeMetadata();
@@ -84,13 +84,13 @@ public class Metadata implements Serializable {
     /**
      * Updating information on stored chunks data
      */
-    public void updateStoredInfo(String fileId, Integer chunkNo, Integer peerId,Peer peer)  {
+    public void updateStoredInfo(String fileId, Integer chunkNo, Integer peerId, Peer peer) {
         FileMetadata hostingMetadata = hostingFileInfo.get(fileId);
         if (hostingMetadata != null) {
             updateHostingInfo(hostingMetadata, chunkNo, peerId);
         } else {
 
-            storedChunksMetadata.updateChunkInfo(fileId, chunkNo, peerId,peer);
+            storedChunksMetadata.updateChunkInfo(fileId, chunkNo, peerId, peer);
         }
         writeMetadata();
     }
@@ -139,7 +139,7 @@ public class Metadata implements Serializable {
         }
     }
 
-    public String returnState(){
+    public String returnState() {
         StringBuilder state = new StringBuilder();
         state.append("\n********************************************************************************\n");
         state.append("******************************** State Metadata ********************************\n");
@@ -187,7 +187,7 @@ public class Metadata implements Serializable {
         double finalSpace = storedSize + newFileSizeKb;
 
         System.out.println("STORED SIZE: " + storedSize);
-        System.out.println("WOTH MEW FILE: " +finalSpace);
+        System.out.println("WOTH MEW FILE: " + finalSpace);
         if (maxSpace == -1) return true;
         return maxSpace > finalSpace;
     }

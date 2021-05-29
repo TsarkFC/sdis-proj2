@@ -1,4 +1,4 @@
-package messages;
+package messages.protocol;
 
 // <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
 public class Delete extends Message {

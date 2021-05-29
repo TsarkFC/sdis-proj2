@@ -1,7 +1,7 @@
 package protocol;
 
-import messages.Delete;
-import messages.PutChunk;
+import messages.protocol.Delete;
+import messages.protocol.PutChunk;
 import peer.Peer;
 import peer.PeerArgs;
 import peer.metadata.FileMetadata;
@@ -9,7 +9,6 @@ import filehandler.FileHandler;
 import utils.ThreadHandler;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -58,8 +57,8 @@ public class BackupProtocol extends Protocol {
             Delete msg = new Delete(peerArgs.getVersion(), peerArgs.getPeerId(), previousFileId);
             List<byte[]> msgs = new ArrayList<>();
             msgs.add(msg.getBytes());
-            ThreadHandler.sendTCPMessage(peerArgs.getAddressList().getMcAddr().getAddress(),
-                    peerArgs.getAddressList().getMcAddr().getPort(), msgs);
+            ThreadHandler.sendTCPMessage(peerArgs.getAddressPortList().getMcAddressPort().getAddress(),
+                    peerArgs.getAddressPortList().getMcAddressPort().getPort(), msgs);
 
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
@@ -79,8 +78,8 @@ public class BackupProtocol extends Protocol {
 
     private void execute() {
         if (reps <= repsLimit) {
-            ThreadHandler.sendTCPMessage(peer.getArgs().getAddressList().getMdbAddr().getAddress(),
-                    peer.getArgs().getAddressList().getMdbAddr().getPort(), messages);
+            ThreadHandler.sendTCPMessage(peer.getArgs().getAddressPortList().getMdbAddressPort().getAddress(),
+                    peer.getArgs().getAddressPortList().getMdbAddressPort().getPort(), messages);
             executor.schedule(this::verify, timeWait, TimeUnit.SECONDS);
             System.out.println("[BACKUP] Sent message, waiting " + timeWait + " seconds...");
         } else {

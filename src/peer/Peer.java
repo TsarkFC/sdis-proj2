@@ -5,6 +5,7 @@ import chord.ChordNode;
 import filehandler.FileHandler;
 import peer.metadata.Metadata;
 import protocol.*;
+import utils.AddressPort;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,22 +35,16 @@ public class Peer implements RemoteObject {
     private final ConcurrentHashMap<String, ConcurrentHashMap<Integer, byte[]>> activeRestores = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
-        if (args.length != 9) {
-            System.out.println("Usage: java Peer <protocol_version> <peer_id> <service_access_point> <MC_addr> <MC_port> <MDB_addr> <MDB_port> <MDR_addr> <MDR_port>");
-            return;
-        }
-        // Peer creation
         Peer peer = new Peer();
         peer.peerArgs = peer.createPeerArgs(args);
         if (peer.peerArgs == null) return;
         peer.startFileSystem();
         peer.createMetadata();
-        peer.connectToRmi();
+        if (!peer.connectToRmi()) return;
         peer.createChannels();
         peer.createChordNode();
     }
 
-    // Estas sao as funçoes do Initiator peer, entao na classe Protocol e que ele vai começar o RING right?
     @Override
     public void backup(File file, int repDegree) throws IOException {
         System.out.println("[BACKUP] Initiator peer received Backup");
@@ -136,24 +131,27 @@ public class Peer implements RemoteObject {
         }
     }
 
-    public void connectToRmi() {
+    public boolean connectToRmi() {
         try {
             String remoteObjName = this.peerArgs.getAccessPoint();
             RemoteObject stub = (RemoteObject) UnicastRemoteObject.exportObject(this, 0);
             Registry registry = LocateRegistry.getRegistry();
             registry.bind(remoteObjName, stub);
             System.err.println("Peer with name: " + remoteObjName + " ready");
-
         } catch (Exception e) {
             System.out.println("Error creating peer and connecting to RMI: " + e);
+            return false;
         }
+        return true;
     }
 
     public void createChordNode() {
         this.chordNode = new ChordNode(this);
         if (this.peerArgs.isBoot) this.chordNode.create();
-        else this.chordNode.join(this.peerArgs.address, this.peerArgs.getPort());
-
+        else {
+            AddressPort addressPort = this.peerArgs.getOtherPeerAddressPort();
+            this.chordNode.join(addressPort.getAddress(), addressPort.getPort());
+        }
     }
 
     public String getFileSystem() {
@@ -203,4 +201,14 @@ public class Peer implements RemoteObject {
     public boolean hasRestoreEntry(String fileId) {
         return activeRestores.get(fileId) != null;
     }
+
+    public ChordNode getChordNode() {
+        return chordNode;
+    }
+
+    //TODO: remove
+    public boolean isVanillaVersion() {
+        return true;
+    }
+
 }

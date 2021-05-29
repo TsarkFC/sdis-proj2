@@ -1,4 +1,4 @@
-package messages;
+package messages.protocol;
 
 // <Version> CHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
 

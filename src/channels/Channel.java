@@ -5,6 +5,8 @@ import ssl.SSlArgs;
 import ssl.SslReceiver;
 import utils.AddressList;
 import utils.ChannelAddress;
+import utils.AddressPort;
+import utils.AddressPortList;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -12,22 +14,22 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public abstract class Channel extends SslReceiver {
-    protected final AddressList addrList;
-    protected ChannelAddress currentAddr;
+    protected final AddressPortList addressPortList;
+    protected AddressPort currentAddr;
+    
     protected Peer peer;
     protected int numOfThreads = 20;
    protected ThreadPoolExecutor executor;
     private final double MAX_SIZE = Math.pow(2, 16);
 
-    public AddressList getAddrList() {
-        return addrList;
-    }
-
-    public Channel(AddressList addrList, Peer peer) {
+    public Channel(AddressPortList addressPortList, Peer peer) {
         super(peer.getArgs().getSslInformation());
-        this.addrList = addrList;
+        this.addressPortList = addressPortList;
         this.peer = peer;
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numOfThreads);
+    }
+    public AddressPortList getAddrList() {
+        return addressPortList;
     }
 
     public void handleMsg(byte[] message){
@@ -40,7 +42,7 @@ public abstract class Channel extends SslReceiver {
 
     /*@Override
     public void run() {
-        try {
+        /*try {
             InetAddress mcastAddr = InetAddress.getByName(this.currentAddr.getAddress());
             MulticastSocket mcastSocket;
             mcastSocket = new MulticastSocket(currentAddr.getPort());
@@ -77,5 +79,9 @@ public abstract class Channel extends SslReceiver {
             } else crlf = 0;
         }
         return 0;
+    }
+
+    public AddressPortList getAddressPortList() {
+        return addressPortList;
     }
 }

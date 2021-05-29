@@ -1,7 +1,7 @@
 package protocol;
 
 import filehandler.FileHandler;
-import messages.Removed;
+import messages.protocol.Removed;
 import peer.Peer;
 import peer.PeerArgs;
 import peer.metadata.ChunkMetadata;
@@ -54,8 +54,8 @@ public class ReclaimProtocol extends Protocol {
                 }
             }
             PeerArgs peerArgs = peer.getArgs();
-            ThreadHandler.sendTCPMessage(peerArgs.getAddressList().getMcAddr().getAddress(),
-                    peerArgs.getAddressList().getMcAddr().getPort(), messages);
+            ThreadHandler.sendTCPMessage(peerArgs.getAddressPortList().getMcAddressPort().getAddress(),
+                    peerArgs.getAddressPortList().getMcAddressPort().getPort(), messages);
         }else{
             System.out.println("[RECLAIM] The peer does not have any stored files");
         }

@@ -1,11 +1,10 @@
 package protocol;
 
-import messages.Removed;
+import messages.protocol.Removed;
 import peer.Peer;
 import peer.metadata.ChunkMetadata;
 import filehandler.FileHandler;
 
-import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 

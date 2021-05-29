@@ -1,5 +1,7 @@
 package ssl;
 
+import channels.ChordChannel;
+
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
@@ -18,11 +20,15 @@ public abstract class SslReceiver extends Ssl implements Runnable {
      */
     private Selector selector;
 
+    /**
+     * States whether the receiving thread is active or not
+     */
     private boolean isActive = true;
+
 
     //TODO tirar o decrypted data e isso dali
     public SslReceiver(SSLInformation sslInformation) {
-        initializeSslContext(sslInformation.getProtocol(), sslInformation.getPassword(), sslInformation.getServerKeys(), sslInformation.getTrustStore());
+        initializeSslContext(sslInformation.getProtocol(), "../ssl/resources/server.keys");
         try {
             selector = SelectorProvider.provider().openSelector();
         } catch (IOException e) {
@@ -79,7 +85,7 @@ public abstract class SslReceiver extends Ssl implements Runnable {
     //Starts listening to new connections
     //Run in a loop as long the server is active
     public void start() {
-        System.out.println("[Server] Initialized and waiting for new connections...");
+        //System.out.println("[Server] Initialized and waiting for new connections...");
 
         while (isActive) {
             try {
@@ -116,12 +122,14 @@ public abstract class SslReceiver extends Ssl implements Runnable {
         } else if (key.isReadable()) {
             SocketChannel channel = (SocketChannel) key.channel();
             SSLEngine engine = (SSLEngine) key.attachment();
-            int nBytes = receive(channel, engine);
-            System.out.println("[Server] nBytes = " + nBytes);
-            if (nBytes > 0) {
-                System.out.println("[Server] sending...");
-                send(channel, engine);
-            }
+            byte[] message = receive(channel, engine);
+
+            if (message != null) {
+                //System.out.println("[Server] sending...");
+                send(channel, engine, handlerChannel.handle(message));
+            } /*else {
+                System.out.println("[Server] Did not send!");
+            }*/
         }
     }
 
@@ -133,11 +141,11 @@ public abstract class SslReceiver extends Ssl implements Runnable {
         engine.setUseClientMode(false);
         engine.beginHandshake();
         if (handshake(channel, engine)) {
-            System.out.println("[Server] Handshake successful");
+            //System.out.println("[Server] Handshake successful");
             channel.register(selector, SelectionKey.OP_READ, engine);
             //allocateData(engine.getSession());
         } else {
-            System.out.println("[Server] Closing socket channel due to bad handshake");
+            //System.out.println("[Server] Closing socket channel due to bad handshake");
             channel.close();
         }
     }
@@ -160,11 +168,10 @@ public abstract class SslReceiver extends Ssl implements Runnable {
 
     public abstract void handleMsg(byte[] message);
 
-    public void send(SocketChannel channel, SSLEngine engine) {
-        String response = "HeyHey";
-        System.out.println("[Server] attempting to write...");
+    public void send(SocketChannel channel, SSLEngine engine, byte[] response) {
+        //System.out.println("[Server] attempting to write...");
         try {
-            System.out.println("[Server] writing...");
+            //System.out.println("[Server] writing...");
             write(response, channel, engine);
         } catch (IOException e) {
             System.out.println("Error trying to respond to client");
@@ -172,29 +179,19 @@ public abstract class SslReceiver extends Ssl implements Runnable {
         }
     }
 
-    public int receive(SocketChannel channel, SSLEngine engine) {
-        System.out.println("[Server] attempting to read...");
+    public byte[] receive(SocketChannel channel, SSLEngine engine) {
+        //System.out.println("[Server] attempting to read...");
         try {
-            System.out.println("[Server] reading...");
-            int nBytes = read(channel, engine);
-            System.out.println("[Server] read " + nBytes + " bytes");
-            return nBytes;
+            //System.out.println("[Server] reading...");
+            return read(channel, engine);
         } catch (IOException e) {
             System.out.println("Error Reading message");
             e.printStackTrace();
         }
-        return 0;
+        return null;
     }
 
-    @Override
-    protected void logReceivedMessage(String message) {
-        System.out.println("Incoming message: " + message);
-    }
-
-    @Override
-    protected void logSentMessage(String message) {
-        System.out.println("Sent response: " + message);
-    }
+    
 
     @Override
     public void run() {

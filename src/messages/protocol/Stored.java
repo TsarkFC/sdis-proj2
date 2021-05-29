@@ -1,4 +1,4 @@
-package messages;
+package messages.protocol;
 
 // <Version> STORED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 public class Stored extends MsgWithChunk {

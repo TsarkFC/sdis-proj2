@@ -1,4 +1,4 @@
-package messages;
+package messages.protocol;
 
 // <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 public class GetChunk extends MsgWithChunk {

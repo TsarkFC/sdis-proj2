@@ -24,18 +24,15 @@ public abstract class Ssl {
      */
     private final ExecutorService taskExecutor = Executors.newSingleThreadExecutor();
 
-    /**
-     * Size of the message buffer.
-     */
     private static final int MESSAGE_SIZE = 64500;
 
-    protected void initializeSslContext(String protocol, String keyStorePassword, String filePathKeys, String trustStorePath) {
-        char[] passphrase = keyStorePassword.toCharArray();
+    protected void initializeSslContext(String protocol, String filePathKeys) {
+        char[] passphrase = "123456".toCharArray();
 
         KeyManagerFactory kmf;
         try {
             kmf = createKeyManagerFactory(passphrase, filePathKeys);
-            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, trustStorePath);
+            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, "../ssl/resources/truststore");
 
             context = SSLContext.getInstance(protocol);
             context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
@@ -168,14 +165,14 @@ public abstract class Ssl {
 
     protected abstract void logSentMessage(byte[] message);
 
-    protected int read(SocketChannel channel, SSLEngine engine) throws IOException {
+    protected byte[] read(SocketChannel channel, SSLEngine engine) throws IOException {
 
         SSLSession session = engine.getSession();
         int peerDecryptedSize = Math.max(session.getApplicationBufferSize(), MESSAGE_SIZE) + 500;
         int peerEncryptedSize = Math.max(session.getPacketBufferSize(), MESSAGE_SIZE) + 500;
         ByteBuffers byteBuffers = new ByteBuffers(peerEncryptedSize,peerDecryptedSize,true);
         byteBuffers.getPeerEncryptedData().clear();
-
+        //TODO: surround with try catch to now if read failed on disconnect
         // Read SSL/TLS encoded data from peer
         int num = channel.read(byteBuffers.getPeerEncryptedData());
         if (num < 0) {
@@ -192,18 +189,21 @@ public abstract class Ssl {
                         byteBuffers.getPeerDecryptedData().flip();
                         //String msg = new String(byteBuffers.getPeerDecryptedData().array());
                         byte[] msg = byteBuffers.getPeerDecryptedData().array();
-                        handleSSlMsg(msg);
+                        return byteBuffers.getPeerDecryptedData();
+                        //handleSSlMsg(msg);
+
+                        
                     }
                     case BUFFER_OVERFLOW -> byteBuffers.setPeerDecryptedData( handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
                     case BUFFER_UNDERFLOW -> byteBuffers.setPeerEncryptedData( handleUnderflow(byteBuffers.getPeerEncryptedData(), engine.getSession().getPacketBufferSize()));
                     case CLOSED -> {
                         disconnect(channel, engine);
-                        return 0;
+                        return null;
                     }
                 }
             }
         }
-        return num;
+        return null;
     }
 
     //public abstract void handleSSlMsg(String msg);
@@ -242,7 +242,7 @@ public abstract class Ssl {
                             engine.closeInbound();
                             disconnect(channel, engine);
                         } else if (num > 0) {
-                            logSentMessage(message);
+                            //logSentMessage(new String(message));
                         }
                     }
                 }

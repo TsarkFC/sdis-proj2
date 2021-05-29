@@ -25,7 +25,7 @@ public class Demo {
 
         SslSender client = new SslSender("localhost", 9222);
         client.connect();
-        client.write("Hello! I am a client!");
+        client.write(("Hello! I am a client!").getBytes());
         client.read();
         client.shutdown();
 
@@ -34,14 +34,14 @@ public class Demo {
         SslSender client4 = new SslSender("localhost", 9222);
 
         client2.connect();
-        client2.write("Hello! I am another client!");
+        client2.write(("Hello! I am another client!").getBytes());
         client2.read();
         client2.shutdown();
 
         client3.connect();
         client4.connect();
-        client3.write("Hello from client3!!!");
-        client4.write("Hello from client4!!!");
+        client3.write(("Hello from client3!!!").getBytes());
+        client4.write(("Hello from client4!!!").getBytes());
         client3.read();
         client4.read();
         client3.shutdown();

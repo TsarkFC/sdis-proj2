@@ -1,4 +1,4 @@
-package messages;
+package messages.protocol;
 
 public class ChunkEnhanced extends MsgWithChunk {
     private final int portNumber;

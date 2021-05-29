@@ -1,8 +1,8 @@
 package protocol;
 
-import messages.Starting;
+import messages.protocol.Starting;
 import peer.Peer;
-import utils.AddressList;
+import utils.AddressPortList;
 import utils.ThreadHandler;
 
 import java.util.ArrayList;
@@ -17,11 +17,11 @@ public class StartProtocol {
 
     public void sendStartingMessage() {
         if (!peer.isVanillaVersion()) {
-            AddressList addrList = peer.getArgs().getAddressList();
+            AddressPortList addrList = peer.getArgs().getAddressPortList();
             Starting msg = new Starting(peer.getArgs().getVersion(), peer.getArgs().getPeerId());
             List<byte[]> msgs = new ArrayList<>();
             msgs.add(msg.getBytes());
-            ThreadHandler.sendTCPMessage(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
+            ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), msgs);
         }
     }
 }

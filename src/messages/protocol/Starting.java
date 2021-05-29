@@ -1,4 +1,4 @@
-package messages;
+package messages.protocol;
 
 // <Version> STARTING <CRLF><CRLF>
 public class Starting extends Message {

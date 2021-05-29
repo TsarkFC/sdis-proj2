@@ -1,4 +1,4 @@
-package messages;
+package messages.protocol;
 
 // <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
 public class PutChunk extends MsgWithChunk {

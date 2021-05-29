@@ -1,21 +1,21 @@
-package messages;
+package messages.protocol;
 
 // <Version> REMOVED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-public class Deleted extends Message {
+public class Removed extends MsgWithChunk {
 
-    public Deleted(Double version, Integer senderId, String fileId) {
-        super(version, senderId, fileId);
+    public Removed(Double version, Integer senderId, String fileId, Integer chunkNo) {
+        super(version, senderId, fileId, chunkNo);
     }
-    public Deleted(String rcvd){
+    public Removed(String rcvd){
         super(rcvd);
     }
     @Override
     public String getMsgType() {
-        return "DELETED";
+        return "REMOVED";
     }
 
     @Override
-    protected String getExtraString() {
+    protected String getChildString() {
         return "";
     }
 

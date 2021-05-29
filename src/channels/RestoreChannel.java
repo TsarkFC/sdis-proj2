@@ -1,9 +1,9 @@
 package channels;
 
-import messages.Chunk;
-import messages.ChunkEnhanced;
+import messages.protocol.Chunk;
+import messages.protocol.ChunkEnhanced;
 import peer.Peer;
-import utils.AddressList;
+import utils.AddressPortList;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -15,9 +15,9 @@ import static filehandler.FileHandler.CHUNK_SIZE;
 
 public class RestoreChannel extends Channel{
 
-    public RestoreChannel(AddressList addressList, Peer peer) {
-        super(addressList, peer);
-        super.currentAddr = addressList.getMdrAddr();
+    public RestoreChannel(AddressPortList addressPortList, Peer peer) {
+        super(addressPortList, peer);
+        super.currentAddr = addressPortList.getMdrAddressPort();
         addServer(currentAddr.getAddress(),currentAddr.getPort());
 
     }

@@ -1,11 +1,11 @@
 package messages.handlers;
 
 import filehandler.FileHandler;
-import messages.Chunk;
-import messages.ChunkEnhanced;
-import messages.GetChunk;
+import messages.protocol.Chunk;
+import messages.protocol.ChunkEnhanced;
+import messages.protocol.GetChunk;
 import peer.Peer;
-import utils.AddressList;
+import utils.AddressPortList;
 import utils.ThreadHandler;
 import utils.Utils;
 
@@ -50,8 +50,8 @@ public class GetChunkHandler {
         String chunkId = rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo();
         if (peer.hasReceivedChunk(chunkId)) return;
 
-        AddressList addrList = peer.getArgs().getAddressList();
-        ThreadHandler.sendTCPMessage(addrList.getMdrAddr().getAddress(), addrList.getMdrAddr().getPort(), msgs);
+        AddressPortList addrList = peer.getArgs().getAddressPortList();
+        ThreadHandler.sendTCPMessage(addrList.getMdrAddressPort().getAddress(), addrList.getMdrAddressPort().getPort(), msgs);
 
         if (socket == null) return;
         if (peer.getArgs().getVersion() != 1.0) handleRestoreTcp(socket, chunk);

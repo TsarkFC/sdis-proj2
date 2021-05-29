@@ -4,12 +4,14 @@ import filehandler.FileHandler;
 import messages.*;
 import messages.handlers.DeleteHandler;
 import messages.handlers.GetChunkHandler;
+import messages.protocol.*;
 import peer.Peer;
 import peer.metadata.ChunkMetadata;
 import peer.metadata.FileMetadata;
 import peer.metadata.StoredChunksMetadata;
 import protocol.BackupProtocolInitiator;
 import utils.AddressList;
+import utils.AddressPortList;
 import utils.Utils;
 
 import java.net.DatagramPacket;
@@ -19,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 
 public class ControlChannel extends Channel {
 
-    public ControlChannel(AddressList addressList, Peer peer) {
-        super(addressList, peer);
-        super.currentAddr = addressList.getMcAddr();
+    public ControlChannel(AddressPortList addressPortList, Peer peer) {
+        super(addressPortList, peer);
+        super.currentAddr = addressPortList.getMcAddressPort();
         addServer(currentAddr.getAddress(),currentAddr.getPort());
 
     }

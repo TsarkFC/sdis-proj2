@@ -1,15 +1,15 @@
 package utils;
 
 public class AddressList {
-    final ChannelAddress mcAddr;
-    final ChannelAddress mdbAddr;
-    final ChannelAddress mdrAddr;
+    final AddressPort mcAddr;
+    final AddressPort mdbAddr;
+    final AddressPort mdrAddr;
 
-    public ChannelAddress getMcAddr() { return mcAddr; }
-    public ChannelAddress getMdbAddr() { return mdbAddr; }
-    public ChannelAddress getMdrAddr() { return mdrAddr; }
+    public AddressPort getMcAddr() { return mcAddr; }
+    public AddressPort getMdbAddr() { return mdbAddr; }
+    public AddressPort getMdrAddr() { return mdrAddr; }
 
-    public AddressList(ChannelAddress mcAddr, ChannelAddress mdbAddr, ChannelAddress mdrAddr) {
+    public AddressList(AddressPort mcAddr, AddressPort mdbAddr, AddressPort mdrAddr) {
         this.mcAddr = mcAddr;
         this.mdbAddr = mdbAddr;
         this.mdrAddr = mdrAddr;
