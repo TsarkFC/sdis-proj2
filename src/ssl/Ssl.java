@@ -189,6 +189,7 @@ public abstract class Ssl {
         peerEncryptedData.clear();
 
         // Read SSL/TLS encoded data from peer
+        //TODO: surround with try catch to now if read failed on disconnect
         int num = channel.read(peerEncryptedData);
         if (num < 0) {
             engine.closeInbound();

@@ -60,12 +60,11 @@ public class SslSender extends Ssl implements Runnable {
     }
 
     public void write(byte[] message) {
-        if (message == null) System.out.println("\n\n\n\nMESSAGE IS NULL!!\n\n\n\n");
         try {
             //System.out.println("[Client] writing...");
             write(message, channel, engine);
         } catch (IOException e) {
-            //System.out.println("Error writing message");
+            System.out.println("Error writing message");
             e.printStackTrace();
         }
     }
@@ -74,12 +73,12 @@ public class SslSender extends Ssl implements Runnable {
         //System.out.println("[Client] attempting to read...");
         int tries = 0;
 
-        while (tries < 5) {
+        while (tries < 15) {
             tries++;
             try {
                 //System.out.println("[Client] reading...");
                 byte[] message = read(channel, engine);
-                //System.out.println("[Client] read " + (message == null ? 0 : message.length) + " bytes");
+                //System.out.println("[Client] read " + (message == null ? "null" : message.length) + " bytes");
                 if (message != null) return message;
             } catch (IOException e) {
                 System.out.println("Error Reading message");
@@ -92,6 +91,7 @@ public class SslSender extends Ssl implements Runnable {
             }
         }
 
+        System.out.println("[Client] could not read! tries = " + tries);
         return null;
     }
 
@@ -102,11 +102,11 @@ public class SslSender extends Ssl implements Runnable {
 
     @Override
     public void logReceivedMessage(String message) {
-        System.out.println("Server response: " + message);
+        System.out.println("[Client] Server response: " + message);
     }
 
     @Override
     protected void logSentMessage(String message) {
-        System.out.println("Sent message to server: " + message);
+        System.out.println("[Client] Sent message to server: " + message);
     }
 }

@@ -115,7 +115,9 @@ public class SslReceiver extends Ssl implements Runnable {
             if (message != null) {
                 //System.out.println("[Server] sending...");
                 send(channel, engine, handlerChannel.handle(message));
-            }
+            } /*else {
+                System.out.println("[Server] Did not send!");
+            }*/
         }
     }
 
@@ -161,12 +163,12 @@ public class SslReceiver extends Ssl implements Runnable {
 
     @Override
     protected void logReceivedMessage(String message) {
-        System.out.println("Incoming message: " + message);
+        System.out.println("[Server] Incoming message: " + message);
     }
 
     @Override
     protected void logSentMessage(String message) {
-        System.out.println("Sent response: " + message);
+        System.out.println("[Server] Sent response: " + message);
     }
 
     @Override

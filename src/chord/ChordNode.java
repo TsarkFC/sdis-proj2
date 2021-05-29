@@ -14,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -155,7 +154,7 @@ public class ChordNode {
         if (next < fingerTable.size()) fingerTable.set(next, node);
         else fingerTable.add(node);
 
-        //logFingerTable();
+        logFingerTable();
     }
 
     public void checkPredecessor() {
@@ -179,12 +178,13 @@ public class ChordNode {
         if (isInInterval(id, this.id, this.successor.getId() + 1)) {
             return this.successor;
         } else {
-            ChordNodeData ns = closestPrecedingNode(id);
-            if (ns == null) return this.data;
+            ChordNodeData precedingNode = closestPrecedingNode(id);
+            if (precedingNode == null) return this.data;
 
             // Sending Get Successor message
-            String message = Messages.GET_SUCCESSOR + " " + this.id + "\r\n\r\n";
-            AddressPort addressPort = ns.getAddressPortList().getChordAddressPort();
+            String message = Messages.GET_SUCCESSOR + " " + id + "\r\n\r\n";
+            AddressPort addressPort = precedingNode.getAddressPortList().getChordAddressPort();
+            System.out.println("[Client] sent to " + addressPort.getPort() + " want successor of " + id);
             byte[] response = sendMessage(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
             return new SerializeChordData().deserialize(response);
         }
@@ -233,8 +233,6 @@ public class ChordNode {
             messageDigest = MessageDigest.getInstance("SHA-1");
             messageDigest.reset();
             messageDigest.update(name.getBytes(StandardCharsets.UTF_8));
-
-
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
