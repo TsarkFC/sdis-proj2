@@ -66,7 +66,7 @@ public class ChordNode {
         this.isBoot = peer.getArgs().isBoot();
         this.data = new ChordNodeData(id, addressPortList);
         System.out.println("Chord Peer was created id: " + id);
-
+        //TODO Nao faz sentido por tudo no mesmo?
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
         executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::fixFingers, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
@@ -107,19 +107,15 @@ public class ChordNode {
     public void stabilize() {
         if (successor == null) return;
 
-        System.out.println("stabilize...");
-
         String message = Messages.GET_PREDECESSOR + "\r\n\r\n";
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
         byte[] predecessorInfoCRLF = sendMessage(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
         byte[] predecessorInfo = Utils.readUntilCRLF(predecessorInfoCRLF);
         ChordNodeData x = new SerializeChordData().deserialize(predecessorInfo);
 
-        System.out.println("#### successor.predecessor = " + (x == null ? "null" : x.getId()));
-
         if (x != null && isInInterval(x.getId(), this.id, successor.getId())) {
             successor = x;
-            System.out.println("[Stabilize] peer " + id + ": updated successor, is now: " + successor.getId());
+            //System.out.println("[Stabilize] peer " + id + ": updated successor, is now: " + successor.getId());
         }
 
         // Sending notify message
@@ -140,10 +136,9 @@ public class ChordNode {
     public void receiveNotify(ChordNodeData n) {
         if (this.id == n.getId()) return;
 
-        System.out.println("#### Notified by peer " + n.getId());
         if (predecessor == null || isInInterval(n.getId(), predecessor.getId(), this.id)) {
             predecessor = n;
-            System.out.println("[Notify] peer " + this.id + ": updated predecessor, is now: " + predecessor.getId());
+            //System.out.println("[Notify] peer " + this.id + ": updated predecessor, is now: " + predecessor.getId());
         }
     }
 
@@ -154,12 +149,13 @@ public class ChordNode {
         next++;
         if (next > Chord.m - 1) next = 0;
 
-        ChordNodeData node = findSuccessor(this.id + (int) Math.pow(2, next));
+        //ChordNodeData node = findSuccessor(this.id + (int) Math.pow(2, next));
+        ChordNodeData node = findSuccessor(calculateKey(this.id, next));
 
         if (next < fingerTable.size()) fingerTable.set(next, node);
         else fingerTable.add(node);
 
-        logFingerTable();
+        //logFingerTable();
     }
 
     public void checkPredecessor() {
@@ -186,6 +182,7 @@ public class ChordNode {
             ChordNodeData ns = closestPrecedingNode(id);
             if (ns == null) return this.data;
 
+            // Sending Get Successor message
             String message = Messages.GET_SUCCESSOR + " " + this.id + "\r\n\r\n";
             AddressPort addressPort = ns.getAddressPortList().getChordAddressPort();
             byte[] response = sendMessage(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
@@ -194,15 +191,17 @@ public class ChordNode {
     }
 
     public ChordNodeData closestPrecedingNode(int id) {
-        for (int i = Chord.m; i > 0; i--) {
-            if (i >= fingerTable.size()) return null;
+        for (int i = fingerTable.size() - 1; i >= 0; i--) {
             ChordNodeData node = fingerTable.get(i);
-
             if (node == null) continue;
-            if (isInInterval(node.getId(), this.id, id))
-                return node;
-        }
 
+            //System.out.println("#### NODE ID: " + node.getId());
+            //System.out.println("#### INTERVAL: [" + this.id + "," + id + "]");
+            if (isInInterval(node.getId(), this.id, id)) {
+                //System.out.println("#### IS IN INTERVAL");
+                return node;
+            }
+        }
         return null;
     }
 
@@ -285,10 +284,17 @@ public class ChordNode {
     }
 
     private void logFingerTable() {
+        int count = 0;
         System.out.println("----------------");
         for (ChordNodeData node : fingerTable) {
-            System.out.println(node.getId());
+            System.out.print("key: " + calculateKey(this.id, count++));
+            System.out.println(" | node id: " + node.getId());
         }
         System.out.println("----------------");
+    }
+
+    private int calculateKey(int id, int tablePos) {
+        int key = id + (int) Math.pow(2, tablePos);
+        return key % (int) Math.pow(2, Chord.m);
     }
 }

@@ -60,6 +60,7 @@ public class SslSender extends Ssl implements Runnable {
     }
 
     public void write(byte[] message) {
+        if (message == null) System.out.println("\n\n\n\nMESSAGE IS NULL!!\n\n\n\n");
         try {
             //System.out.println("[Client] writing...");
             write(message, channel, engine);

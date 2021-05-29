@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.concurrent.ExecutorService;
@@ -203,7 +202,7 @@ public abstract class Ssl {
                 switch (res.getStatus()) {
                     case OK -> {
                         peerDecryptedData.flip();
-                        String message = new String(peerDecryptedData.array(), 0, peerDecryptedData.remaining());
+                        //String message = new String(peerDecryptedData.array(), 0, peerDecryptedData.remaining());
                         //logReceivedMessage(message);
                         return peerDecryptedData.array();
                     }
