@@ -21,7 +21,7 @@ public class StartProtocol {
             Starting msg = new Starting(peer.getArgs().getVersion(), peer.getArgs().getPeerId());
             List<byte[]> msgs = new ArrayList<>();
             msgs.add(msg.getBytes());
-            ThreadHandler.startMulticastThread(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
+            ThreadHandler.sendTCPMessage(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
         }
     }
 }

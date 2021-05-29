@@ -51,7 +51,7 @@ public class GetChunkHandler {
         if (peer.hasReceivedChunk(chunkId)) return;
 
         AddressList addrList = peer.getArgs().getAddressList();
-        ThreadHandler.startMulticastThread(addrList.getMdrAddr().getAddress(), addrList.getMdrAddr().getPort(), msgs);
+        ThreadHandler.sendTCPMessage(addrList.getMdrAddr().getAddress(), addrList.getMdrAddr().getPort(), msgs);
 
         if (socket == null) return;
         if (peer.getArgs().getVersion() != 1.0) handleRestoreTcp(socket, chunk);

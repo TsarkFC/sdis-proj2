@@ -16,7 +16,7 @@ public class DeleteHandler {
         List<byte[]> messages = new ArrayList<>();
         Delete msg = new Delete(peerArgs.getVersion(), peerArgs.getPeerId(), fileId);
         messages.add(msg.getBytes());
-        ThreadHandler.startMulticastThread(peerArgs.getAddressList().getMcAddr().getAddress(),
+        ThreadHandler.sendTCPMessage(peerArgs.getAddressList().getMcAddr().getAddress(),
                 peerArgs.getAddressList().getMcAddr().getPort(), messages);
     }
 
@@ -26,7 +26,7 @@ public class DeleteHandler {
             Deleted msg = new Deleted(deleteMsg.getVersion(), peer.getArgs().getPeerId(), deleteMsg.getFileId());
             List<byte[]> msgs = new ArrayList<>();
             msgs.add(msg.getBytes());
-            ThreadHandler.startMulticastThread(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
+            ThreadHandler.sendTCPMessage(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
         }
     }
 

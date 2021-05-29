@@ -58,7 +58,7 @@ public class BackupProtocol extends Protocol {
             Delete msg = new Delete(peerArgs.getVersion(), peerArgs.getPeerId(), previousFileId);
             List<byte[]> msgs = new ArrayList<>();
             msgs.add(msg.getBytes());
-            ThreadHandler.startMulticastThread(peerArgs.getAddressList().getMcAddr().getAddress(),
+            ThreadHandler.sendTCPMessage(peerArgs.getAddressList().getMcAddr().getAddress(),
                     peerArgs.getAddressList().getMcAddr().getPort(), msgs);
 
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
@@ -79,7 +79,7 @@ public class BackupProtocol extends Protocol {
 
     private void execute() {
         if (reps <= repsLimit) {
-            ThreadHandler.startMulticastThread(peer.getArgs().getAddressList().getMdbAddr().getAddress(),
+            ThreadHandler.sendTCPMessage(peer.getArgs().getAddressList().getMdbAddr().getAddress(),
                     peer.getArgs().getAddressList().getMdbAddr().getPort(), messages);
             executor.schedule(this::verify, timeWait, TimeUnit.SECONDS);
             System.out.println("[BACKUP] Sent message, waiting " + timeWait + " seconds...");

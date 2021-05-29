@@ -104,7 +104,7 @@ public class BackupChannel extends Channel {
     private void sendStoredMsg(byte[] msg) {
         List<byte[]> msgs = new ArrayList<>();
         msgs.add(msg);
-        ThreadHandler.startMulticastThread(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
+        ThreadHandler.sendTCPMessage(addrList.getMcAddr().getAddress(), addrList.getMcAddr().getPort(), msgs);
     }
 
     private void preventReclaim(PutChunk rcvdMsg) {
