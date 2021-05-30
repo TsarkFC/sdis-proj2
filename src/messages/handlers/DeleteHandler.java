@@ -7,8 +7,10 @@ import utils.ThreadHandler;
 
 public class DeleteHandler {
     public void sendDeleteMessage(Peer peer, String fileId) {
-        AddressPort addressPortMc = peer.getArgs().getAddressPortList().getMcAddressPort();
+        //TODO AQUI ELE PRECISA DO FILENAME
+        //quao rafado e gerar o chord id atraves do id do ficheiro?
+        AddressPort addressPortMc = peer.getArgs().getAddressPortList().getChordAddressPort();
         Delete msg = new Delete(addressPortMc.getAddress(), addressPortMc.getPort(), fileId);
-        ThreadHandler.sendTCPMessage(addressPortMc.getAddress(), addressPortMc.getPort(), msg.getBytes());
+        ThreadHandler.sendTCPMessageMC(fileId,peer,msg.getBytes());
     }
 }

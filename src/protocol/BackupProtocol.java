@@ -51,7 +51,7 @@ public class BackupProtocol extends Protocol {
         String previousFileId = peer.getMetadata().getFileIdFromPath(file.getPath());
         if (previousFileId != null) {
             Delete msg = new Delete(mcAddr.getAddress(), mcAddr.getPort(), previousFileId);
-            ThreadHandler.sendTCPMessageMC(file.getName(), peer, msg.getBytes());
+            ThreadHandler.sendTCPMessageMC(fileId, peer, msg.getBytes());
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
 
@@ -70,7 +70,9 @@ public class BackupProtocol extends Protocol {
             System.out.println(new String(message));
             System.out.println("######");
 
-            ThreadHandler.sendTCPMessageMDB(file.getName() + i++, peer, message);
+            //TODO Ter em atençao isto nos outros
+            String chunkFileId =fileHandler.createChunkFileId(fileId,i++);
+            ThreadHandler.sendTCPMessageMDB(chunkFileId, peer, message);
         }
     }
 
@@ -84,6 +86,6 @@ public class BackupProtocol extends Protocol {
         PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), fileId,
                 chunkNo, repDgr, fileHandler.getChunkFileData());
         byte[] message = backupMsg.getBytes();
-        ThreadHandler.sendTCPMessageMDB(file.getName(), peer, message);
+        ThreadHandler.sendTCPMessageMDB(fileId, peer, message);
     }
 }

@@ -134,7 +134,7 @@ public class Peer implements RemoteObject {
             String remoteObjName = this.peerArgs.getAccessPoint();
             RemoteObject stub = (RemoteObject) UnicastRemoteObject.exportObject(this, 0);
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind(remoteObjName, stub);
+            registry.rebind(remoteObjName, stub);
             System.err.println("Peer with name: " + remoteObjName + " ready");
         } catch (Exception e) {
             System.out.println("Error creating peer and connecting to RMI: " + e);

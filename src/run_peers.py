@@ -7,14 +7,12 @@ import os
 
 # java peer.Peer <protocol_version> <peer_id> <service_access_point> <MC_addr> <MC_port> <MDB_addr> <MDB_port> <MDR_addr> <MDR_port>
 
-if len(sys.argv) != 4:
-    print("Execute: python3 run_peers.py <peers_num> (int) <protocol_version> (1.0) <redirect> (yes/no)")
+if len(sys.argv) != 3:
+    print("Execute: python3 run_peers.py <peers_num> (int) <redirect> (yes/no)")
     os._exit(0)
 
 peers_num = int(sys.argv[1])
-protocol_version = sys.argv[2]
-redirect = sys.argv[3] == "yes"
-
+redirect = sys.argv[2] == "yes"
 service_access_point = "access"
 mc_addr = ("228.25.25.25", "4445")
 mdb_addr = ("228.25.25.25", "4446")
@@ -33,10 +31,10 @@ def peer(i,isBoot):
     mdrPort = str(i+3+4445)
     if not isBoot:
         cmd = "../../scripts/peer.sh "  + str(i) + " access" + str(
-            i) + " " + "localhost " + str(localPort) + " " + mc_addr[0] + " " + mcPort + " " + mdb_addr[0] + " " + mdbPort + " " + mdr_addr[0] + " " + mdrPort + " localhost " + str(4445)
+            i) + " localhost " + str(localPort) + " " + mc_addr[0] + " " + mcPort + " " + mdb_addr[0] + " " + mdbPort + " " + mdr_addr[0] + " " + mdrPort + " localhost " + str(4445)
     else:
         cmd = "../../scripts/peer.sh " + str(i) + " access" + str(
-            i) + "localhost" + str(4445) + " " + mc_addr[0] + " " + mcPort + " " + mdb_addr[0] + " " + mdbPort + " " + mdr_addr[0] + " " + mdrPort
+            i) + " localhost " + str(4445) + " " + mc_addr[0] + " " + mcPort + " " + mdb_addr[0] + " " + mdbPort + " " + mdr_addr[0] + " " + mdrPort
     print(cmd)
     if (redirect):
         cmd += " > output/peer" + str(i) + ".out"

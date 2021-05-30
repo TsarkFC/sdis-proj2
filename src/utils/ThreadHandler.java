@@ -16,19 +16,27 @@ public class ThreadHandler {
         executor.schedule(tcpThread, 0, TimeUnit.SECONDS);
     }
 
-    public static void sendTCPMessageMC(String fileName, Peer peer, byte[] msg) {
-        int chordID = peer.getChordNode().generateHash(fileName);
+    public static void sendTCPMessageMC(String fileId, Peer peer, byte[] msg) {
+        int chordID = peer.getChordNode().generateHash(fileId);
         ChordNodeData chordNodeData = peer.getChordNode().findSuccessor(chordID);
         AddressPort addrPortMc = chordNodeData.getAddressPortList().getMcAddressPort();
         ThreadHandler.sendTCPMessage(addrPortMc.getAddress(),
                 addrPortMc.getPort(), msg);
     }
 
-    public static void sendTCPMessageMDB(String fileName, Peer peer, byte[] msg) {
-        int chordID = peer.getChordNode().generateHash(fileName);
+    public static void sendTCPMessageMDB(String fileId, Peer peer, byte[] msg) {
+        int chordID = peer.getChordNode().generateHash(fileId);
         ChordNodeData chordNodeData = peer.getChordNode().findSuccessor(chordID);
-        AddressPort addrPortMc = chordNodeData.getAddressPortList().getMdbAddressPort();
-        ThreadHandler.sendTCPMessage(addrPortMc.getAddress(),
-                addrPortMc.getPort(), msg);
+        AddressPort addrPortMdb = chordNodeData.getAddressPortList().getMdbAddressPort();
+        ThreadHandler.sendTCPMessage(addrPortMdb.getAddress(),
+                addrPortMdb.getPort(), msg);
+    }
+
+    public static void sendTCPMessageMDR(String fileId, Peer peer, byte[] msg) {
+        int chordID = peer.getChordNode().generateHash(fileId);
+        ChordNodeData chordNodeData = peer.getChordNode().findSuccessor(chordID);
+        AddressPort addrPortMdr = chordNodeData.getAddressPortList().getMdrAddressPort();
+        ThreadHandler.sendTCPMessage(addrPortMdr.getAddress(),
+                addrPortMdr.getPort(), msg);
     }
 }

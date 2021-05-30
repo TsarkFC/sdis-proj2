@@ -19,7 +19,10 @@ public class GetChunkHandler {
 
     private void getAndSendChunk(GetChunk rcvdMsg, Peer peer) {
         byte[] chunk = FileHandler.getChunk(rcvdMsg, peer.getFileSystem());
-        if (chunk == null) return;
+        if (chunk == null){
+            System.out.println("Chunk is null");
+            return;
+        }
 
         Chunk msg = new Chunk(rcvdMsg.getIpAddress(), peer.getArgs().getPeerId(), rcvdMsg.getFileId(),
                 rcvdMsg.getChunkNo(), chunk);
@@ -27,8 +30,6 @@ public class GetChunkHandler {
 
         String chunkId = rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo();
         if (peer.hasReceivedChunk(chunkId)) return;
-
-        AddressPortList addrList = peer.getArgs().getAddressPortList();
-        ThreadHandler.sendTCPMessage(addrList.getMdrAddressPort().getAddress(), addrList.getMdrAddressPort().getPort(), message);
+        ThreadHandler.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message);
     }
 }

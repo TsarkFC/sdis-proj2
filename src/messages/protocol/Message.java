@@ -95,7 +95,8 @@ public abstract class Message {
         if (!ipAddress.equals(this.ipAddress)) return false;
         return port.equals(addressPortList.getMcAddressPort().getPort()) ||
                 port.equals(addressPortList.getMdbAddressPort().getPort()) ||
-                port.equals(addressPortList.getMdrAddressPort().getPort());
+                port.equals(addressPortList.getMdrAddressPort().getPort()) ||
+                port.equals(addressPortList.getChordAddressPort().getPort());
     }
 }
 

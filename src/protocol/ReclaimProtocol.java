@@ -6,6 +6,7 @@ import peer.Peer;
 import peer.PeerArgs;
 import peer.metadata.ChunkMetadata;
 import peer.metadata.StoredChunksMetadata;
+import utils.AddressPort;
 import utils.ThreadHandler;
 
 import java.io.File;
@@ -34,14 +35,13 @@ public class ReclaimProtocol extends Protocol {
     }
 
     public void reclaimSpace(double maxDiskSpace, double currentSize) {
-        List<byte[]> messages = new ArrayList<>();
         File[] fileFolders = FileHandler.getDirectoryFiles(peer.getFileSystem());
         if (fileFolders != null) {
 
             System.out.println("[RECLAIM] Eliminating only chunks with Perceived Rep degree > Rep degree");
             for (File file : fileFolders) {
                 if (currentSize <= maxDiskSpace) break;
-                currentSize = reclaimFileSpace(file, currentSize, messages, true);
+                currentSize = reclaimFileSpace(file, currentSize, true);
             }
             fileFolders = FileHandler.getDirectoryFiles(peer.getFileSystem());
 
@@ -51,23 +51,25 @@ public class ReclaimProtocol extends Protocol {
                 System.out.println("[RECLAIM] Eliminating other files");
                 for (File file : fileFolders) {
                     if (currentSize <= maxDiskSpace) break;
-                    currentSize = reclaimFileSpace(file, currentSize, messages, false);
+                    currentSize = reclaimFileSpace(file, currentSize, false);
                 }
             }
-            PeerArgs peerArgs = peer.getArgs();
+
+            //TODO Ele agoraa esta a enviar dentro da funçao reclaim file space, nao ha problema right?
+            /*PeerArgs peerArgs = peer.getArgs();
             ThreadHandler.sendTCPMessage(peerArgs.getAddressPortList().getMcAddressPort().getAddress(),
-                    peerArgs.getAddressPortList().getMcAddressPort().getPort(), messages.get(0));
+                    peerArgs.getAddressPortList().getMcAddressPort().getPort(), messages.get(0));*/
         } else {
             System.out.println("[RECLAIM] The peer does not have any stored files");
         }
     }
 
 
-    private double reclaimFileSpace(File fileId, double currentSize, List<byte[]> messages, boolean onlyBiggerPercDgr) {
+    private double reclaimFileSpace(File fileId, double currentSize, boolean onlyBiggerPercDgr) {
         StoredChunksMetadata storedChunksMetadata = peer.getMetadata().getStoredChunksMetadata();
-        String fileName = fileId.getName();
-        if (!fileName.equals("metadata") && !fileName.equals("restored")) {
-            System.out.println("[RECLAIM] Analysing file: " + fileName);
+        String fileIdName = fileId.getName();
+        if (!fileIdName.equals("metadata") && !fileIdName.equals("restored")) {
+            System.out.println("[RECLAIM] Analysing file: " + fileIdName);
             File[] chunks = FileHandler.getDirectoryFiles(fileId.getPath());
             if (chunks != null) {
                 for (File chunkFile : chunks) {
@@ -79,11 +81,14 @@ public class ReclaimProtocol extends Protocol {
                         System.out.println("[RECLAIM] Eliminating chunk: " + chunkFile.getPath() + " size: " + size);
                         System.out.println("          With perceived dgr = " + chunkMetadata.getPerceivedRepDgr() + " and rep = " + chunkMetadata.getRepDgr());
                         if (FileHandler.deleteFile(chunkFile)) {
-                            peer.getMetadata().getStoredChunksMetadata().deleteChunk(fileName, chunkNo);
-                            peer.getMetadata().getStoredChunksMetadata().deleteReceivedChunk(fileName, chunkNo);
+                            peer.getMetadata().getStoredChunksMetadata().deleteChunk(fileIdName, chunkNo);
+                            peer.getMetadata().getStoredChunksMetadata().deleteReceivedChunk(fileIdName, chunkNo);
                             peer.getMetadata().writeMetadata();
-                            //Removed removedMsg = new Removed(peerArgs.getVersion(), peerArgs.getPeerId(), fileId.getName(), Integer.parseInt(chunkFile.getName()));
-                            //messages.add(removedMsg.getBytes());
+                            //TODO Estou a enviar o do chord para ele verificar se e o mesmo sender
+                            AddressPort addr = peerArgs.getAddressPortList().getChordAddressPort();
+                            Removed removedMsg = new Removed(addr.getAddress(), addr.getPort(), fileId.getName(), Integer.parseInt(chunkFile.getName()));
+                            String chunkId = FileHandler.createChunkFileId(fileIdName,chunkNo);
+                            ThreadHandler.sendTCPMessageMC(chunkId,peer,removedMsg.getBytes());
                             currentSize -= size;
                             System.out.println("[RECLAIM] Current Size = " + currentSize);
                             if (currentSize <= maxDiskSpace) break;
