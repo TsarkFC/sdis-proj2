@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FileHandler {
     private final File file;
-    public static final int CHUNK_SIZE = 64000;
+    public static final int CHUNK_SIZE = 15000;
     private final FileReader fileReader;
 
     public FileHandler(File file) {

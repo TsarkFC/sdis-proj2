@@ -75,10 +75,11 @@ public abstract class Message {
         byte[] crlf = getDoubleCRLF();
         int headerCrlfSize = header.length + crlf.length;
 
-        byte[] msgBytes = new byte[header.length + crlf.length + body.length];
+        byte[] msgBytes = new byte[header.length + crlf.length + body.length/* + crlf.length*/];
         System.arraycopy(header, 0, msgBytes, 0, header.length);
         System.arraycopy(crlf, 0, msgBytes, header.length, crlf.length);
         System.arraycopy(body, 0, msgBytes, headerCrlfSize, body.length);
+        //System.arraycopy(crlf, 0, msgBytes, header.length + crlf.length + body.length, crlf.length); //TODO: Isto tem knowledge?
 
         return msgBytes;
     }
