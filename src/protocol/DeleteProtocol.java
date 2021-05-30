@@ -28,7 +28,7 @@ public class DeleteProtocol extends Protocol {
             return;
         }
         peer.getMetadata().getFileMetadata(fileId).setDeleted(true);
-        if (peer.isVanillaVersion()) peer.getMetadata().deleteFile(fileId);
+        peer.getMetadata().deleteFile(fileId);
 
         execute(fileId);
     }

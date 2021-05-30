@@ -41,12 +41,7 @@ public class StoredChunksMetadata implements Serializable {
             chunk = chunksInfo.get(chunkId);
             chunk.addPeer(peerId);
         } else {
-            if(!peer.isVanillaVersion() && !alreadyReceivedPutChunk(fileId,chunkNo,peer)){
-                chunk = new ChunkMetadata();
-                chunksInfo.put(chunkId, chunk);
-                chunk.addPeer(peerId);
 
-            }
         }
     }
 
@@ -159,23 +154,11 @@ public class StoredChunksMetadata implements Serializable {
         return size;
     }
 
-    public void receivedPutChunk(String fileId,int chunkNo,Peer peer){
-        if(!peer.isVanillaVersion()){
-            String chunkId = getChunkId(fileId,chunkNo);
-            alreadySavedChunk.add(chunkId);
-        }
-    }
+
 
     public void deleteReceivedChunk(String fileId,int chunkNo){
         String chunkId = getChunkId(fileId,chunkNo);
         alreadySavedChunk.remove(chunkId);
     }
 
-    public boolean alreadyReceivedPutChunk(String fileId,int chunkNo,Peer peer){
-        if (!peer.isVanillaVersion()){
-            String chunkId = getChunkId(fileId,chunkNo);
-            return alreadySavedChunk.contains(chunkId);
-        }
-        return true;
-    }
 }

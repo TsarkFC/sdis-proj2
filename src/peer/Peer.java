@@ -114,8 +114,6 @@ public class Peer implements RemoteObject {
 
     public void createChannels() {
         channelCoordinator = new ChannelCoordinator(this);
-        StartProtocol startProtocol = new StartProtocol(this);
-        startProtocol.sendStartingMessage();
     }
 
 
@@ -205,10 +203,4 @@ public class Peer implements RemoteObject {
     public ChordNode getChordNode() {
         return chordNode;
     }
-
-    //TODO: remove
-    public boolean isVanillaVersion() {
-        return true;
-    }
-
 }

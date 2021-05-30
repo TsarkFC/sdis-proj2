@@ -33,17 +33,14 @@ public abstract class Channel {
     public abstract byte[] handle(byte[] message);
 
     protected int getBodyStartPos(byte[] msg) {
-        int crlf = 0;
         int CR = 0xD;
         int LF = 0xA;
-        for (int i = 0; i < msg.length - 1; i++) {
-            if (msg[i] == CR && msg[i + 1] == LF && crlf == 1) {
-                return i + 2;
-            } else if (msg[i] == CR && msg[i + 1] == LF) {
-                crlf++;
-                i++;
-            } else crlf = 0;
+        for (int i = 0; i < msg.length - 3; i++) {
+            if (msg[i] == CR && msg[i + 1] == LF && msg[i + 2] == CR && msg[i + 3] == LF) {
+                return i + 4;
+            }
         }
+        System.out.println("COULD NOT FIND <CRLF><CRLF>");
         return 0;
     }
 

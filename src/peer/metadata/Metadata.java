@@ -75,10 +75,7 @@ public class Metadata implements Serializable {
     public void deleteFileHosting(String fileID, Peer peer) {
         FileMetadata fileMetadata = hostingFileInfo.get(fileID);
         if (fileMetadata == null) return;
-        if (!peer.isVanillaVersion() && fileMetadata.deletedAllChunksAllPeers()) {
-            hostingFileInfo.remove(fileID);
-            writeMetadata();
-        }
+
     }
 
     /**
@@ -187,7 +184,7 @@ public class Metadata implements Serializable {
         double finalSpace = storedSize + newFileSizeKb;
 
         System.out.println("STORED SIZE: " + storedSize);
-        System.out.println("WOTH MEW FILE: " + finalSpace);
+        System.out.println("GOT FILE: " + finalSpace);
         if (maxSpace == -1) return true;
         return maxSpace > finalSpace;
     }

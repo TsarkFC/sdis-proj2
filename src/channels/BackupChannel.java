@@ -30,13 +30,13 @@ public class BackupChannel extends Channel {
 
     @Override
     public byte[] handle(byte[] message) {
-        return parseMsg(message);
-    }
-
-    public byte[] parseMsg(byte[] packetData) {
-        int bodyStartPos = getBodyStartPos(packetData);
-        byte[] header = Arrays.copyOfRange(packetData, 0, bodyStartPos - 4);
-        byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packetData.length);
+        System.out.println("DATA");
+        System.out.println(new String(message));
+        System.out.println("######");
+        int bodyStartPos = getBodyStartPos(message);
+        System.out.println("###### BODY START POSITION: " + bodyStartPos);
+        byte[] header = Arrays.copyOfRange(message, 0, bodyStartPos - 4);
+        byte[] body = Arrays.copyOfRange(message, bodyStartPos, message.length);
 
         String rcvd = new String(header, 0, header.length);
         System.out.println("[RECEIVED MESSAGE MDB] " + rcvd);
@@ -45,19 +45,14 @@ public class BackupChannel extends Channel {
         if (shouldSaveFile(rcvdMsg)) {
             System.out.println("Should save file");
             String delayMsg;
-            if (peer.isVanillaVersion()) {
-                saveChunk(rcvdMsg);
-                delayMsg = "[BACKUP] Sending stored messages after: ";
-            } else delayMsg = "[BACKUP] Initiate Backup after: ";
+
+            saveChunk(rcvdMsg);
+            delayMsg = "[BACKUP] Sending stored messages after: ";
+
             new ScheduledThreadPoolExecutor(1).schedule(() -> sendStored(rcvdMsg),
                     Utils.generateRandomDelay(delayMsg), TimeUnit.MILLISECONDS);
         } else {
             System.out.println("Should not save file");
-            if (!peer.isVanillaVersion()) {
-                peer.getMetadata().getStoredChunksMetadata().deleteChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-                peer.getMetadata().getStoredChunksMetadata().receivedPutChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), peer);
-                peer.getMetadata().writeMetadata();
-            }
         }
         return Utils.discard();
     }
@@ -82,22 +77,14 @@ public class BackupChannel extends Channel {
     }
 
     public void sendStored(PutChunk rcvdMsg) {
-        if (!alreadyReachedRepDgr(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg())) {
-            AddressPort addressPortChord = peer.getArgs().getAddressPortList().getChordAddressPort();
-            
-            Stored message = new Stored(addressPortChord.getAddress(), addressPortChord.getPort(), rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-            ThreadHandler.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
-            if (!peer.isVanillaVersion()) {
-                //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize0(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-                saveChunk(rcvdMsg);
-            }
 
-        } else {
-            System.out.println("[BACKUP] Not backing up because reached perceived rep degree");
-            if (!peer.isVanillaVersion()) {
-                peer.getMetadata().getStoredChunksMetadata().deleteChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-            }
-        }
+        AddressPort addressPortChord = peer.getArgs().getAddressPortList().getChordAddressPort();
+
+        Stored message = new Stored(addressPortChord.getAddress(), addressPortChord.getPort(), rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
+        ThreadHandler.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
+
+        //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize0(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
+        saveChunk(rcvdMsg);
     }
 
     private void preventReclaim(PutChunk rcvdMsg) {
@@ -107,11 +94,5 @@ public class BackupChannel extends Channel {
         }
     }
 
-    private boolean alreadyReachedRepDgr(String fileId, int chunkNo, int repDgr) {
-        if (peer.isVanillaVersion()) return false;
-        int stored = peer.getMetadata().getStoredChunksMetadata().getStoredCount(fileId, chunkNo);
-        System.out.println("[BACKUP] Replication Degree = " + repDgr + " and perceived = " + stored + " of file " + fileId);
-        return (stored >= repDgr);
 
-    }
 }

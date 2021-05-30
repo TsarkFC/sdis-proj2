@@ -1,6 +1,6 @@
 package messages.protocol;
 
-// <Version> PUTCHUNK <IPAddress> <Port> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+// PUTCHUNK <IPAddress> <Port> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
 public class PutChunk extends MsgWithChunk {
 
     final int REP_DGR_IDX = 5;

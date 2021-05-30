@@ -2,19 +2,12 @@ package messages.handlers;
 
 import filehandler.FileHandler;
 import messages.protocol.Chunk;
-import messages.protocol.ChunkEnhanced;
 import messages.protocol.GetChunk;
 import peer.Peer;
 import utils.AddressPortList;
 import utils.ThreadHandler;
 import utils.Utils;
 
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 

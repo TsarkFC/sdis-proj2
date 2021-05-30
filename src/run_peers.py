@@ -26,12 +26,17 @@ def handler(signal_received, frame):
     os._exit(0)
 
 
-def peer(i):
+def peer(i,isBoot):
+    localPort = 4445+i
     mcPort = str(i+1+4445)
     mdbPort = str(i+2+4445)
     mdrPort = str(i+3+4445)
-    cmd = "../../scripts/peer.sh " + protocol_version + " " + str(i) + " access" + str(
-        i) + " " + mc_addr[0] + " " + mcPort + " " + mdb_addr[0] + " " + mdbPort + " " + mdr_addr[0] + " " + mdrPort
+    if not isBoot:
+        cmd = "../../scripts/peer.sh "  + str(i) + " access" + str(
+            i) + " " + "localhost " + str(localPort) + " " + mc_addr[0] + " " + mcPort + " " + mdb_addr[0] + " " + mdbPort + " " + mdr_addr[0] + " " + mdrPort + " localhost " + str(4445)
+    else:
+        cmd = "../../scripts/peer.sh " + str(i) + " access" + str(
+            i) + "localhost" + str(4445) + " " + mc_addr[0] + " " + mcPort + " " + mdb_addr[0] + " " + mdbPort + " " + mdr_addr[0] + " " + mdrPort
     print(cmd)
     if (redirect):
         cmd += " > output/peer" + str(i) + ".out"
@@ -53,10 +58,13 @@ def start():
         subprocess.Popen("rm -r output", shell=True, cwd="build")
     subprocess.Popen("mkdir output", shell=True, cwd="build")
 
-    for i in range(peers_num):
+    newpid = os.fork()
+    if newpid == 0:
+        peer(0,True)
+    for i in range(1,peers_num):
         newpid = os.fork()
         if newpid == 0:
-            peer(i*4)
+            peer(i*4,False)
 
     print('Running. Press CTRL-C to exit.')
     while True:

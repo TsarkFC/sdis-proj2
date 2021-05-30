@@ -34,8 +34,6 @@ public class ControlChannel extends Channel {
             case "DELETE" -> handleDelete(msgString);
             case "GETCHUNK" -> handleRestore(msgString);
             case "REMOVED" -> handleReclaim(msgString);
-            case "DELETED" -> handleDeleted(msgString);
-            case "STARTING" -> handleStart(msgString);
             default -> System.out.println("\nERROR NOT PARSING THAT MESSAGE " + msgType);
         }
         return Utils.discard();
@@ -55,35 +53,6 @@ public class ControlChannel extends Channel {
             System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
             if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
                 peer.getMetadata().deleteFile(msg.getFileId());
-                new DeleteHandler().sendDeletedMessage(peer, msg);
-            }
-        }
-    }
-
-
-    public void handleDeleted(String msgString) {
-        Deleted msg = new Deleted(msgString);
-        if (!msg.samePeerAndSender(peer) && !peer.isVanillaVersion()) {
-            System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
-            FileMetadata fileMetadata = peer.getMetadata().getFileMetadata(msg.getFileId());
-            if (fileMetadata == null) return;
-            //fileMetadata.removeID(msg.getSenderId());
-            peer.getMetadata().writeMetadata();
-            if (fileMetadata.deletedAllChunksAllPeers()) {
-                System.out.println("[DELETE] Successfully removed all chunks from all peers of file " + msg.getFileId());
-                peer.getMetadata().deleteFileHosting(msg.getFileId(), peer);
-            }
-        }
-    }
-
-    public void handleStart(String msgString) {
-        Starting msg = new Starting(msgString);
-        if (!msg.samePeerAndSender(peer) && !peer.isVanillaVersion()) {
-            System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
-            List<FileMetadata> almostDeletedFiles = peer.getMetadata().getAlmostDeletedFiles();
-            for (FileMetadata almostDeletedFile : almostDeletedFiles) {
-                System.out.println("[DELETE] Sending delete message of file " + almostDeletedFile.getId());
-                new DeleteHandler().sendDeleteMessage(peer, almostDeletedFile.getId());
             }
         }
     }
