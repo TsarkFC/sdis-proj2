@@ -5,6 +5,7 @@ import messages.protocol.Stored;
 import peer.Peer;
 import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
+import utils.AddressPort;
 import utils.AddressPortList;
 import filehandler.FileHandler;
 import utils.ThreadHandler;
@@ -32,7 +33,7 @@ public class BackupChannel extends Channel {
         return parseMsg(message);
     }
 
-    public byte[] parseMsg(byte[] packetData){
+    public byte[] parseMsg(byte[] packetData) {
         int bodyStartPos = getBodyStartPos(packetData);
         byte[] header = Arrays.copyOfRange(packetData, 0, bodyStartPos - 4);
         byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packetData.length);
@@ -42,6 +43,7 @@ public class BackupChannel extends Channel {
         PutChunk rcvdMsg = new PutChunk(rcvd, body);
 
         if (shouldSaveFile(rcvdMsg)) {
+            System.out.println("Should save file");
             String delayMsg;
             if (peer.isVanillaVersion()) {
                 saveChunk(rcvdMsg);
@@ -50,6 +52,7 @@ public class BackupChannel extends Channel {
             new ScheduledThreadPoolExecutor(1).schedule(() -> sendStored(rcvdMsg),
                     Utils.generateRandomDelay(delayMsg), TimeUnit.MILLISECONDS);
         } else {
+            System.out.println("Should not save file");
             if (!peer.isVanillaVersion()) {
                 peer.getMetadata().getStoredChunksMetadata().deleteChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
                 peer.getMetadata().getStoredChunksMetadata().receivedPutChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), peer);
@@ -60,7 +63,7 @@ public class BackupChannel extends Channel {
     }
 
     private boolean shouldSaveFile(PutChunk rcvdMsg) {
-        boolean sameSenderPeer = rcvdMsg.getSenderId().equals(peer.getArgs().getPeerId());
+        boolean sameSenderPeer = rcvdMsg.samePeerAndSender(peer);
         boolean hasSpace = peer.getMetadata().hasSpace(rcvdMsg.getBody().length / 1000.0);
         boolean isOriginalFileSender = peer.getMetadata().hasFile(rcvdMsg.getFileId());
         return !sameSenderPeer && hasSpace && !isOriginalFileSender;
@@ -72,7 +75,7 @@ public class BackupChannel extends Channel {
     }
 
     public void saveChunk(PutChunk rcvdMsg) {
-        System.out.println("[BACKUP] Backing up file " + rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo() + "from " + rcvdMsg.getSenderId());
+        System.out.println("[BACKUP] Backing up file " + rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo());
         preventReclaim(rcvdMsg);
         FileHandler.saveChunk(rcvdMsg, peer.getFileSystem());
         saveStateMetadata(rcvdMsg);
@@ -80,8 +83,10 @@ public class BackupChannel extends Channel {
 
     public void sendStored(PutChunk rcvdMsg) {
         if (!alreadyReachedRepDgr(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg())) {
-            Stored confMsg = new Stored(rcvdMsg.getVersion(), peer.getArgs().getPeerId(), rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-            sendStoredMsg(confMsg.getBytes());
+            AddressPort addressPortChord = peer.getArgs().getAddressPortList().getChordAddressPort();
+            
+            Stored message = new Stored(addressPortChord.getAddress(), addressPortChord.getPort(), rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
+            ThreadHandler.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
             if (!peer.isVanillaVersion()) {
                 //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize0(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
                 saveChunk(rcvdMsg);
@@ -93,10 +98,6 @@ public class BackupChannel extends Channel {
                 peer.getMetadata().getStoredChunksMetadata().deleteChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
             }
         }
-    }
-
-    private void sendStoredMsg(byte[] msg) {
-        ThreadHandler.sendTCPMessage(addressPortList.getMcAddressPort().getAddress(), addressPortList.getMcAddressPort().getPort(), msg);
     }
 
     private void preventReclaim(PutChunk rcvdMsg) {

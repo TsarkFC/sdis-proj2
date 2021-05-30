@@ -1,6 +1,6 @@
 package messages.protocol;
 
-// <Version> PUTCHUNK <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+// <Version> PUTCHUNK <IPAddress> <Port> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
 public class PutChunk extends MsgWithChunk {
 
     final int REP_DGR_IDX = 5;
@@ -8,9 +8,9 @@ public class PutChunk extends MsgWithChunk {
     private final Integer replicationDeg;
     private final byte[] body;
 
-    public PutChunk(Double version, Integer senderId, String fileId, Integer chunkNo,
+    public PutChunk(String ipAddress, Integer port, String fileId, Integer chunkNo,
                     Integer replicationDeg, byte[] body) {
-        super(version, senderId, fileId, chunkNo);
+        super(ipAddress, port, fileId, chunkNo);
         this.replicationDeg = replicationDeg;
         this.body = body;
     }
@@ -44,7 +44,7 @@ public class PutChunk extends MsgWithChunk {
 
     @Override
     public byte[] getBytes() {
-        String header = String.format("%s %s %d %s %d %d", this.version, getMsgType(), this.senderId,
+        String header = String.format("%s %s %d %s %d %d", getMsgType(), this.ipAddress, this.port,
                 this.fileId, this.chunkNo, this.replicationDeg);
         return addBody(header.getBytes(), body);
     }

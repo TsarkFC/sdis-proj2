@@ -82,8 +82,8 @@ public class ReclaimProtocol extends Protocol {
                             peer.getMetadata().getStoredChunksMetadata().deleteChunk(fileName, chunkNo);
                             peer.getMetadata().getStoredChunksMetadata().deleteReceivedChunk(fileName, chunkNo);
                             peer.getMetadata().writeMetadata();
-                            Removed removedMsg = new Removed(peerArgs.getVersion(), peerArgs.getPeerId(), fileId.getName(), Integer.parseInt(chunkFile.getName()));
-                            messages.add(removedMsg.getBytes());
+                            //Removed removedMsg = new Removed(peerArgs.getVersion(), peerArgs.getPeerId(), fileId.getName(), Integer.parseInt(chunkFile.getName()));
+                            //messages.add(removedMsg.getBytes());
                             currentSize -= size;
                             System.out.println("[RECLAIM] Current Size = " + currentSize);
                             if (currentSize <= maxDiskSpace) break;

@@ -1,10 +1,12 @@
 package messages.protocol;
 
-// <Version> REMOVED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+import utils.Utils;
+
+// REMOVED <IPAddress> <Port> <FileId> <ChunkNo> <CRLF><CRLF>
 public class Removed extends MsgWithChunk {
 
-    public Removed(Double version, Integer senderId, String fileId, Integer chunkNo) {
-        super(version, senderId, fileId, chunkNo);
+    public Removed(String ipAddress, Integer port, String fileId, Integer chunkNo) {
+        super(ipAddress, port, fileId, chunkNo);
     }
     public Removed(String rcvd){
         super(rcvd);
@@ -26,6 +28,6 @@ public class Removed extends MsgWithChunk {
 
     @Override
     public byte[] getBytes() {
-        return addCRLF(getMsgString().getBytes());
+        return Utils.addCRLF(getMsgString().getBytes());
     }
 }

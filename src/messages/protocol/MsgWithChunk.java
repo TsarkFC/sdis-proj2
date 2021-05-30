@@ -1,13 +1,13 @@
 package messages.protocol;
 
-// <Version> STORED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+// STORED <IPAddress> <Port> <FileId> <ChunkNo> <CRLF><CRLF>
 public abstract class MsgWithChunk extends Message {
 
     final int CHUNK_NO_IDX = 4;
     protected final Integer chunkNo;
 
-    public MsgWithChunk(Double version, Integer senderId, String fileId, Integer chunkNo) {
-        super(version, senderId, fileId);
+    public MsgWithChunk(String ipAddress, Integer port, String fileId, Integer chunkNo) {
+        super(ipAddress, port, fileId);
         this.chunkNo = chunkNo;
     }
 

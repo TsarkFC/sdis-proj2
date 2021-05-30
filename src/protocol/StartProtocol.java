@@ -2,6 +2,7 @@ package protocol;
 
 import messages.protocol.Starting;
 import peer.Peer;
+import utils.AddressPort;
 import utils.AddressPortList;
 import utils.ThreadHandler;
 
@@ -17,9 +18,10 @@ public class StartProtocol {
 
     public void sendStartingMessage() {
         if (!peer.isVanillaVersion()) {
-            AddressPortList addrList = peer.getArgs().getAddressPortList();
-            Starting msg = new Starting(peer.getArgs().getVersion(), peer.getArgs().getPeerId());
-            ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), msg.getBytes());
+            AddressPortList addrPortList = peer.getArgs().getAddressPortList();
+            //TODO: REMOVE
+            Starting msg = new Starting("delete", peer.getArgs().getPeerId());
+            ThreadHandler.sendTCPMessage(addrPortList.getMcAddressPort().getAddress(), addrPortList.getMcAddressPort().getPort(), msg.getBytes());
         }
     }
 }

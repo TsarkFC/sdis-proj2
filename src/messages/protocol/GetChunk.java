@@ -1,10 +1,12 @@
 package messages.protocol;
 
-// <Version> GETCHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+import utils.Utils;
+
+// <Version> GETCHUNK <IPAddress> <Port> <FileID> <ChunkNo> <CRLF><CRLF>
 public class GetChunk extends MsgWithChunk {
 
-    public GetChunk(Double version, Integer senderId, String fileId, Integer chunkNo) {
-        super(version, senderId, fileId, chunkNo);
+    public GetChunk(String ipAddress, Integer port, String fileId, Integer chunkNo) {
+        super(ipAddress, port, fileId, chunkNo);
     }
     public GetChunk(String msg){
         super(msg);
@@ -27,6 +29,6 @@ public class GetChunk extends MsgWithChunk {
 
     @Override
     public byte[] getBytes() {
-        return addCRLF(getMsgString().getBytes());
+        return Utils.addCRLF(getMsgString().getBytes());
     }
 }

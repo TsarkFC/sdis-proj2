@@ -5,17 +5,12 @@ import messages.handlers.DeleteHandler;
 import messages.handlers.GetChunkHandler;
 import messages.protocol.*;
 import peer.Peer;
-import peer.metadata.ChunkMetadata;
 import peer.metadata.FileMetadata;
-import peer.metadata.StoredChunksMetadata;
-import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
 import utils.AddressPortList;
 import utils.Utils;
 
 import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class ControlChannel extends Channel {
 
@@ -49,7 +44,9 @@ public class ControlChannel extends Channel {
     public void handleBackup(String msgString) {
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
         Stored msg = new Stored(msgString);
-        peer.getMetadata().updateStoredInfo(msg.getFileId(), msg.getChunkNo(), msg.getSenderId(),peer);
+
+        // TODO: check rep degree
+        //peer.getMetadata().updateStoredInfo(msg.getFileId(), msg.getChunkNo(), msg.getSenderId(), peer);
     }
 
     public void handleDelete(String msgString) {
@@ -69,8 +66,8 @@ public class ControlChannel extends Channel {
         if (!msg.samePeerAndSender(peer) && !peer.isVanillaVersion()) {
             System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
             FileMetadata fileMetadata = peer.getMetadata().getFileMetadata(msg.getFileId());
-            if(fileMetadata == null) return;
-            fileMetadata.removeID(msg.getSenderId());
+            if (fileMetadata == null) return;
+            //fileMetadata.removeID(msg.getSenderId());
             peer.getMetadata().writeMetadata();
             if (fileMetadata.deletedAllChunksAllPeers()) {
                 System.out.println("[DELETE] Successfully removed all chunks from all peers of file " + msg.getFileId());
@@ -86,7 +83,7 @@ public class ControlChannel extends Channel {
             List<FileMetadata> almostDeletedFiles = peer.getMetadata().getAlmostDeletedFiles();
             for (FileMetadata almostDeletedFile : almostDeletedFiles) {
                 System.out.println("[DELETE] Sending delete message of file " + almostDeletedFile.getId());
-                new DeleteHandler().sendDeleteMessages(peer, almostDeletedFile.getId());
+                new DeleteHandler().sendDeleteMessage(peer, almostDeletedFile.getId());
             }
         }
     }
@@ -105,7 +102,7 @@ public class ControlChannel extends Channel {
 
         //A peer that has a local copy of the chunk shall update its local count of this chunk
         //1- Check if chunk is stored
-        StoredChunksMetadata storageMetadata = peer.getMetadata().getStoredChunksMetadata();
+        /*StoredChunksMetadata storageMetadata = peer.getMetadata().getStoredChunksMetadata();
         int peerId = peer.getArgs().getPeerId();
         if (storageMetadata.chunkIsStored(removed.getFileId(), removed.getChunkNo()) && !removed.samePeerAndSender(peerId)) {
             //2- Update local count of its chunk
@@ -124,6 +121,6 @@ public class ControlChannel extends Channel {
                 new ScheduledThreadPoolExecutor(1).schedule(backupProtocolInitiator,
                         Utils.generateRandomDelay("[BACKUP] Starting backup of " + chunkMetadata.getId() + " after "), TimeUnit.MILLISECONDS);
             }
-        } else System.out.println("[RECLAIM]: Peer does not have Chunk stored");
+        } else System.out.println("[RECLAIM]: Peer does not have Chunk stored");*/
     }
 }

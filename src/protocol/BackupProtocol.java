@@ -1,16 +1,14 @@
 package protocol;
 
+import filehandler.FileHandler;
 import messages.protocol.Delete;
 import messages.protocol.PutChunk;
 import peer.Peer;
-import peer.PeerArgs;
 import peer.metadata.FileMetadata;
-import filehandler.FileHandler;
+import utils.AddressPort;
 import utils.ThreadHandler;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +41,9 @@ public class BackupProtocol extends Protocol {
         ConcurrentHashMap<Integer, byte[]> chunks = fileHandler.getFileChunks();
         fileId = fileHandler.createFileId();
         numOfChunks = chunks.size();
+        AddressPort mcaddr = peer.getArgs().getAddressPortList().getMcAddressPort();
+        AddressPort mdbaddr = peer.getArgs().getAddressPortList().getMdbAddressPort();
+
 
         if (peer.getMetadata().hasFile(fileId)) {
             System.out.println("[BACKUP] File already backed up, aborting...");
@@ -52,22 +53,17 @@ public class BackupProtocol extends Protocol {
         // Updating a previously backed up file, delete previous one
         String previousFileId = peer.getMetadata().getFileIdFromPath(file.getPath());
         if (previousFileId != null) {
-            PeerArgs peerArgs = peer.getArgs();
-            Delete msg = new Delete(peerArgs.getVersion(), peerArgs.getPeerId(), previousFileId);
-            List<byte[]> msgs = new ArrayList<>();
-            msgs.add(msg.getBytes());
-            ThreadHandler.sendTCPMessage(peerArgs.getAddressPortList().getMcAddressPort().getAddress(),
-                    peerArgs.getAddressPortList().getMcAddressPort().getPort(), message);
-
+            Delete msg = new Delete(mcaddr.getAddress(), mcaddr.getPort(), previousFileId);
+            ThreadHandler.sendTCPMessageMC(file.getName(), peer, msg.getBytes());
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
 
         FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length());
         peer.getMetadata().addHostingEntry(fileMetadata);
-
+    
         // message initialization
         for (ConcurrentHashMap.Entry<Integer, byte[]> chunk : chunks.entrySet()) {
-            PutChunk backupMsg = new PutChunk(peer.getArgs().getVersion(), peer.getArgs().getPeerId(), fileId,
+            PutChunk backupMsg = new PutChunk(mdbaddr.getAddress(), mdbaddr.getPort(), fileId,
                     chunk.getKey(), repDgr, chunk.getValue());
             message = backupMsg.getBytes();
         }
@@ -77,9 +73,9 @@ public class BackupProtocol extends Protocol {
 
     private void execute() {
         if (reps <= repsLimit) {
-            ThreadHandler.sendTCPMessage(peer.getArgs().getAddressPortList().getMdbAddressPort().getAddress(),
-                    peer.getArgs().getAddressPortList().getMdbAddressPort().getPort(), message);
-            executor.schedule(this::verify, timeWait, TimeUnit.SECONDS);
+            ThreadHandler.sendTCPMessageMDB(file.getName(), peer, message);
+            
+            //TODO isto e para comentar right? executor.schedule(this::verify, timeWait, TimeUnit.SECONDS);
             System.out.println("[BACKUP] Sent message, waiting " + timeWait + " seconds...");
         } else {
             System.out.println("[BACKUP] Reached reached limit of PUTCHUNK messages!");
@@ -103,7 +99,9 @@ public class BackupProtocol extends Protocol {
         //FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length());
         //peer.getMetadata().addHostingEntry(fileMetadata);
 
-        PutChunk backupMsg = new PutChunk(peer.getArgs().getVersion(), peer.getArgs().getPeerId(), fileId,
+
+        AddressPort addressPort = peer.getArgs().getAddressPortList().getMdbAddressPort();
+        PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), fileId,
                 chunkNo, repDgr, fileHandler.getChunkFileData());
         message = backupMsg.getBytes();
 

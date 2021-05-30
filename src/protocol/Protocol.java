@@ -1,11 +1,9 @@
 package protocol;
 
-import chord.Chord;
-import peer.Peer;
 import filehandler.FileHandler;
+import peer.Peer;
 
 import java.io.File;
-import java.io.IOException;
 
 public abstract class Protocol {
     protected final File file;
@@ -23,7 +21,8 @@ public abstract class Protocol {
         this.peer = peer;
     }
 
-
-
     public abstract void initialize();
+
+    
+    
 }

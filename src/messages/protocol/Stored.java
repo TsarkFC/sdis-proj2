@@ -1,10 +1,12 @@
 package messages.protocol;
 
+import utils.Utils;
+
 // <Version> STORED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
 public class Stored extends MsgWithChunk {
 
-    public Stored(Double version, Integer senderId, String fileId, Integer chunkNo) {
-        super(version,senderId,fileId,chunkNo);
+    public Stored(String ipAddress, Integer port, String fileId, Integer chunkNo) {
+        super(ipAddress, port, fileId, chunkNo);
     }
 
     public Stored(String message) {
@@ -29,7 +31,7 @@ public class Stored extends MsgWithChunk {
 
     @Override
     public byte[] getBytes() {
-        return addCRLF(getMsgString().getBytes());
+        return Utils.addCRLF(getMsgString().getBytes());
     }
 
     public void printMsg() {

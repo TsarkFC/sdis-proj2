@@ -1,14 +1,18 @@
 package messages.protocol;
 
-// <Version> REMOVED <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
+import utils.Utils;
+
+// <Version> REMOVED <IPAddress> <Port> <FileID> <CRLF><CRLF>
 public class Deleted extends Message {
 
-    public Deleted(Double version, Integer senderId, String fileId) {
-        super(version, senderId, fileId);
+    public Deleted(String ipAddress, Integer port, String fileId) {
+        super(ipAddress, port, fileId);
     }
-    public Deleted(String rcvd){
+
+    public Deleted(String rcvd) {
         super(rcvd);
     }
+
     @Override
     public String getMsgType() {
         return "DELETED";
@@ -26,6 +30,6 @@ public class Deleted extends Message {
 
     @Override
     public byte[] getBytes() {
-        return addCRLF(getMsgString().getBytes());
+        return Utils.addCRLF(getMsgString().getBytes());
     }
 }

@@ -3,8 +3,8 @@ package messages.protocol;
 public class ChunkEnhanced extends MsgWithChunk {
     private final int portNumber;
 
-    public ChunkEnhanced(Double version, Integer senderId, String fileId, Integer chunkNo, int portNumber) {
-        super(version, senderId, fileId, chunkNo);
+    public ChunkEnhanced(String ipAddress, Integer port, String fileId, Integer chunkNo, int portNumber) {
+        super(ipAddress, port, fileId, chunkNo);
         this.portNumber = portNumber;
     }
 
@@ -30,8 +30,8 @@ public class ChunkEnhanced extends MsgWithChunk {
 
     @Override
     public byte[] getBytes() {
-        //<Version> <MessageType> <SenderId> <FileId> <ChunkNo> <PortNumber> <CRLF>
-        String header = String.format("%s %s %d %s %d", this.version, getMsgType(), this.senderId,
+        //<MessageType> <IPAddress> <Port> <FileId> <ChunkNo> <PortNumber> <CRLF>
+        String header = String.format("%s %s %d %s %d", getMsgType(), this.ipAddress, this.port,
                 this.fileId, this.chunkNo);
         return addBody(header.getBytes(), String.valueOf(this.portNumber).getBytes());
     }

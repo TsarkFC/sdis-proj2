@@ -1,12 +1,15 @@
 package messages.protocol;
 
-// <Version> DELETE <SenderId> <FileId> <CRLF><CRLF>
+import utils.Utils;
+
+// <Version> DELETE <IPAddress> <Port> <FileID> <CRLF><CRLF>
 public class Delete extends Message {
 
-    public Delete(Double version, Integer senderId, String fileId) {
-        super(version,senderId,fileId);
+    public Delete(String ipAddress, Integer port, String fileId) {
+        super(ipAddress, port, fileId);
     }
-    public Delete(String msg){
+
+    public Delete(String msg) {
         super(msg);
     }
 
@@ -27,6 +30,6 @@ public class Delete extends Message {
 
     @Override
     public byte[] getBytes() {
-        return addCRLF(getMsgString().getBytes());
+        return Utils.addCRLF(getMsgString().getBytes());
     }
 }

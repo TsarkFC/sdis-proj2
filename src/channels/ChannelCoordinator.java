@@ -2,8 +2,6 @@ package channels;
 
 import peer.Peer;
 import protocol.BackupProtocolInitiator;
-import ssl.SSLInformation;
-import utils.AddressList;
 import utils.AddressPortList;
 
 import java.util.concurrent.ExecutorService;
@@ -21,17 +19,6 @@ public class ChannelCoordinator {
         this.createMCChannel(addressPortList);
         this.createMDRChannel(addressPortList);
         this.createChordChannel(addressPortList);
-    }
-
-    //TODO Alterar a classe Channel
-    //TODO Acho que ja nao e preciso, esta a ser inicializado no channel right?
-    public void initializeReceiver(SSLInformation sslInformation,AddressList addressList){
-        /*SslReceiver receiverThread = new SslReceiver(peer.getArgs().getSslInformation());
-        receiverThread.addServer(addressList.getMcAddr().getAddress(), addressList.getMcAddr().getPort());
-        receiverThread.addServer(addressList.getMdbAddr().getAddress(), addressList.getMdbAddr().getPort());
-        receiverThread.addServer(addressList.getMdrAddr().getAddress(), addressList.getMdrAddr().getPort());
-        receiverThread.addServer(peer.getArgs().getChordPeerIpAddr(), peer.getArgs().getChordPort());
-        new Thread(receiverThread).start();*/
     }
 
     public void createMDBChannel(AddressPortList addressPortList) {

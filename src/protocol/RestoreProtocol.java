@@ -5,6 +5,7 @@ import messages.protocol.GetChunk;
 import peer.Peer;
 import peer.PeerArgs;
 import peer.metadata.Metadata;
+import utils.AddressPort;
 import utils.AddressPortList;
 import utils.ThreadHandler;
 
@@ -41,7 +42,8 @@ public class RestoreProtocol extends Protocol {
         int chunksNo = FileHandler.getNumberOfChunks(metadata.getFileSize(fileId));
 
         for (int i = 0; i < chunksNo; i++) {
-            GetChunk getChunk = new GetChunk(peerArgs.getVersion(), peerArgs.getPeerId(), fileId, i);
+            AddressPort addressPort = peerArgs.getAddressPortList().getMdrAddressPort();
+            GetChunk getChunk = new GetChunk(addressPort.getAddress(), addressPort.getPort(), fileId, i);
             messages.add(getChunk.getBytes());
         }
 

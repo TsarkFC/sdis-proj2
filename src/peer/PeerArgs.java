@@ -70,9 +70,6 @@ public class PeerArgs {
         return otherPeerAddressPort;
     }
 
-    //TODO: remove
-    public Double getVersion() { return 0.0; }
-
     public SSLInformation getSslInformation() {
         return sslInformation;
     }

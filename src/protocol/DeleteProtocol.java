@@ -35,7 +35,7 @@ public class DeleteProtocol extends Protocol {
 
     private void execute(String fileId) {
         if (reps <= repsLimit) {
-            new DeleteHandler().sendDeleteMessages(peer, fileId);
+            new DeleteHandler().sendDeleteMessage(peer, fileId);
             executor.schedule(() -> {
                 reps++;
                 execute(fileId);

@@ -1,10 +1,12 @@
 package messages.protocol;
 
+import utils.Utils;
+
 // <Version> STARTING <CRLF><CRLF>
 public class Starting extends Message {
 
-    public Starting(Double version, Integer senderId) {
-        super(version, senderId, "");
+    public Starting(String ipAddress, Integer port) {
+        super(ipAddress, port, "");
     }
     public Starting(String msg) {
         super(msg);
@@ -27,6 +29,6 @@ public class Starting extends Message {
 
     @Override
     public byte[] getBytes() {
-        return addCRLF(getMsgString().getBytes());
+        return Utils.addCRLF(getMsgString().getBytes());
     }
 }
