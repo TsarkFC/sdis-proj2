@@ -9,6 +9,7 @@ import utils.AddressPort;
 import utils.AddressPortList;
 import utils.ThreadHandler;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -47,19 +48,16 @@ public class RestoreProtocol extends Protocol {
             messages.add(getChunk.getBytes());
         }
 
-        execute(messages, fileId);
+        execute(messages,fileId);
     }
 
-    private void execute(List<byte[]> messages, String fileId) {
-        if (reps <= repsLimit) {
-            AddressPortList addrList = peer.getArgs().getAddressPortList();
-            for (byte[] message : messages) {
-                ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), message);
-            }
-            executor.schedule(() -> verify(messages, fileId), timeWait, TimeUnit.SECONDS);
-            System.out.println("[RESTORE] Sent message, waiting " + timeWait + " seconds...");
-        } else {
-            System.out.println("[RESTORE] Reached resending limit of PUTCHUNK messages!");
+    private void execute(List<byte[]> messages,String fileId) {
+        AddressPortList addrList = peer.getArgs().getAddressPortList();
+        for (byte[] message : messages) {
+            //ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), message);
+            File f = new File(path);
+            System.out.println("Trying to restore file with name: " + f.getName());
+            ThreadHandler.sendTCPMessageMC(fileId,peer,message);
         }
     }
 
@@ -68,7 +66,7 @@ public class RestoreProtocol extends Protocol {
             System.out.println("[RESTORE] Did not complete after " + timeWait + " seconds. Resending...");
             reps++;
             timeWait *= 2;
-            execute(messages, fileId);
+            execute(messages,fileId);
         }
     }
 }

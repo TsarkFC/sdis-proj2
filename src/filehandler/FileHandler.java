@@ -52,6 +52,10 @@ public class FileHandler {
         return sb.toString();
     }
 
+    public static String createChunkFileId(String fileId,int chunkNo){
+        return fileId+chunkNo;
+    }
+
     public static String getFilePath(String peerDir, Message message) {
         return peerDir.concat("/" + message.getFileId() + "/");
     }

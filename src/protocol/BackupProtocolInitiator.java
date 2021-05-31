@@ -29,10 +29,12 @@ public class BackupProtocolInitiator implements Runnable {
     public void run() {
         String path = FileHandler.getChunkPath(peer.getFileSystem(), removed.getFileId(), removed.getChunkNo());
         System.out.println("[BACKUP] Initiating backup protocol of path: " + path);
-        if (!receivedDuringReclaim(removed.getFileId(), removed.getChunkNo())) {
-            BackupProtocol backupProtocol = new BackupProtocol(path, peer, chunkMetadata.getRepDgr());
-            backupProtocol.backupChunk(removed.getFileId(), removed.getChunkNo());
-        }
+        //TODO ele agora ja nao precisa do if porque ele so envia o reclaim para um right?
+        //E o rep degree e um pq ele so eliminou num file
+        //if (!receivedDuringReclaim(removed.getFileId(), removed.getChunkNo())) {
+        BackupProtocol backupProtocol = new BackupProtocol(path, peer, 1);
+        backupProtocol.backupChunk(removed.getFileId(), removed.getChunkNo());
+        //}
         peer.getChannelCoordinator().setBackupInitiator(null);
     }
 

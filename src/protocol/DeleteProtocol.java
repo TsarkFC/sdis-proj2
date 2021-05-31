@@ -30,17 +30,7 @@ public class DeleteProtocol extends Protocol {
         peer.getMetadata().getFileMetadata(fileId).setDeleted(true);
         peer.getMetadata().deleteFile(fileId);
 
-        execute(fileId);
+        new DeleteHandler().sendDeleteMessage(peer, fileId);
     }
 
-    private void execute(String fileId) {
-        if (reps <= repsLimit) {
-            new DeleteHandler().sendDeleteMessage(peer, fileId);
-            executor.schedule(() -> {
-                reps++;
-                execute(fileId);
-            }, timeWait, TimeUnit.SECONDS);
-            System.out.println("[DELETE] Sent message, waiting " + timeWait + " seconds...");
-        }
-    }
 }

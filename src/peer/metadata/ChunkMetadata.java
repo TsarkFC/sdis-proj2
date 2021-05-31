@@ -7,6 +7,7 @@ public class ChunkMetadata implements Serializable {
     private final int sizeKb;
     private final String id;
     private final int repDgr;
+    //TODO acho que ele ja nao precisa disto? ainda por cima ele atualizava isto quando recebia um stored ne?
     private final ConcurrentSkipListSet<Integer> peerIds;
 
     public ChunkMetadata(int sizeKb, String id, int repDgr, ConcurrentSkipListSet<Integer> peerIds) {
