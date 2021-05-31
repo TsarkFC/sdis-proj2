@@ -8,15 +8,10 @@ import ssl.SslReceiver;
 import utils.AddressPort;
 import utils.AddressPortList;
 import filehandler.FileHandler;
-import utils.ThreadHandler;
+import messages.MessageSender;
 import utils.Utils;
 
-import java.net.DatagramPacket;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class BackupChannel extends Channel {
 
@@ -41,15 +36,18 @@ public class BackupChannel extends Channel {
 
         if (shouldSaveFile(rcvdMsg)) {
             System.out.println("Should save file");
-            String delayMsg;
-
             saveChunk(rcvdMsg);
-            delayMsg = "[BACKUP] Sending stored messages after: ";
-
-            new ScheduledThreadPoolExecutor(1).schedule(() -> sendStored(rcvdMsg),
-                    Utils.generateRandomDelay(delayMsg), TimeUnit.MILLISECONDS);
+            sendStored(rcvdMsg);
+            resendFile(rcvdMsg);
         } else {
             System.out.println("Should not save file " + new String(header));
+            int repDgr = peer.getMetadata().getFileMetadata(rcvdMsg.getFileId()).getRepDgr();
+            if (repDgr == rcvdMsg.getReplicationDeg()) {
+                System.out.println("Resent message");
+                MessageSender.sendTCPMessageMDBSuccessor(rcvdMsg.getFileId(), peer, rcvdMsg.getBytes());
+                return Utils.discard();
+            }
+            System.out.println("Did not resend message!");
         }
         return Utils.discard();
     }
@@ -73,14 +71,13 @@ public class BackupChannel extends Channel {
         saveStateMetadata(rcvdMsg);
     }
 
-    public void sendStored(PutChunk rcvdMsg) {
-
+    private void sendStored(PutChunk rcvdMsg) {
         AddressPort addressPortChord = peer.getArgs().getAddressPortList().getChordAddressPort();
 
         Stored message = new Stored(addressPortChord.getAddress(), addressPortChord.getPort(), rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-        ThreadHandler.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
+        MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
 
-        //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize0(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
+        //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
         saveChunk(rcvdMsg);
     }
 
@@ -91,5 +88,14 @@ public class BackupChannel extends Channel {
         }
     }
 
-
+    private boolean resendFile(PutChunk message) {
+        if (message.getReplicationDeg() - 1 > 0) {
+            PutChunk newPutChunk = new PutChunk(message.getIpAddress(), message.getPort(), message.getFileId(), message.getChunkNo(), message.getReplicationDeg() - 1, message.getBody());
+            MessageSender.sendTCPMessageMDBSuccessor(message.getFileId(), peer, newPutChunk.getBytes());
+            return true;
+        } else {
+            System.out.println("Completed Replication degree");
+            return false;
+        }
+    }
 }

@@ -4,8 +4,7 @@ import filehandler.FileHandler;
 import messages.protocol.Chunk;
 import messages.protocol.GetChunk;
 import peer.Peer;
-import utils.AddressPortList;
-import utils.ThreadHandler;
+import messages.MessageSender;
 import utils.Utils;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -30,6 +29,6 @@ public class GetChunkHandler {
 
         String chunkId = rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo();
         if (peer.hasReceivedChunk(chunkId)) return;
-        ThreadHandler.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message);
+        MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message);
     }
 }

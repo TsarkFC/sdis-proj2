@@ -6,12 +6,11 @@ import messages.protocol.PutChunk;
 import peer.Peer;
 import peer.metadata.FileMetadata;
 import utils.AddressPort;
-import utils.ThreadHandler;
+import messages.MessageSender;
 
 import java.io.File;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class BackupProtocol extends Protocol {
     final int repDgr;
@@ -51,7 +50,7 @@ public class BackupProtocol extends Protocol {
         String previousFileId = peer.getMetadata().getFileIdFromPath(file.getPath());
         if (previousFileId != null) {
             Delete msg = new Delete(mcAddr.getAddress(), mcAddr.getPort(), previousFileId);
-            ThreadHandler.sendTCPMessageMC(fileId, peer, msg.getBytes());
+            MessageSender.sendTCPMessageMC(fileId, peer, msg.getBytes());
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
 
@@ -65,7 +64,7 @@ public class BackupProtocol extends Protocol {
                     chunk.getKey(), repDgr, chunk.getValue());
             byte[] message = backupMsg.getBytes();
             String chunkFileId = FileHandler.createChunkFileId(fileId, i++);
-            ThreadHandler.sendTCPMessageMDB(chunkFileId, peer, message);
+            MessageSender.sendTCPMessageMDB(chunkFileId, peer, message);
         }
     }
 
@@ -79,6 +78,6 @@ public class BackupProtocol extends Protocol {
         PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), fileId,
                 chunkNo, repDgr, fileHandler.getChunkFileData());
         byte[] message = backupMsg.getBytes();
-        ThreadHandler.sendTCPMessageMDB(fileId, peer, message);
+        MessageSender.sendTCPMessageMDB(fileId, peer, message);
     }
 }

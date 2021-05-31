@@ -105,10 +105,11 @@ public class SslReceiver extends Ssl implements Runnable {
         } else if (key.isReadable()) {
             SocketChannel channel = (SocketChannel) key.channel();
             SSLEngine engine = (SSLEngine) key.attachment();
-            byte[] message = receive(channel, engine);
 
+            byte[] message = receive(channel, engine);
             if (message != null) {
-                send(channel, engine, handlerChannel.handle(message));
+                byte[] response = handlerChannel.handle(message);
+                if (response != null) send(channel, engine, response);
             }
         }
     }

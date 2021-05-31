@@ -69,7 +69,7 @@ public class ChordNode {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
         executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::fixFingers, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
-        executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        //executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         System.out.println("Executors ready!");
     }
 
@@ -154,7 +154,7 @@ public class ChordNode {
         if (next < fingerTable.size()) fingerTable.set(next, node);
         else fingerTable.add(node);
 
-        logFingerTable();
+        //logFingerTable();
     }
 
     public void checkPredecessor() {
@@ -184,7 +184,6 @@ public class ChordNode {
             // Sending Get Successor message
             String message = Messages.GET_SUCCESSOR + " " + id + "\r\n\r\n";
             AddressPort addressPort = precedingNode.getAddressPortList().getChordAddressPort();
-            System.out.println("[Client] sent to " + addressPort.getPort() + " want successor of " + id);
             byte[] response = sendMessage(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
             return new SerializeChordData().deserialize(response);
         }
@@ -194,11 +193,7 @@ public class ChordNode {
         for (int i = fingerTable.size() - 1; i >= 0; i--) {
             ChordNodeData node = fingerTable.get(i);
             if (node == null) continue;
-
-            //System.out.println("#### NODE ID: " + node.getId());
-            //System.out.println("#### INTERVAL: [" + this.id + "," + id + "]");
             if (isInInterval(node.getId(), this.id, id)) {
-                //System.out.println("#### IS IN INTERVAL");
                 return node;
             }
         }

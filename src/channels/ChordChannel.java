@@ -47,7 +47,7 @@ public class ChordChannel extends Channel {
         if (hasSpace) data = Arrays.copyOfRange(parsedMessage, firstSpacePos + 1, parsedMessage.length);
 
         switch (header) {
-            case Messages.JOIN -> {
+            case Messages.JOIN, Messages.GET_SUCCESSOR -> {
                 Integer chordNodeId = Integer.parseInt(new String(data));
                 ChordNodeData successor = peer.getChordNode().findSuccessor(chordNodeId);
                 byte[] serialized = serializeChordNode.serialize(successor);
@@ -63,14 +63,6 @@ public class ChordChannel extends Channel {
             case Messages.GET_PREDECESSOR -> {
                 ChordNodeData predecessor = peer.getChordNode().getPredecessor();
                 byte[] serialized = serializeChordNode.serialize(predecessor);
-                return Utils.addCRLF(serialized);
-            }
-
-            case Messages.GET_SUCCESSOR -> {
-                Integer chordNodeId = Integer.parseInt(new String(data));
-                System.out.println("[Server] Received get successor of " + chordNodeId);
-                ChordNodeData successor = peer.getChordNode().findSuccessor(chordNodeId);
-                byte[] serialized = serializeChordNode.serialize(successor);
                 return Utils.addCRLF(serialized);
             }
 

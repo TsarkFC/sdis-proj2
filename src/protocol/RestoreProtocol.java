@@ -7,13 +7,12 @@ import peer.PeerArgs;
 import peer.metadata.Metadata;
 import utils.AddressPort;
 import utils.AddressPortList;
-import utils.ThreadHandler;
+import messages.MessageSender;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class RestoreProtocol extends Protocol {
     final int repsLimit = 5;
@@ -57,7 +56,7 @@ public class RestoreProtocol extends Protocol {
             //ThreadHandler.sendTCPMessage(addrList.getMcAddressPort().getAddress(), addrList.getMcAddressPort().getPort(), message);
             File f = new File(path);
             System.out.println("Trying to restore file with name: " + f.getName());
-            ThreadHandler.sendTCPMessageMC(fileId,peer,message);
+            MessageSender.sendTCPMessageMC(fileId,peer,message);
         }
     }
 

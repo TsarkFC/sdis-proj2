@@ -7,11 +7,9 @@ import peer.PeerArgs;
 import peer.metadata.ChunkMetadata;
 import peer.metadata.StoredChunksMetadata;
 import utils.AddressPort;
-import utils.ThreadHandler;
+import messages.MessageSender;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ReclaimProtocol extends Protocol {
     private final Double maxDiskSpace;
@@ -88,7 +86,7 @@ public class ReclaimProtocol extends Protocol {
                             AddressPort addr = peerArgs.getAddressPortList().getChordAddressPort();
                             Removed removedMsg = new Removed(addr.getAddress(), addr.getPort(), fileId.getName(), Integer.parseInt(chunkFile.getName()));
                             String chunkId = FileHandler.createChunkFileId(fileIdName,chunkNo);
-                            ThreadHandler.sendTCPMessageMC(chunkId,peer,removedMsg.getBytes());
+                            MessageSender.sendTCPMessageMC(chunkId,peer,removedMsg.getBytes());
                             currentSize -= size;
                             System.out.println("[RECLAIM] Current Size = " + currentSize);
                             if (currentSize <= maxDiskSpace) break;
