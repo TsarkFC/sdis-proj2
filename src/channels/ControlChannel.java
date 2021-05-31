@@ -57,6 +57,7 @@ public class ControlChannel extends Channel {
     public void handleDelete(String msgString) {
         Delete msg = new Delete(msgString,false);
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
+        System.out.println("ZAS " + msg.getFileId());
         if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
             peer.getMetadata().getHostingMetadata().deleteFile(msg.getFileId());
         }

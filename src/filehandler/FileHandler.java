@@ -70,6 +70,7 @@ public class FileHandler {
 
     public static boolean deleteFile(String fileId, String peerDir) {
         String dirPath = getFilePath(peerDir, fileId);
+
         File folder = new File(dirPath);
         if (!folder.exists()) System.out.println("[DELETE] Tried to delete directory that does not exist");
         else {

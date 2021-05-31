@@ -22,9 +22,11 @@ public abstract class Message {
         if (!tokens[MSG_TYPE_IDX].equals(getMsgType())) {
             System.out.println("ERROR: building " + tokens[MSG_TYPE_IDX] + " message with " + getMsgType() + " constructor!");
         }
-        if (getNumberArguments() >= 5) {
+
+        this.fileId = tokens[FILE_ID_IDX];
+        /*if (getNumberArguments() >= 5) {
             this.fileId = tokens[FILE_ID_IDX];
-        } else this.fileId = "";
+        } else this.fileId = "";*/
     }
 
     public abstract String getMsgString();
