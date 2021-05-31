@@ -23,8 +23,7 @@ public class GetChunkHandler {
             return;
         }
 
-        Chunk msg = new Chunk(rcvdMsg.getIpAddress(), peer.getArgs().getPeerId(), rcvdMsg.getFileId(),
-                rcvdMsg.getChunkNo(), chunk);
+        Chunk msg = new Chunk( rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), chunk);
         byte[] message = msg.getBytes();
 
         String chunkId = rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo();

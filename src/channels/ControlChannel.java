@@ -53,8 +53,9 @@ public class ControlChannel extends Channel {
     }
 
     public void handleDelete(String msgString) {
-        Delete msg = new Delete(msgString);
-        if (!msg.samePeerAndSender(peer)) {
+        Delete msg = new Delete(msgString,false);
+
+        if (!peer.getMetadata().verifySamePeerSender(msg,peer)) {
             System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
             if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
                 peer.getMetadata().deleteFile(msg.getFileId());
@@ -71,7 +72,7 @@ public class ControlChannel extends Channel {
 
     public void handleReclaim(String msgString) {
         Removed removed = new Removed(msgString);
-        if (removed.samePeerAndSender(peer)) return;
+        if (peer.getMetadata().verifySamePeerSender(removed,peer)) return;
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
 
         //A peer that has a local copy of the chunk shall update its local count of this chunk

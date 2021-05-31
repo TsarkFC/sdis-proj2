@@ -5,7 +5,6 @@ import peer.Peer;
 import peer.metadata.Metadata;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class DeleteProtocol extends Protocol {
     final int repsLimit = 3;
@@ -27,7 +26,7 @@ public class DeleteProtocol extends Protocol {
             System.out.println("[ERROR] Peer has not hosted BACKUP to file");
             return;
         }
-        peer.getMetadata().getFileMetadata(fileId).setDeleted(true);
+        peer.getMetadata().getHostingFileMetadata(fileId).setDeleted(true);
         peer.getMetadata().deleteFile(fileId);
 
         new DeleteHandler().sendDeleteMessage(peer, fileId);

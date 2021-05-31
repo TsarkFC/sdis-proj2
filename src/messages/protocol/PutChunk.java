@@ -1,22 +1,32 @@
 package messages.protocol;
 
-// PUTCHUNK <IPAddress> <Port> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
+import peer.Peer;
+import utils.AddressPort;
+import utils.AddressPortList;
+
+// PUTCHUNK <FileId> <ChunkNo> <IPAddress> <Port>  <ReplicationDeg> <CRLF><CRLF><Body>
 public class PutChunk extends MsgWithChunk {
 
+    protected static final int ADDRESS_IDX = 3;
+    protected static final int PORT_IDX = 4;
     final int REP_DGR_IDX = 5;
     final int BODY_IDX = 6;
+
+    protected final AddressPort addressPort;
     private final Integer replicationDeg;
     private final byte[] body;
 
     public PutChunk(String ipAddress, Integer port, String fileId, Integer chunkNo,
                     Integer replicationDeg, byte[] body) {
-        super(ipAddress, port, fileId, chunkNo);
+        super(fileId, chunkNo);
         this.replicationDeg = replicationDeg;
         this.body = body;
+        this.addressPort = new AddressPort(ipAddress,port);
     }
 
     public PutChunk(String header, byte[] body) {
         super(header);
+        this.addressPort = new AddressPort(tokens[ADDRESS_IDX],Integer.parseInt(tokens[PORT_IDX]));
         this.replicationDeg = Integer.parseInt(tokens[REP_DGR_IDX]);
         this.body = body;
     }
@@ -26,9 +36,18 @@ public class PutChunk extends MsgWithChunk {
         return "PUTCHUNK";
     }
 
+
     @Override
-    protected String getChildString() {
-        return String.format("%d", this.replicationDeg);
+    public String getMsgString() {
+        return String.format("%s %s %d %s %d %d", getMsgType(), this.fileId, this.chunkNo,this.addressPort.getAddress(),this.addressPort.getPort(),this.replicationDeg);
+    }
+
+    public String getIpAddress() {
+        return addressPort.getAddress();
+    }
+
+    public Integer getPort() {
+        return addressPort.getPort();
     }
 
     @Override
@@ -38,13 +57,15 @@ public class PutChunk extends MsgWithChunk {
 
     public void printMsg() {
         super.printMsg();
+        System.out.println("Ip Address: " + this.addressPort.getAddress());
+        System.out.println("Port: " + this.addressPort.getPort());
         System.out.println("Rep dgr: " + this.replicationDeg);
         System.out.println("Body: " + new String(this.body));
     }
 
     @Override
     public byte[] getBytes() {
-        String header = String.format("%s %s %d %s %d %d", getMsgType(), this.ipAddress, this.port,
+        String header = String.format("%s %s %d %s %d %d", getMsgType(), this.addressPort.getAddress(), this.addressPort.getPort(),
                 this.fileId, this.chunkNo, this.replicationDeg);
         return addBody(header.getBytes(), body);
     }
@@ -56,5 +77,11 @@ public class PutChunk extends MsgWithChunk {
     public byte[] getBody() {
         return body;
     }
+
+    public boolean samePeerAndSender(Peer peer){
+        return this.addressPort.samePeerAndSender(peer);
+    }
+
+
 
 }

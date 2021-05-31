@@ -84,7 +84,7 @@ public class ReclaimProtocol extends Protocol {
                             peer.getMetadata().writeMetadata();
                             //TODO Estou a enviar o do chord para ele verificar se e o mesmo sender
                             AddressPort addr = peerArgs.getAddressPortList().getChordAddressPort();
-                            Removed removedMsg = new Removed(addr.getAddress(), addr.getPort(), fileId.getName(), Integer.parseInt(chunkFile.getName()));
+                            Removed removedMsg = new Removed(fileId.getName(), Integer.parseInt(chunkFile.getName()));
                             String chunkId = FileHandler.createChunkFileId(fileIdName,chunkNo);
                             MessageSender.sendTCPMessageMC(chunkId,peer,removedMsg.getBytes());
                             currentSize -= size;

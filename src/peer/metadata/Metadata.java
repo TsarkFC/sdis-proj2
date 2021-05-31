@@ -1,5 +1,6 @@
 package peer.metadata;
 
+import messages.protocol.Message;
 import peer.Peer;
 
 import java.io.*;
@@ -13,6 +14,7 @@ public class Metadata implements Serializable {
      * Maps fileId to FileMetadata
      */
     ConcurrentHashMap<String, FileMetadata> hostingFileInfo = new ConcurrentHashMap<>();
+
 
     /**
      * Contains information about stored chunks
@@ -96,6 +98,12 @@ public class Metadata implements Serializable {
         int chunkSizeKb = (int) Math.round(chunkSize);
         storedChunksMetadata.updateChunkInfo(fileId, chunkNo, repDgr, chunkSizeKb, peerId);
         writeMetadata();
+    }
+
+    //TODO nao tenho a certeza disto
+    public boolean verifySamePeerSender(Message message,Peer peer){
+        String messageFileId = message.getFileId();
+        return peer.getMetadata().hostesFile(messageFileId);
     }
 
     public boolean verifyRepDgr(String fileId, Integer repDgr, Integer numOfChunks) {
@@ -193,8 +201,12 @@ public class Metadata implements Serializable {
         return path;
     }
 
-    public FileMetadata getFileMetadata(String fileId) {
+    public FileMetadata getHostingFileMetadata(String fileId) {
         return hostingFileInfo.get(fileId);
+    }
+
+    public boolean hostesFile(String fileId){
+        return hostingFileInfo.contains(fileId);
     }
 
     public StoredChunksMetadata getStoredChunksMetadata() {
