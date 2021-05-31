@@ -32,7 +32,8 @@ public class DeleteProtocol extends Protocol {
         peer.getMetadata().getHostingFileMetadata(fileId).setDeleted(true);
         peer.getMetadata().deleteFile(fileId);
 
-        new DeleteHandler().sendDeleteMessage(peer, fileId);
+
+        new DeleteHandler().sendDeleteMessage(peer, fileId,fileMetadata);
     }
 
 }

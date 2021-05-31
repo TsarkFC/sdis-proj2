@@ -54,7 +54,7 @@ public class BackupProtocol extends Protocol {
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
 
-        FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length());
+        FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length(),numOfChunks);
         peer.getMetadata().addHostingEntry(fileMetadata);
 
         // message initialization
@@ -63,7 +63,7 @@ public class BackupProtocol extends Protocol {
             PutChunk backupMsg = new PutChunk(mcAddr.getAddress(), mcAddr.getPort(), fileId,
                     chunk.getKey(), repDgr, chunk.getValue());
             byte[] message = backupMsg.getBytes();
-            String chunkFileId = FileHandler.createChunkFileId(fileId, i++);
+            String chunkFileId = FileHandler.createChunkFileId(fileId, i++,repDgr);
             MessageSender.sendTCPMessageMDB(chunkFileId, peer, message);
         }
     }
