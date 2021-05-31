@@ -13,17 +13,19 @@ public class FileMetadata implements Serializable {
     private final int repDgr;
     private final int size;
     private boolean deleted = false;
+    private int numberChunks;
 
     /**
      * Maps chunk no to peer Ids that store the chunk
      */
     private final ConcurrentHashMap<Integer, ConcurrentSkipListSet<AddressPort>> chunksData = new ConcurrentHashMap<>();
 
-    public FileMetadata(String pathname, String id, int repDgr, int size) {
+    public FileMetadata(String pathname, String id, int repDgr, int size,int numberChunks) {
         this.pathname = pathname;
         this.id = id;
         this.repDgr = repDgr;
         this.size = size;
+        this.numberChunks = numberChunks;
     }
 
     public void print(){
@@ -87,5 +89,13 @@ public class FileMetadata implements Serializable {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public int getNumberChunks() {
+        return numberChunks;
+    }
+
+    public void setNumberChunks(int numberChunks) {
+        this.numberChunks = numberChunks;
     }
 }
