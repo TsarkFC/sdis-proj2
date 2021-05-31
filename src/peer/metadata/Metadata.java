@@ -217,14 +217,12 @@ public class Metadata implements Serializable {
         return storedChunksMetadata;
     }
 
-
-
     public HostingMetadata getHostingMetadata() {
         return hostingMetadata;
     }
 
     public int getFileSize(String idFile) {
-        return hostingMetadata.getFileSize(idFile);
+        return hostingMetadata.getFileMetadata(idFile).getSize();
     }
 
 }
