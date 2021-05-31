@@ -43,4 +43,12 @@ public class Utils {
         byte[] toDiscard = discard.getBytes();
         return Utils.addCRLF(toDiscard);
     }
+
+    public static byte[] concatBuffer(byte[] buffer1, byte[] buffer2) {
+        if (buffer1 == null) return buffer2;
+        byte[] buffer = new byte[buffer1.length + buffer2.length];
+        System.arraycopy(buffer1, 0, buffer, 0, buffer1.length);
+        System.arraycopy(buffer2, 0, buffer, buffer1.length, buffer2.length);
+        return buffer;
+    }
 }

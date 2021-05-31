@@ -30,19 +30,10 @@ public class BackupChannel extends Channel {
 
     @Override
     public byte[] handle(byte[] message) {
-        //System.out.println("Message Read: " + new String(message));
-        System.out.println("--------------------------------------NEWCHUNK-----------------------------------------------------------");
-        System.out.println("Message Size: " + message.length);
-        System.out.println("Message Read: " + new String(message));
         int bodyStartPos = getBodyStartPos(message);
         byte[] header = Arrays.copyOfRange(message, 0, bodyStartPos - 4);
-        byte[] body = Arrays.copyOfRange(message, bodyStartPos, message.length);
-        
-        System.out.println("Header Size: " + header.length);
-        System.out.println("Body Size: " + body.length);
-        //System.out.println("Header: " + new String(header));
-        //System.out.println("Body: " + new String(body));
-    
+        byte[] bodyCrlf = Arrays.copyOfRange(message, bodyStartPos, message.length);
+        byte[] body = Utils.readUntilCRLF(bodyCrlf);
 
         String rcvd = new String(header, 0, header.length);
         System.out.println("[RECEIVED MESSAGE MDB] " + rcvd);

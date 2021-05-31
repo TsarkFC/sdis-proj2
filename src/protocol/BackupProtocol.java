@@ -64,19 +64,6 @@ public class BackupProtocol extends Protocol {
             PutChunk backupMsg = new PutChunk(mcAddr.getAddress(), mcAddr.getPort(), fileId,
                     chunk.getKey(), repDgr, chunk.getValue());
             byte[] message = backupMsg.getBytes();
-            System.out.println("Message to be sent: " + new String(message));
-            System.out.println("--------------------------------------------------------------------------------------------------------");
-
-            /* 
-                System.out.println("###### SENT MESSAGE WITH SIZE: " + message.length);
-                System.out.println(new String(message));
-                System.out.println("######"); 
-            */
-            /*System.out.println("File Name: " + file.getName() + i);
-            System.out.println("Peer: " + peer.getArgs().getPeerId());
-            System.out.println("Message size: " + message.length);
-            System.out.println("Message: " + new String(message));
-            System.out.println("\n\n\n\n\n\n\n\n\n\n\nGets Here\n\n\n\n\n\n\n\n\n\n\n");*/
             ThreadHandler.sendTCPMessageMDB(file.getName() + i++, peer, message);
         }
     }

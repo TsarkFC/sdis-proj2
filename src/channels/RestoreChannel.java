@@ -27,9 +27,8 @@ public class RestoreChannel extends Channel {
     public byte[] handle(byte[] message) {
         int bodyStartPos = getBodyStartPos(message);
         byte[] header = Arrays.copyOfRange(message, 0, bodyStartPos - 4);
-        //TODO sel alguma coisa der shit pode ser por estar a usar o packetData.length em vez de packet.getLength()
-        //byte[] body = Arrays.copyOfRange(packetData, bodyStartPos, packet.getLength());
-        byte[] body = Arrays.copyOfRange(message, bodyStartPos, message.length);
+        byte[] bodyCrlf = Arrays.copyOfRange(message, bodyStartPos, message.length);
+        byte[] body = Utils.readUntilCRLF(bodyCrlf);
 
         String headerString = new String(header);
         System.out.println("[RECEIVED MESSAGE MDR] " + headerString);

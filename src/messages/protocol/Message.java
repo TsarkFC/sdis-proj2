@@ -2,6 +2,7 @@ package messages.protocol;
 
 import peer.Peer;
 import utils.AddressPortList;
+import utils.Utils;
 
 public abstract class Message {
     protected static final int MSG_TYPE_IDX = 0;
@@ -75,13 +76,12 @@ public abstract class Message {
         byte[] crlf = getDoubleCRLF();
         int headerCrlfSize = header.length + crlf.length;
 
-        byte[] msgBytes = new byte[header.length + crlf.length + body.length/* + crlf.length*/];
+        byte[] msgBytes = new byte[header.length + crlf.length + body.length];
         System.arraycopy(header, 0, msgBytes, 0, header.length);
         System.arraycopy(crlf, 0, msgBytes, header.length, crlf.length);
         System.arraycopy(body, 0, msgBytes, headerCrlfSize, body.length);
-        //System.arraycopy(crlf, 0, msgBytes, header.length + crlf.length + body.length, crlf.length); //TODO: Isto tem knowledge?
 
-        return msgBytes;
+        return Utils.addCRLF(msgBytes);
     }
 
     public static String getTypeStatic(String msg) {

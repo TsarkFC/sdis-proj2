@@ -1,5 +1,7 @@
 package ssl;
 
+import utils.Utils;
+
 import javax.net.ssl.*;
 import javax.net.ssl.SSLEngineResult.HandshakeStatus;
 import java.io.FileInputStream;
@@ -166,6 +168,7 @@ public abstract class Ssl {
         int peerEncryptedSize = Math.max(session.getPacketBufferSize(), MESSAGE_SIZE) + 500;
         ByteBuffers byteBuffers = new ByteBuffers(peerEncryptedSize, peerDecryptedSize, true);
         byteBuffers.getPeerEncryptedData().clear();
+        byte[] readResult = null;
 
         // Read SSL/TLS encoded data from peer
         // TODO: surround with try catch to now if read failed on disconnect
@@ -183,8 +186,7 @@ public abstract class Ssl {
                     case OK -> {
                         byteBuffers.getPeerDecryptedData().flip();
                         byte[] msg = byteBuffers.getPeerDecryptedData().array();
-                        //handleSSlMsg(msg);
-                        return msg;
+                        readResult = Utils.concatBuffer(readResult, msg);
                     }
                     case BUFFER_OVERFLOW -> byteBuffers.setPeerDecryptedData(handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
                     case BUFFER_UNDERFLOW -> byteBuffers.setPeerEncryptedData(handleUnderflow(byteBuffers.getPeerEncryptedData(), engine.getSession().getPacketBufferSize()));
@@ -195,7 +197,7 @@ public abstract class Ssl {
                 }
             }
         }
-        return null;
+        return readResult;
     }
 
     //public abstract void handleSSlMsg(String msg);

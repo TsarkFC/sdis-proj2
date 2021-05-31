@@ -26,8 +26,7 @@ public class ThreadHandler {
 
     public static void sendTCPMessageMDB(String fileName, Peer peer, byte[] msg) {
         int chordID = peer.getChordNode().generateHash(fileName);
-        System.out.println("------------------ChordID: " + chordID);
-        ChordNodeData chordNodeData = peer.getChordNode().findSuccessor(203); //TODO: alterar para chordID
+        ChordNodeData chordNodeData = peer.getChordNode().findSuccessor(chordID);
         AddressPort addrPortMdb = chordNodeData.getAddressPortList().getMdbAddressPort();
         ThreadHandler.sendTCPMessage(addrPortMdb.getAddress(),
                 addrPortMdb.getPort(), msg);
