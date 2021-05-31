@@ -30,7 +30,7 @@ public class FileHandler {
             File file = new File(path);
             if (file.exists() && file.canRead()) return file;
         }
-        System.out.println("[ERROR] " +path + " does not exist!");
+        System.out.println("[ERROR] " + path + " does not exist!");
         return null;
     }
 

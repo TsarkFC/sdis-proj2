@@ -24,6 +24,14 @@ public class ChunkMetadata implements Serializable {
         peerIds = new ConcurrentSkipListSet<>();
     }
 
+    public String getFileId() {
+        return this.id.split("-")[0];
+    }
+
+    public Integer getChunkNum(){
+        return Integer.valueOf(this.id.split("-")[1]);
+    }
+
     public String getString() {
         return String.format("%d, %s, %d, %d", sizeKb, id, repDgr, peerIds.size());
     }

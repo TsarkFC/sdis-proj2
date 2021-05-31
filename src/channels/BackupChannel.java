@@ -42,7 +42,7 @@ public class BackupChannel extends Channel {
         } else {
             System.out.println("Should not save file " + new String(header));
             int repDgr = peer.getMetadata().getFileMetadata(rcvdMsg.getFileId()).getRepDgr();
-            if (repDgr == rcvdMsg.getReplicationDeg()) {
+            if (repDgr == rcvdMsg.getReplicationDeg() || !rcvdMsg.samePeerAndSender(peer)) {
                 System.out.println("Resent message");
                 MessageSender.sendTCPMessageMDBSuccessor(rcvdMsg.getFileId(), peer, rcvdMsg.getBytes());
                 return Utils.discard();

@@ -80,4 +80,16 @@ public class BackupProtocol extends Protocol {
         byte[] message = backupMsg.getBytes();
         MessageSender.sendTCPMessageMDB(fileId, peer, message);
     }
+
+    /*public static void backupChunk(String fileId, int chunkNo, AddressPort addressPort) {
+        FileHandler fileHandler = new FileHandler(file);
+
+        //FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length());
+        //peer.getMetadata().addHostingEntry(fileMetadata);
+
+        PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), fileId,
+                chunkNo, repDgr, fileHandler.getChunkFileData());
+        byte[] message = backupMsg.getBytes();
+        MessageSender.sendTCPMessageMDB(fileId, peer, message);
+    }*/
 }

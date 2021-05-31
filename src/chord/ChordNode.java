@@ -8,6 +8,11 @@ import utils.AddressPort;
 import utils.AddressPortList;
 import utils.SerializeChordData;
 import utils.Utils;
+import peer.metadata.ChunkMetadata;
+import protocol.BackupProtocol;
+import filehandler.FileHandler;
+import messages.protocol.PutChunk;
+import messages.MessageSender;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -17,8 +22,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
+
+
 
 public class ChordNode {
+
+    /**
+    * Peer corresponding to the node in the chord
+    */
+    private Peer peer;
+
     /**
      * True if peer is the started the chord ring
      */
@@ -60,6 +77,7 @@ public class ChordNode {
     private int next = 0;
 
     public ChordNode(Peer peer) {
+        this.peer = peer;
         this.addressPortList = peer.getArgs().getAddressPortList();
         this.id = generateHash(addressPortList.getChordAddressPort().getAddress(), addressPortList.getChordAddressPort().getPort());
         this.isBoot = peer.getArgs().isBoot();
@@ -69,7 +87,7 @@ public class ChordNode {
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
         executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::fixFingers, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
-        //executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         System.out.println("Executors ready!");
     }
 
@@ -138,6 +156,23 @@ public class ChordNode {
         if (predecessor == null || isInInterval(n.getId(), predecessor.getId(), this.id)) {
             predecessor = n;
             //System.out.println("[Notify] peer " + this.id + ": updated predecessor, is now: " + predecessor.getId());
+
+            for (Map.Entry<String, ChunkMetadata> entry : this.peer.getMetadata().getStoredChunksMetadata().getChunksInfo().entrySet()) {
+                String key = entry.getKey();
+                ChunkMetadata chunkMetadata = entry.getValue();
+                int fileIdHashed = generateHash(chunkMetadata.getFileId());
+                System.out.println("FileIdHashed: " + fileIdHashed + " PredecessorId: " + predecessor.getId());
+                if (!isInInterval(fileIdHashed, predecessor.getId(), this.id)) {
+                    FileHandler fileHandler = new FileHandler(FileHandler.getFile(FileHandler.getChunkPath(this.peer.getFileSystem(), chunkMetadata.getFileId(), chunkMetadata.getChunkNum())));
+                    AddressPort addressPort = this.addressPortList.getMcAddressPort();
+                    PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), chunkMetadata.getFileId(),
+                        chunkMetadata.getChunkNum(), 1, fileHandler.getChunkFileData());
+                    byte[] message = backupMsg.getBytes();
+                    System.out.println("Zaaaaaaaaaah: " + new String(message));
+                    AddressPort predecessorAddrPort = predecessor.getAddressPortList().getMdbAddressPort();
+                    MessageSender.sendTCPMessage(predecessorAddrPort.getAddress(), predecessorAddrPort.getPort(), message);
+                }
+            }
         }
     }
 
@@ -244,6 +279,10 @@ public class ChordNode {
 
     public int getId() {
         return id;
+    }
+
+    public Peer getPeer() {
+        return this.peer;
     }
 
     public ChordNodeData getData() {

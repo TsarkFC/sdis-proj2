@@ -22,6 +22,10 @@ public class StoredChunksMetadata implements Serializable {
      */
     final ConcurrentSkipListSet<String> alreadySavedChunk = new ConcurrentSkipListSet<>();
 
+    public ConcurrentHashMap<String, ChunkMetadata> getChunksInfo() {
+        return chunksInfo;
+    }
+
     public String getChunkId(String fileId, Integer chunkNo) {
         return fileId + "-" + chunkNo;
     }
