@@ -4,28 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class HostingMetadata extends Metadata {
+public class HostingMetadata  {
+
+    //File id -> [rep Degree, numberChunks]
+    ConcurrentHashMap<String, FileMetadata> fileInfo = new ConcurrentHashMap<>();
 
 
     public ConcurrentHashMap<String, FileMetadata> getFileInfo() {
         return fileInfo;
     }
 
-    //File id -> [rep Degree, numberChunks]
-    ConcurrentHashMap<String, FileMetadata> fileInfo = new ConcurrentHashMap<>();
-
-    public HostingMetadata(String path) {
-        super(path);
-    }
 
     public FileMetadata getFileMetadata(String fileId){
         return fileInfo.get(fileId);
     }
 
-    public void addHostingEntry(FileMetadata fileMetadata) {
-
+    public void addHostingFileEntry(FileMetadata fileMetadata) {
         fileInfo.put(fileMetadata.getId(),fileMetadata);
-        writeMetadata();
     }
 
     public boolean hasFile(String fileId) {
@@ -33,8 +28,6 @@ public class HostingMetadata extends Metadata {
     }
     public void deleteFile(String fileId) {
         fileInfo.remove(fileId);
-        storedChunksMetadata.deleteChunksFromFile(fileId);
-        writeMetadata();
     }
 
 }

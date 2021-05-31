@@ -15,7 +15,7 @@ public class Metadata implements Serializable {
      * Maps fileId to FileMetadata
      */
     //ConcurrentHashMap<String, FileMetadata> hostingFileInfo = new ConcurrentHashMap<>();
-    final HostingMetadata hostingMetadata;
+    HostingMetadata hostingMetadata;
 
     /**
      * Contains information about stored chunks
@@ -35,14 +35,14 @@ public class Metadata implements Serializable {
     public Metadata(String path) {
         this.path = path;
         storedChunksMetadata = new StoredChunksMetadata();
-        hostingMetadata = new HostingMetadata(path);
+        hostingMetadata = new HostingMetadata();
     }
 
     /**
      * Updating information on initiator peer data
      */
     public void addHostingEntry(FileMetadata fileMetadata) {
-        hostingMetadata.addHostingEntry(fileMetadata);
+        hostingMetadata.addHostingFileEntry(fileMetadata);
         writeMetadata();
     }
 
@@ -217,12 +217,14 @@ public class Metadata implements Serializable {
         return storedChunksMetadata;
     }
 
-    public int getFileSize(String fileId) {
-        return hostingMetadata.getFileSize(fileId);
-    }
+
 
     public HostingMetadata getHostingMetadata() {
         return hostingMetadata;
+    }
+
+    public int getFileSize(String idFile) {
+        return hostingMetadata.getFileSize(idFile);
     }
 
 }
