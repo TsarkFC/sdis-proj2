@@ -58,16 +58,16 @@ public class BackupChannel extends Channel {
         return !sameSenderPeer && hasSpace && !isOriginalFileSender;
     }
 
-    private void saveStateMetadata(PutChunk rcvdMsg) {
+    /*private void saveStateMetadata(PutChunk rcvdMsg) {
         peer.getMetadata().updateStoredInfo(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg(),
                 rcvdMsg.getBody().length / 1000.0, peer.getArgs().getPeerId());
-    }
+    }*/
 
     public void saveChunk(PutChunk rcvdMsg) {
         System.out.println("[BACKUP] Backing up file " + rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo());
         preventReclaim(rcvdMsg);
         FileHandler.saveChunk(rcvdMsg, peer.getFileSystem());
-        saveStateMetadata(rcvdMsg);
+        //saveStateMetadata(rcvdMsg);
     }
 
     private void sendStored(PutChunk rcvdMsg) {

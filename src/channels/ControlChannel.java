@@ -48,19 +48,19 @@ public class ControlChannel extends Channel {
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
         Stored msg = new Stored(msgString);
 
+        //peer.getMetadata().updateStoredInfo(msg.getFileId(),msg.getChunkNo(),msg.get);
+
         // TODO: check rep degree
         //peer.getMetadata().updateStoredInfo(msg.getFileId(), msg.getChunkNo(), msg.getSenderId(), peer);
     }
 
     public void handleDelete(String msgString) {
         Delete msg = new Delete(msgString,false);
-
-        if (!peer.getMetadata().verifySamePeerSender(msg,peer)) {
-            System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
-            if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
-                peer.getMetadata().deleteFile(msg.getFileId());
-            }
+        System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
+        if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
+            peer.getMetadata().getHostingMetadata().deleteFile(msg.getFileId());
         }
+
     }
 
     public void handleRestore(String msgString) {
@@ -72,7 +72,6 @@ public class ControlChannel extends Channel {
 
     public void handleReclaim(String msgString) {
         Removed removed = new Removed(msgString);
-        if (peer.getMetadata().verifySamePeerSender(removed,peer)) return;
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
 
         //A peer that has a local copy of the chunk shall update its local count of this chunk

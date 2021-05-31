@@ -41,7 +41,7 @@ public class BackupProtocol extends Protocol {
         numOfChunks = chunks.size();
         AddressPort mcAddr = peer.getArgs().getAddressPortList().getMcAddressPort();
 
-        if (peer.getMetadata().hasFile(fileId)) {
+        if (peer.getMetadata().getHostingMetadata().hasFile(fileId)) {
             System.out.println("[BACKUP] File already backed up, aborting...");
             return;
         }
