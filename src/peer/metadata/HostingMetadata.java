@@ -1,10 +1,11 @@
 package peer.metadata;
 
 import java.util.ArrayList;
+import java.io.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class HostingMetadata  {
+public class HostingMetadata implements Serializable  {
 
     //File id -> [rep Degree, numberChunks]
     ConcurrentHashMap<String, FileMetadata> fileInfo = new ConcurrentHashMap<>();

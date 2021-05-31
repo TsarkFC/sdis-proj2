@@ -65,8 +65,8 @@ public class PutChunk extends MsgWithChunk {
 
     @Override
     public byte[] getBytes() {
-        String header = String.format("%s %s %d %s %d %d", getMsgType(), this.addressPort.getAddress(), this.addressPort.getPort(),
-                this.fileId, this.chunkNo, this.replicationDeg);
+        String header = String.format("%s %s %d %s %d %d", getMsgType(), this.fileId, this.chunkNo,this.addressPort.getAddress(),
+                    this.addressPort.getPort(),this.replicationDeg);
         return addBody(header.getBytes(), body);
     }
 
