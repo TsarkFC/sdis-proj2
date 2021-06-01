@@ -32,12 +32,12 @@ public abstract class Ssl {
     private static final int MESSAGE_SIZE = 64500;
 
     protected void initializeSslContext(String protocol, String filePathKeys) {
-        char[] passphrase = "123456".toCharArray();
+        char[] passphrase = SSLInformation.password.toCharArray();
 
         KeyManagerFactory kmf;
         try {
             kmf = createKeyManagerFactory(passphrase, filePathKeys);
-            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, "../ssl/resources/truststore");
+            TrustManagerFactory tmf = createTrustManagerFactory(passphrase, SSLInformation.trustStore);
 
             context = SSLContext.getInstance(protocol);
             context.init(kmf.getKeyManagers(), tmf.getTrustManagers(), new SecureRandom());
@@ -63,11 +63,11 @@ public abstract class Ssl {
                         byteBuffers.getEncryptedData().clear();
                         result = engine.wrap(byteBuffers.getDecryptedData(), byteBuffers.getEncryptedData());
                         if (!handleWrapResult(result, engine, channel, byteBuffers)) {
-                            System.out.println("Error during WRAP stage of handshake");
+                            System.out.println("[Handshake] Error during wrap");
                             return false;
                         }
                     } catch (SSLException e) {
-                        e.printStackTrace();
+                        System.out.println("[Handshake] Error during wrap");
                         return false;
                     }
                 }
@@ -82,8 +82,8 @@ public abstract class Ssl {
                             engine.closeOutbound();
                             break;
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        System.out.println("[Handshake] Error during unwrap");
                         return false;
                     }
 
@@ -94,11 +94,11 @@ public abstract class Ssl {
                         byteBuffers.getPeerEncryptedData().compact();
 
                         if (!handleUnwrapResult(result, engine, byteBuffers)) {
-                            System.out.println("Error during UNWRAP stage of handshake");
+                            System.out.println("[Handshake] Error during unwrap");
                             return false;
                         }
-                    } catch (SSLException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        System.out.println("[Handshake] Error during unwrap");
                         return false;
                     }
                 }
@@ -161,7 +161,7 @@ public abstract class Ssl {
 
     protected abstract void logSentMessage(byte[] message);
 
-    protected byte[] read(SocketChannel channel, SSLEngine engine) throws IOException {
+    protected byte[] read(SocketChannel channel, SSLEngine engine) {
 
         SSLSession session = engine.getSession();
         int peerDecryptedSize = Math.max(session.getApplicationBufferSize(), MESSAGE_SIZE) + 500;
@@ -172,43 +172,39 @@ public abstract class Ssl {
 
         // Read SSL/TLS encoded data from peer
         // TODO: surround with try catch to now if read failed on disconnect
-        int num = channel.read(byteBuffers.getPeerEncryptedData());
-        if (num < 0) {
-            engine.closeInbound();
-            disconnect(channel, engine);
-        } else {
-            // Process incoming data
-            byteBuffers.getPeerEncryptedData().flip();
-            while (byteBuffers.getPeerEncryptedData().hasRemaining()) {
-                byteBuffers.getPeerDecryptedData().clear();
-                SSLEngineResult res = engine.unwrap(byteBuffers.getPeerEncryptedData(), byteBuffers.getPeerDecryptedData());
-                switch (res.getStatus()) {
-                    case OK -> {
-                        byteBuffers.getPeerDecryptedData().flip();
-                        byte[] msg = byteBuffers.getPeerDecryptedData().array();
-                        readResult = Utils.concatBuffer(readResult, msg);
-                    }
-                    case BUFFER_OVERFLOW -> byteBuffers.setPeerDecryptedData(handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
-                    case BUFFER_UNDERFLOW -> byteBuffers.setPeerEncryptedData(handleUnderflow(byteBuffers.getPeerEncryptedData(), engine.getSession().getPacketBufferSize()));
-                    case CLOSED -> {
-                        disconnect(channel, engine);
-                        return null;
+        try {
+            int num = channel.read(byteBuffers.getPeerEncryptedData());
+            if (num < 0) {
+                engine.closeInbound();
+                disconnect(channel, engine);
+            } else {
+                // Process incoming data
+                byteBuffers.getPeerEncryptedData().flip();
+                while (byteBuffers.getPeerEncryptedData().hasRemaining()) {
+                    byteBuffers.getPeerDecryptedData().clear();
+                    SSLEngineResult res = engine.unwrap(byteBuffers.getPeerEncryptedData(), byteBuffers.getPeerDecryptedData());
+                    switch (res.getStatus()) {
+                        case OK -> {
+                            byteBuffers.getPeerDecryptedData().flip();
+                            byte[] msg = byteBuffers.getPeerDecryptedData().array();
+                            readResult = Utils.concatBuffer(readResult, msg);
+                        }
+                        case BUFFER_OVERFLOW -> byteBuffers.setPeerDecryptedData(handleOverflow(byteBuffers.getPeerDecryptedData(), engine.getSession().getApplicationBufferSize()));
+                        case BUFFER_UNDERFLOW -> byteBuffers.setPeerEncryptedData(handleUnderflow(byteBuffers.getPeerEncryptedData(), engine.getSession().getPacketBufferSize()));
+                        case CLOSED -> {
+                            disconnect(channel, engine);
+                            return null;
+                        }
                     }
                 }
             }
+        } catch (IOException exception) {
+            System.out.println("Could not read!!");
         }
         return readResult;
     }
 
-    //public abstract void handleSSlMsg(String msg);
-    public abstract void handleSSlMsg(byte[] msg);
-
-    protected void write(String message, SocketChannel channel, SSLEngine engine) throws IOException {
-        byte[] msg = message.getBytes();
-        write(msg, channel, engine);
-    }
-
-    protected void write(byte[] message, SocketChannel channel, SSLEngine engine) throws IOException {
+    protected void write(byte[] message, SocketChannel channel, SSLEngine engine) {
 
         SSLSession session = engine.getSession();
         int encryptedBufferSize = session.getPacketBufferSize();
@@ -219,44 +215,48 @@ public abstract class Ssl {
         byteBuffers.getDecryptedData().put(message);
         byteBuffers.getDecryptedData().flip();
 
-        while (byteBuffers.getDecryptedData().hasRemaining()) {
-            byteBuffers.getEncryptedData().clear();
-            SSLEngineResult res = engine.wrap(byteBuffers.getDecryptedData(), byteBuffers.getEncryptedData());
+        try {
+            while (byteBuffers.getDecryptedData().hasRemaining()) {
+                byteBuffers.getEncryptedData().clear();
+                SSLEngineResult res = engine.wrap(byteBuffers.getDecryptedData(), byteBuffers.getEncryptedData());
 
-            // Process status of call
-            switch (res.getStatus()) {
-                case OK -> {
-                    byteBuffers.getEncryptedData().flip();
+                // Process status of call
+                switch (res.getStatus()) {
+                    case OK -> {
+                        byteBuffers.getEncryptedData().flip();
 
-                    // Send SSL/TLS encoded data to peer
-                    while (byteBuffers.getEncryptedData().hasRemaining()) {
-                        int num = channel.write(byteBuffers.getEncryptedData());
-                        //System.out.println("Wrote " + num + " bytes");
-                        if (num < 0) {
-                            engine.closeInbound();
-                            disconnect(channel, engine);
-                        } else if (num > 0) {
-                            //logSentMessage(new String(message));
+                        // Send SSL/TLS encoded data to peer
+                        while (byteBuffers.getEncryptedData().hasRemaining()) {
+                            int num = channel.write(byteBuffers.getEncryptedData());
+                            //System.out.println("Wrote " + num + " bytes");
+                            if (num < 0) {
+                                engine.closeInbound();
+                                disconnect(channel, engine);
+                            } else if (num > 0) {
+                                //logSentMessage(new String(message));
+                            }
                         }
                     }
-                }
-                case BUFFER_OVERFLOW -> byteBuffers.setEncryptedData(handleOverflow(byteBuffers.getEncryptedData(), engine.getSession().getPacketBufferSize()));
-                case BUFFER_UNDERFLOW -> throw new IllegalStateException("Underflow after wrap occurred!");
-                case CLOSED -> {
-                    disconnect(channel, engine);
-                    return;
+                    case BUFFER_OVERFLOW -> byteBuffers.setEncryptedData(handleOverflow(byteBuffers.getEncryptedData(), engine.getSession().getPacketBufferSize()));
+                    case BUFFER_UNDERFLOW -> throw new IllegalStateException("Underflow after wrap occurred!");
+                    case CLOSED -> {
+                        disconnect(channel, engine);
+                        return;
+                    }
                 }
             }
+        } catch (IOException io) {
+            System.out.println("Could not write!!");
         }
     }
 
     protected void disconnect(SocketChannel channel, SSLEngine engine) {
-        engine.closeOutbound();
-        handshake(channel, engine);
         try {
+            engine.closeOutbound();
+            handshake(channel, engine);
             channel.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("[Disconnect] Error!");
         }
     }
 

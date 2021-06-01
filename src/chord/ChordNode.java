@@ -85,8 +85,6 @@ public class ChordNode {
         byte[] successorInfoCRLF = sendMessage(message.getBytes(), chordAddress, chordPort);
         byte[] successorInfo = Utils.readUntilCRLF(successorInfoCRLF);
         successor = new SerializeChordData().deserialize(successorInfo);
-
-        System.out.println("Successor id: " + successor.getId());
     }
 
     public void printChordInfo() {

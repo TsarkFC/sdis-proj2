@@ -29,10 +29,8 @@ public class SslReceiver extends Ssl implements Runnable {
      */
     private Channel handlerChannel;
 
-
-    //TODO tirar o decrypted data e isso dali
     public SslReceiver(String host, Integer port, Channel handlerChannel) {
-        initializeSslContext(SSLInformation.protocol, "../ssl/resources/server.keys");
+        initializeSslContext(SSLInformation.protocol, SSLInformation.serverKeys);
         try {
             selector = SelectorProvider.provider().openSelector();
         } catch (IOException e) {
@@ -44,7 +42,7 @@ public class SslReceiver extends Ssl implements Runnable {
     }
 
     public SslReceiver(String protocol, String serverKeys, String trustStore, String password) {
-        initializeSslContext(protocol, "../ssl/resources/server.keys");
+        initializeSslContext(protocol, SSLInformation.serverKeys);
         try {
             selector = SelectorProvider.provider().openSelector();
         } catch (IOException e) {
@@ -106,10 +104,10 @@ public class SslReceiver extends Ssl implements Runnable {
             SocketChannel channel = (SocketChannel) key.channel();
             SSLEngine engine = (SSLEngine) key.attachment();
 
-            byte[] message = receive(channel, engine);
+            byte[] message = read(channel, engine);
             if (message != null) {
                 byte[] response = handlerChannel.handle(message);
-                if (response != null) send(channel, engine, response);
+                if (response != null) write(response, channel, engine);
             }
         }
     }
@@ -120,14 +118,14 @@ public class SslReceiver extends Ssl implements Runnable {
 
         SSLEngine engine = context.createSSLEngine();
         engine.setUseClientMode(false);
-        engine.beginHandshake();
-        if (handshake(channel, engine)) {
-            //System.out.println("[Server] Handshake successful");
-            channel.register(selector, SelectionKey.OP_READ, engine);
-            //allocateData(engine.getSession());
-        } else {
-            //System.out.println("[Server] Closing socket channel due to bad handshake");
-            channel.close();
+
+        try {
+            engine.beginHandshake();
+            if (handshake(channel, engine))
+                channel.register(selector, SelectionKey.OP_READ, engine);
+            else channel.close();
+        } catch (Exception e) {
+            System.out.println("[Server] could not accept connection");
         }
     }
 
@@ -140,35 +138,6 @@ public class SslReceiver extends Ssl implements Runnable {
     protected void logSentMessage(byte[] message) {
         System.out.println("Sent response: " + new String(message));
     }
-
-    @Override
-    public void handleSSlMsg(byte[] msg) {
-        logReceivedMessage(msg);
-    }
-
-    public void send(SocketChannel channel, SSLEngine engine, byte[] response) {
-        //System.out.println("[Server] attempting to write...");
-        try {
-            //System.out.println("[Server] writing...");
-            write(response, channel, engine);
-        } catch (IOException e) {
-            System.out.println("Error trying to respond to client");
-            e.printStackTrace();
-        }
-    }
-
-    public byte[] receive(SocketChannel channel, SSLEngine engine) {
-        //System.out.println("[Server] attempting to read...");
-        try {
-            //System.out.println("[Server] reading...");
-            return read(channel, engine);
-        } catch (IOException e) {
-            System.out.println("Error Reading message");
-            e.printStackTrace();
-        }
-        return null;
-    }
-
 
     @Override
     public void run() {

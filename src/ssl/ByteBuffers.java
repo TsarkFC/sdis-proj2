@@ -50,6 +50,11 @@ public class ByteBuffers {
      */
     public ByteBuffer peerDecryptedData;
 
+    /**
+     * Contains the other peer encrypted network data
+     */
+    public ByteBuffer peerEncryptedData;
+
     public ByteBuffers(ByteBuffer decryptedData, ByteBuffer encryptedData, ByteBuffer peerDecryptedData, ByteBuffer peerEncryptedData) {
         this.decryptedData = decryptedData;
         this.encryptedData = encryptedData;
@@ -57,28 +62,20 @@ public class ByteBuffers {
         this.peerEncryptedData = peerEncryptedData;
     }
 
-    public ByteBuffers(int bufferSize){
+    public ByteBuffers(int bufferSize) {
         decryptedData = ByteBuffer.allocate(bufferSize);
         encryptedData = ByteBuffer.allocate(bufferSize);
         peerDecryptedData = ByteBuffer.allocate(bufferSize);
         peerEncryptedData = ByteBuffer.allocate(bufferSize);
     }
 
-    public ByteBuffers(int encryptedSize,int decryptedSize,boolean isPeer){
-        if(isPeer){
+    public ByteBuffers(int encryptedSize, int decryptedSize, boolean isPeer) {
+        if (isPeer) {
             peerDecryptedData = ByteBuffer.allocate(decryptedSize);
             peerEncryptedData = ByteBuffer.allocate(encryptedSize);
-        }else{
+        } else {
             decryptedData = ByteBuffer.allocate(decryptedSize);
             encryptedData = ByteBuffer.allocate(encryptedSize);
         }
-
     }
-
-
-
-    /**
-     * Contains the other peer encrypted network data
-     */
-    public ByteBuffer peerEncryptedData;
 }
