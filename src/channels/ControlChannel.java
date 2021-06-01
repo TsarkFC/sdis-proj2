@@ -7,7 +7,6 @@ import messages.protocol.*;
 import peer.Peer;
 import peer.metadata.ChunkMetadata;
 import peer.metadata.StoredChunksMetadata;
-import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
 import utils.AddressPort;
 import utils.AddressPortList;
@@ -38,7 +37,7 @@ public class ControlChannel extends Channel {
             case "STORED" -> handleBackup(msgString);
             case "DELETE" -> handleDelete(msgString);
             case "GETCHUNK" -> handleRestore(msgString);
-            case "REMOVED" -> handleReclaim(msgString);
+            //case "REMOVED" -> handleReclaim(msgString);
             default -> System.out.println("\nERROR NOT PARSING THAT MESSAGE " + msgType);
         }
         return null;
@@ -84,7 +83,7 @@ public class ControlChannel extends Channel {
         MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message);
     }
 
-    public void handleReclaim(String msgString) {
+    /*public void handleReclaim(String msgString) {
         Removed removed = new Removed(msgString);
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
 
@@ -110,12 +109,12 @@ public class ControlChannel extends Channel {
             }
 
         }
-    }
+    }*/
 
-    private boolean shouldResend(Removed message) {
+    /*private boolean shouldResend(Removed message) {
         String chunkFileId = FileHandler.createChunkFileId(message.getFileId(), message.getChunkNo(), message.getReplicationDeg());
         int fileChordID = peer.getChordNode().generateHash(chunkFileId);
         ChordNode node = peer.getChordNode();
         return !node.isInInterval(fileChordID, node.getId(), node.getSuccessor().getId());
-    }
+    }*/
 }

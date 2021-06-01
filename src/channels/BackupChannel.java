@@ -5,7 +5,6 @@ import chord.ChordNodeData;
 import messages.protocol.PutChunk;
 import messages.protocol.Stored;
 import peer.Peer;
-import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
 import utils.AddressPortList;
 import filehandler.FileHandler;
@@ -61,7 +60,7 @@ public class BackupChannel extends Channel {
 
     public void saveChunk(PutChunk rcvdMsg) {
         System.out.println("[BACKUP] Backing up file " + rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo());
-        preventReclaim(rcvdMsg);
+        //preventReclaim(rcvdMsg);
         FileHandler.saveChunk(rcvdMsg, peer.getFileSystem());
         saveStateMetadata(rcvdMsg);
     }
@@ -79,12 +78,12 @@ public class BackupChannel extends Channel {
         saveChunk(rcvdMsg);
     }
 
-    private void preventReclaim(PutChunk rcvdMsg) {
+    /*private void preventReclaim(PutChunk rcvdMsg) {
         BackupProtocolInitiator backupProtocolInitiator = peer.getChannelCoordinator().getBackupInitiator();
         if (backupProtocolInitiator != null) {
             backupProtocolInitiator.setReceivedPutChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
         }
-    }
+    }*/
 
     private boolean resendFile(PutChunk message) {
         if (message.getReplicationDeg() - 1 > 0) {

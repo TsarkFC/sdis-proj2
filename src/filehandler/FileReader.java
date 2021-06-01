@@ -63,8 +63,7 @@ public class FileReader {
         });
     }
 
-    public static byte[] getChunk(GetChunk message, String peerDir) {
-        String chunkPath = FileHandler.getFilePath(peerDir, message) + message.getChunkNo();
+    public static byte[] getChunk(String chunkPath){
         Path path = Paths.get(chunkPath);
         if (!Files.exists(path)) {
             return null;
@@ -95,5 +94,11 @@ public class FileReader {
         buffer.get(chunk);
         buffer.clear();
         return chunk;
+    }
+
+    public static byte[] getChunk(GetChunk message, String peerDir) {
+        String chunkPath = FileHandler.getFilePath(peerDir, message) + message.getChunkNo();
+        return getChunk(chunkPath);
+
     }
 }

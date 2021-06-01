@@ -1,7 +1,7 @@
 package channels;
 
 import peer.Peer;
-import protocol.BackupProtocolInitiator;
+//import protocol.BackupProtocolInitiator;
 import utils.AddressPortList;
 
 import java.util.concurrent.ExecutorService;
@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 
 public class ChannelCoordinator {
     private final Peer peer;
-    private BackupProtocolInitiator backupInitiator;
+    //private BackupProtocolInitiator backupInitiator;
 
     public ChannelCoordinator(Peer peer) {
         this.peer = peer;
@@ -45,11 +45,11 @@ public class ChannelCoordinator {
         //executor.execute(chordChannel);
     }
 
-    public BackupProtocolInitiator getBackupInitiator() {
+    /*public BackupProtocolInitiator getBackupInitiator() {
         return backupInitiator;
     }
 
     public void setBackupInitiator(BackupProtocolInitiator backupInitiator) {
         this.backupInitiator = backupInitiator;
-    }
+    }*/
 }

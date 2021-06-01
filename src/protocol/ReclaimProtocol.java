@@ -3,10 +3,13 @@ package protocol;
 import chord.ChordNode;
 import chord.ChordNodeData;
 import filehandler.FileHandler;
-import messages.protocol.Removed;
+import filehandler.FileReader;
+import messages.protocol.PutChunk;
+
 import peer.Peer;
 import peer.PeerArgs;
 import peer.metadata.ChunkMetadata;
+import peer.metadata.FileMetadata;
 import peer.metadata.StoredChunksMetadata;
 import utils.AddressPort;
 import messages.MessageSender;
@@ -85,7 +88,7 @@ public class ReclaimProtocol extends Protocol {
 
 
                         //Sending removed message
-                        Removed removedMsg = new Removed(fileId.getName(), Integer.parseInt(chunkFile.getName()),chunkMetadata.getRepDgr());
+                        /*Removed removedMsg = new Removed(fileId.getName(), Integer.parseInt(chunkFile.getName()),chunkMetadata.getRepDgr());
 
                         if(chunkMetadata.getRepDgr()==1){
                             String chunkIdMoreRep = FileHandler.createChunkFileId(fileIdName, chunkNo, chunkMetadata.getRepDgr()+1);
@@ -93,7 +96,12 @@ public class ReclaimProtocol extends Protocol {
                         }else{
                             String chunkIdLessRep = FileHandler.createChunkFileId(fileIdName, chunkNo, chunkMetadata.getRepDgr()-1);
                             MessageSender.sendTCPMessageMC(chunkIdLessRep,peer,removedMsg.getBytes());
-                        }
+                        }*/
+
+                        AddressPort mcAddr = peer.getArgs().getAddressPortList().getMcAddressPort();
+                        byte[] chunkData = FileReader.getChunk(chunkFile.getPath());
+                        PutChunk putChunk = new PutChunk(mcAddr.getAddress(),mcAddr.getPort(),file.getName(), Integer.parseInt(chunkFile.getName()),chunkMetadata.getRepDgr(),chunkData);
+                        MessageSender.sendTCPMessageMDBSuccessor(peer,putChunk.getBytes());
 
                         currentSize -= size;
                         System.out.println("[RECLAIM] Current Size = " + currentSize);
