@@ -1,19 +1,17 @@
 package chord;
 
 import constants.Constants;
+import filehandler.FileHandler;
+import messages.MessageSender;
 import messages.Messages;
+import messages.protocol.PutChunk;
 import peer.Peer;
+import peer.metadata.ChunkMetadata;
 import ssl.SslSender;
 import utils.AddressPort;
 import utils.AddressPortList;
 import utils.SerializeChordData;
 import utils.Utils;
-import peer.metadata.ChunkMetadata;
-import protocol.BackupProtocol;
-import filehandler.FileHandler;
-import messages.protocol.PutChunk;
-import messages.MessageSender;
-import peer.metadata.FileMetadata;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -21,20 +19,21 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
-
 
 
 public class ChordNode {
 
     /**
-    * Peer corresponding to the node in the chord
-    */
+     *
+     */
+    private boolean joined;
+
+    /**
+     * Peer corresponding to the node in the chord
+     */
     private Peer peer;
 
     /**
@@ -56,6 +55,11 @@ public class ChordNode {
      * Peer own data on the ring
      */
     private ChordNodeData data;
+
+    /**
+     * Peer previous predecessor data
+     */
+    private ChordNodeData previousPredecessor;
 
     /**
      * Peer predecessor data
@@ -84,28 +88,32 @@ public class ChordNode {
         this.isBoot = peer.getArgs().isBoot();
         this.data = new ChordNodeData(id, addressPortList);
         System.out.println("Chord Peer was created id: " + id);
+
         //TODO Nao faz sentido por tudo no mesmo?
+        //TODO: Verificar tempos
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
         executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::fixFingers, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
-        executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(this::checkPredecessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(this::checkSuccessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        //executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         System.out.println("Executors ready!");
     }
 
     public void create() {
         predecessor = null;
         successor = this.data;
+        System.out.println("[CHORD] peer ready");
     }
 
     public void join(String chordAddress, int chordPort) {
         predecessor = null;
 
         String message = Messages.JOIN + " " + this.id + "\r\n\r\n";
-        byte[] successorInfoCRLF = sendMessage(message.getBytes(), chordAddress, chordPort);
+        byte[] successorInfoCRLF = sendMessageAndWait(message.getBytes(), chordAddress, chordPort);
         byte[] successorInfo = Utils.readUntilCRLF(successorInfoCRLF);
         successor = new SerializeChordData().deserialize(successorInfo);
-
-        System.out.println("Successor id: " + successor.getId());
+        System.out.println("[CHORD] peer ready");
     }
 
     public void printChordInfo() {
@@ -127,27 +135,19 @@ public class ChordNode {
 
         String message = Messages.GET_PREDECESSOR + "\r\n\r\n";
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
-        byte[] predecessorInfoCRLF = sendMessage(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
+        byte[] predecessorInfoCRLF = sendMessageAndWait(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
         byte[] predecessorInfo = Utils.readUntilCRLF(predecessorInfoCRLF);
         ChordNodeData x = new SerializeChordData().deserialize(predecessorInfo);
 
         if (x != null && isInInterval(x.getId(), this.id, successor.getId())) {
             successor = x;
-            //System.out.println("[Stabilize] peer " + id + ": updated successor, is now: " + successor.getId());
         }
 
         // Sending notify message
         byte[] serialized = new SerializeChordData().serialize(this.data);
-        byte[] crlf = Utils.getDoubleCRLF();
-        int bufferSize = Messages.NOTIFY.length() + serialized.length + crlf.length + 1;
-
-        byte[] notifyMessage = new byte[bufferSize];
-        System.arraycopy((Messages.NOTIFY + " ").getBytes(), 0, notifyMessage, 0, Messages.NOTIFY.length() + 1);
-        System.arraycopy(serialized, 0, notifyMessage, Messages.NOTIFY.length() + 1, serialized.length);
-        System.arraycopy(crlf, 0, notifyMessage, Messages.NOTIFY.length() + 1 + serialized.length, crlf.length);
-
+        byte[] notifyMessage = Utils.concatBuffer((Messages.NOTIFY + " ").getBytes(), serialized);
+        notifyMessage = Utils.addCRLF(notifyMessage);
         addressPort = successor.getAddressPortList().getChordAddressPort();
-
         sendMessage(notifyMessage, addressPort.getAddress(), addressPort.getPort());
     }
 
@@ -155,37 +155,39 @@ public class ChordNode {
         if (this.id == n.getId()) return;
 
         if (predecessor == null || isInInterval(n.getId(), predecessor.getId(), this.id)) {
-            predecessor = n;
-            //System.out.println("[Notify] peer " + this.id + ": updated predecessor, is now: " + predecessor.getId());
-            int i = 0;
-            for (Map.Entry<String, ChunkMetadata> entry : this.peer.getMetadata().getStoredChunksMetadata().getChunksInfo().entrySet()) {
-                i++;
-                String key = entry.getKey();
-                ChunkMetadata chunkMetadata = entry.getValue();
-                int fileIdHashed = generateHash(chunkMetadata.getFileId());
-                System.out.println("FileIdHashed: " + fileIdHashed + " PredecessorId: " + predecessor.getId());
-                if (isInInterval(fileIdHashed, this.id, predecessor.getId())) {
-
-                    String chunkPath = FileHandler.getChunkPath(this.peer.getFileSystem(), chunkMetadata.getFileId(), chunkMetadata.getChunkNum());
-                    FileHandler fileHandler = new FileHandler(FileHandler.getFile(chunkPath));
-                    AddressPort addressPort = this.addressPortList.getMcAddressPort();
-                    PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), chunkMetadata.getFileId(),
-                        chunkMetadata.getChunkNum(), 1, fileHandler.getChunkFileData());
-                    // TODO: Fix
-
-                    File chunkFile = FileHandler.getFile(chunkPath);
-                    System.out.println("CHUNK FILE SIZE " + (int) chunkFile.length());
-                    FileMetadata fileMetadata = new FileMetadata(chunkPath, chunkMetadata.getFileId(), 1, (int) chunkFile.length());
-                    this.peer.getMetadata().addHostingEntry(fileMetadata);
-                    byte[] message = backupMsg.getBytes();
-                    AddressPort predecessorAddrPort = predecessor.getAddressPortList().getMdbAddressPort();
-                    MessageSender.sendTCPMessage(predecessorAddrPort.getAddress(), predecessorAddrPort.getPort(), message);
-                    FileHandler.deleteFile(chunkMetadata.getFileId() + "/" + chunkMetadata.getChunkNum(), this.peer.getFileSystem());
-                    System.out.println("I: " + String.valueOf(i));
-                }
+            if (predecessor == null || predecessor.getId() != n.getId()) {
+                this.previousPredecessor = predecessor;
+                predecessor = n;
+                if (this.previousPredecessor != null) fileTransfer();
             }
         }
     }
+
+    private void fileTransfer() {
+        int i = 0;
+        for (Map.Entry<String, ChunkMetadata> entry : this.peer.getMetadata().getStoredChunksMetadata().getChunksInfo().entrySet()) {
+            i++;
+            ChunkMetadata chunkMetadata = entry.getValue();
+            int fileIdHashed = generateHash(chunkMetadata.getFileId());
+            System.out.println("[FILE TRANSFER] FileIdHashed: " + fileIdHashed + " PredecessorId: " + predecessor.getId());
+            if (compareDistances(fileIdHashed, predecessor.getId())) {
+                System.out.println("[FILE TRANSFER] Passed");
+
+                String chunkPath = FileHandler.getChunkPath(this.peer.getFileSystem(), chunkMetadata.getFileId(), chunkMetadata.getChunkNum());
+                FileHandler fileHandler = new FileHandler(FileHandler.getFile(chunkPath));
+                AddressPort addressPort = this.addressPortList.getMcAddressPort();
+                PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), chunkMetadata.getFileId(),
+                        chunkMetadata.getChunkNum(), 1, fileHandler.getChunkFileData());
+
+                byte[] message = backupMsg.getBytes();
+                AddressPort predecessorAddrPort = predecessor.getAddressPortList().getMdbAddressPort();
+                MessageSender.sendTCPMessage(predecessorAddrPort.getAddress(), predecessorAddrPort.getPort(), message);
+                FileHandler.deleteFile(chunkMetadata.getFileId() + "/" + chunkMetadata.getChunkNum(), this.peer.getFileSystem());
+                System.out.println("[FILE TRANSFER] I: " + i);
+            }
+        }
+    }
+
 
     /**
      * Updates finger table periodically
@@ -194,7 +196,6 @@ public class ChordNode {
         next++;
         if (next > Chord.m - 1) next = 0;
 
-        //ChordNodeData node = findSuccessor(this.id + (int) Math.pow(2, next));
         ChordNodeData node = findSuccessor(calculateKey(this.id, next));
 
         if (next < fingerTable.size()) fingerTable.set(next, node);
@@ -204,24 +205,26 @@ public class ChordNode {
     }
 
     public void checkPredecessor() {
-        //TODO: connect to peer
-        //if predecessor has failed
-        //predecessor = null
-    }
-
-    public void populateFingerTable(ChordNodeData chordNode) {
-        for (int i = 1; i <= Chord.m; i++) {
-            ChordNodeData chordNodeI = findSuccessor(getId(chordNode.getId(), i));
-            //chordNode.addToFingerTable(chordNodeI.getId(), new ChordNode());
+        if (predecessor == null) return;
+        AddressPort addressPort = predecessor.getAddressPortList().getChordAddressPort();
+        if (!new SslSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
+            System.out.println("[CHORD] error connecting to predecessor...");
+            predecessor = null;
         }
     }
 
-    public int getId(int nodeId, int indexFingerTable) {
-        return nodeId + 2 ^ (indexFingerTable - 1);
+    public void checkSuccessor() {
+        if (successor == null || successor.getId() == this.id) return;
+        AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
+        if (!new SslSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
+            System.out.println("[CHORD] error connecting to successor...");
+            successor = null;
+        }
     }
 
     public ChordNodeData findSuccessor(Integer id) {
-        if (isInInterval(id, this.id, this.successor.getId() + 1)) {
+        if (this.successor != null &&
+                isInInterval(id, this.id, this.successor.getId() + 1)) {
             return this.successor;
         } else {
             ChordNodeData precedingNode = closestPrecedingNode(id);
@@ -230,7 +233,7 @@ public class ChordNode {
             // Sending Get Successor message
             String message = Messages.GET_SUCCESSOR + " " + id + "\r\n\r\n";
             AddressPort addressPort = precedingNode.getAddressPortList().getChordAddressPort();
-            byte[] response = sendMessage(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
+            byte[] response = sendMessageAndWait(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
             return new SerializeChordData().deserialize(response);
         }
     }
@@ -254,13 +257,19 @@ public class ChordNode {
      * @param port
      * @return The response received from SSLEngine server
      */
-    private byte[] sendMessage(byte[] message, String address, Integer port) {
+    private byte[] sendMessageAndWait(byte[] message, String address, Integer port) {
         SslSender sender = new SslSender(address, port, message);
         sender.connect();
         sender.write(message);
         byte[] response = sender.read();
         sender.shutdown();
         return response;
+    }
+
+    private void sendMessage(byte[] message, String address, Integer port) {
+        SslSender sender = new SslSender(address, port, message);
+        sender.connect();
+        sender.write(message);
     }
 
     public int generateHash(String ipAddr, int port) {
@@ -320,53 +329,7 @@ public class ChordNode {
         return addressPortList;
     }
 
-    // peer 0 193
-
-
-
-    // peer 1 204
-    // peer 2 6
-    // file 154
-
-
-    //Peer 1
-        //predecessor = 193
-        //sucessor = 6 !isInInterval 
-    //Peer2
-        //predecessor 204
-        //sucessor 193
-
-    //file 154    
-    
-    
-    
-    // file < predecessor
-    // file > sucessor
-
-                //!predecssor e o proprio !intervalo(predecessor, this.id)
-
-             /*153  240     6
-                |----|------|
-
-                File 204
-                //peer 1 3
-                Peer 2 6
-
-                //Tem que ser menor que o predecessor
-                //Maior que o id
-
-                File 152
-                peer 1 204
-                Peer 2 6
-                
-                File 5
-                peer 1 204
-                Peer 2 6*/
-
-
-
-
-    private boolean isInInterval(int element, int lowerBound, int upperBound) {
+    public boolean isInInterval(int element, int lowerBound, int upperBound) {
         if (lowerBound < upperBound)
             return element > lowerBound && element < upperBound;
         return element > lowerBound || element < upperBound;
@@ -385,5 +348,22 @@ public class ChordNode {
     private int calculateKey(int id, int tablePos) {
         int key = id + (int) Math.pow(2, tablePos);
         return key % (int) Math.pow(2, Chord.m);
+    }
+
+    /**
+     * Checks between two chord nodes which one is the best successor to the file position
+     * @return
+     */
+    private boolean compareDistances(int fileIdHashed, int incoming) {
+        int currentDiff = this.id - fileIdHashed;
+        int incomingDiff = incoming - fileIdHashed;
+
+        if (currentDiff > 0 && incomingDiff > 0)
+            return incomingDiff < currentDiff;
+
+        if (currentDiff < 0 && incomingDiff < 0)
+            return incomingDiff > currentDiff;
+
+        return incomingDiff > currentDiff;
     }
 }

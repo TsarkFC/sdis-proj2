@@ -5,11 +5,14 @@ cd build
 
 
 ################# Simple ###############################
-../../scripts/test.sh access0 BACKUP ../files/321.txt 1
+#../../scripts/test.sh access0 BACKUP ../files/321.txt 1
+#../../scripts/test.sh access0 RESTORE ../files/321.txt
+#../../scripts/test.sh access0 BACKUP ../files/321.txt 2
+#../../scripts/test.sh access0 BACKUP ../files/test.txt 2
 #../../scripts/test.sh access0 RESTORE ../files/321.txt
 #../../scripts/test.sh access1 RECLAIM 70
 #../../scripts/test.sh access0 DELETE ../files/321.txt
-#../../scripts/test.sh access0 STATE
+../../scripts/test.sh access2 STATE
 #../../scripts/test.sh access1 STATE
 
 #81 chunk Image TODO ver se nos da feup tb corre bem

@@ -1,11 +1,12 @@
 package channels;
 
+import chord.ChordNode;
+import chord.ChordNodeData;
 import messages.protocol.PutChunk;
 import messages.protocol.Stored;
 import peer.Peer;
 import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
-import utils.AddressPort;
 import utils.AddressPortList;
 import filehandler.FileHandler;
 import messages.MessageSender;
@@ -35,21 +36,20 @@ public class BackupChannel extends Channel {
         PutChunk rcvdMsg = new PutChunk(rcvd, body);
 
         if (shouldSaveFile(rcvdMsg)) {
-            System.out.println("Should save file");
+            System.out.println("[BACKUP] Should save file");
             saveChunk(rcvdMsg);
             sendStored(rcvdMsg);
             resendFile(rcvdMsg);
         } else {
-            System.out.println("Should not save file " + new String(header));
-            int repDgr = peer.getMetadata().getFileMetadata(rcvdMsg.getFileId()).getRepDgr();
-            if (repDgr == rcvdMsg.getReplicationDeg() || !rcvdMsg.samePeerAndSender(peer)) {
-                System.out.println("Resent message");
-                MessageSender.sendTCPMessageMDBSuccessor(rcvdMsg.getFileId(), peer, rcvdMsg.getBytes());
-                return Utils.discard();
+            System.out.println("[BACKUP] Should not save file " + new String(header));
+            if (shouldResend(rcvdMsg)) {
+                System.out.println("[BACKUP] Resent message");
+                MessageSender.sendTCPMessageMDBSuccessor(peer, rcvdMsg.getBytes());
+                return null;
             }
-            System.out.println("Did not resend message!");
+            System.out.println("[BACKUP] Did not resend message!");
         }
-        return Utils.discard();
+        return null;
     }
 
     private boolean shouldSaveFile(PutChunk rcvdMsg) {
@@ -59,43 +59,40 @@ public class BackupChannel extends Channel {
         return !sameSenderPeer && hasSpace && !isOriginalFileSender;
     }
 
-    private void saveStateMetadata(PutChunk rcvdMsg) {
-        peer.getMetadata().updateStoredInfo(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg(),
-                rcvdMsg.getBody().length / 1000.0, peer.getArgs().getPeerId());
-    }
-
     public void saveChunk(PutChunk rcvdMsg) {
         System.out.println("[BACKUP] Backing up file " + rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo());
-        preventReclaim(rcvdMsg);
         FileHandler.saveChunk(rcvdMsg, peer.getFileSystem());
         saveStateMetadata(rcvdMsg);
     }
 
-    private void sendStored(PutChunk rcvdMsg) {
-        AddressPort addressPortChord = peer.getArgs().getAddressPortList().getChordAddressPort();
+    private void saveStateMetadata(PutChunk rcvdMsg) {
+        peer.getMetadata().updateStoredInfo(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg(),
+                rcvdMsg.getBody().length / 1000.0);
+    }
 
-        Stored message = new Stored(addressPortChord.getAddress(), addressPortChord.getPort(), rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
+    private void sendStored(PutChunk rcvdMsg) {
+        Stored message = new Stored(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
         MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
 
         //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
         saveChunk(rcvdMsg);
     }
 
-    private void preventReclaim(PutChunk rcvdMsg) {
-        BackupProtocolInitiator backupProtocolInitiator = peer.getChannelCoordinator().getBackupInitiator();
-        if (backupProtocolInitiator != null) {
-            backupProtocolInitiator.setReceivedPutChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-        }
-    }
-
     private boolean resendFile(PutChunk message) {
         if (message.getReplicationDeg() - 1 > 0) {
             PutChunk newPutChunk = new PutChunk(message.getIpAddress(), message.getPort(), message.getFileId(), message.getChunkNo(), message.getReplicationDeg() - 1, message.getBody());
-            MessageSender.sendTCPMessageMDBSuccessor(message.getFileId(), peer, newPutChunk.getBytes());
+            MessageSender.sendTCPMessageMDBSuccessor(peer, newPutChunk.getBytes());
             return true;
         } else {
-            System.out.println("Completed Replication degree");
+            System.out.println("[BACKUP] Completed replication degree, chunk stored");
             return false;
         }
+    }
+
+    private boolean shouldResend(PutChunk message) {
+        String chunkFileId = FileHandler.createChunkFileId(message.getFileId(), message.getChunkNo(), message.getReplicationDeg());
+        int fileChordID = peer.getChordNode().generateHash(chunkFileId);
+        ChordNode node = peer.getChordNode();
+        return !node.isInInterval(fileChordID, node.getId(), node.getSuccessor().getId());
     }
 }

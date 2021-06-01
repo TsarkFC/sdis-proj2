@@ -1,5 +1,6 @@
 package peer.metadata;
 
+import messages.protocol.Message;
 import peer.Peer;
 
 import java.io.*;
@@ -9,10 +10,12 @@ import java.util.concurrent.ConcurrentSkipListSet;
 
 public class Metadata implements Serializable {
 
+
     /**
      * Maps fileId to FileMetadata
      */
-    ConcurrentHashMap<String, FileMetadata> hostingFileInfo = new ConcurrentHashMap<>();
+    //ConcurrentHashMap<String, FileMetadata> hostingFileInfo = new ConcurrentHashMap<>();
+    HostingMetadata hostingMetadata;
 
     /**
      * Contains information about stored chunks
@@ -32,73 +35,74 @@ public class Metadata implements Serializable {
     public Metadata(String path) {
         this.path = path;
         storedChunksMetadata = new StoredChunksMetadata();
+        hostingMetadata = new HostingMetadata();
     }
 
     /**
      * Updating information on initiator peer data
      */
     public void addHostingEntry(FileMetadata fileMetadata) {
-        hostingFileInfo.put(fileMetadata.getId(), fileMetadata);
+        hostingMetadata.addHostingFileEntry(fileMetadata);
         writeMetadata();
     }
 
-    public List<FileMetadata> getAlmostDeletedFiles() {
+    /*public List<FileMetadata> getAlmostDeletedFiles() {
         List<FileMetadata> almostDeletedFiles = new ArrayList<>();
         for (FileMetadata fileMetadata : hostingFileInfo.values()) {
             if (fileMetadata.isDeleted()) almostDeletedFiles.add(fileMetadata);
         }
         return almostDeletedFiles;
-    }
+    }*/
 
-    public void updateHostingInfo(FileMetadata hostingMetadata, Integer chunkNo, Integer peerId) {
-        hostingMetadata.addChunk(chunkNo, peerId);
+    public void updateHostingInfo(FileMetadata hostingMetadata, Integer chunkNo, String ipAddress, int port) {
+        hostingMetadata.addChunk(chunkNo, ipAddress, port);
         writeMetadata();
     }
 
     public boolean hasFile(String fileId) {
-        return hostingFileInfo.size() > 0 && hostingFileInfo.containsKey(fileId);
+        return hostingMetadata.hasFile(fileId);
     }
 
     public String getFileIdFromPath(String pathName) {
-        for (Map.Entry<String, FileMetadata> entry : hostingFileInfo.entrySet()) {
+        for (Map.Entry<String, FileMetadata> entry : hostingMetadata.getFileInfo().entrySet()) {
             if (entry.getValue().getPathname().equals(pathName)) return entry.getKey();
         }
         return null;
     }
 
     public void deleteFile(String fileId) {
-        hostingFileInfo.remove(fileId);
+        hostingMetadata.deleteFile(fileId);
         storedChunksMetadata.deleteChunksFromFile(fileId);
         writeMetadata();
     }
 
-    public void deleteFileHosting(String fileID, Peer peer) {
+    /*public void deleteFileHosting(String fileID, Peer peer) {
         FileMetadata fileMetadata = hostingFileInfo.get(fileID);
         if (fileMetadata == null) return;
 
-    }
+    }*/
 
     /**
      * Updating information on stored chunks data
      */
-    public void updateStoredInfo(String fileId, Integer chunkNo, Integer peerId, Peer peer) {
-        FileMetadata hostingMetadata = hostingFileInfo.get(fileId);
-        if (hostingMetadata != null) {
-            updateHostingInfo(hostingMetadata, chunkNo, peerId);
-        } else {
-
-            storedChunksMetadata.updateChunkInfo(fileId, chunkNo, peerId, peer);
-        }
+    public void updateStoredInfo(String fileId, Integer chunkNo, int repDgr, double chunkSize) {
+        storedChunksMetadata.updateChunkInfo(fileId, chunkNo, repDgr, chunkSize);
         writeMetadata();
     }
 
-    public void updateStoredInfo(String fileId, Integer chunkNo, Integer repDgr, Double chunkSize, Integer peerId) {
+    /*public void updateStoredInfo(String fileId, Integer chunkNo, Integer repDgr, Double chunkSize, Integer peerId) {
         int chunkSizeKb = (int) Math.round(chunkSize);
         storedChunksMetadata.updateChunkInfo(fileId, chunkNo, repDgr, chunkSizeKb, peerId);
         writeMetadata();
-    }
+    }*/
 
-    public boolean verifyRepDgr(String fileId, Integer repDgr, Integer numOfChunks) {
+    //TODO nao tenho a certeza disto
+    /*public boolean verifySamePeerSender(Message message,Peer peer){
+        String messageFileId = message.getFileId();
+        return peer.getMetadata().hostesFile(messageFileId);
+    }*/
+
+    /*public boolean verifyRepDgr(String fileId, Integer repDgr, Integer numOfChunks) {
 
         //TODO Verificar aquele erro da apresentaçao
         //storedChunksMetadata.getFileChunkIds();
@@ -109,7 +113,7 @@ public class Metadata implements Serializable {
             if (entry.getValue().size() < repDgr) return false;
         }
         return chunksCount == numOfChunks;
-    }
+    }*/
 
     public void writeMetadata() {
         ObjectOutputStream os;
@@ -141,7 +145,7 @@ public class Metadata implements Serializable {
         state.append("\n********************************************************************************\n");
         state.append("******************************** State Metadata ********************************\n");
         // hosting data
-        state.append("* Hosting:\n");
+        /*state.append("* Hosting:\n");
         for (String fileId : hostingFileInfo.keySet()) {
             state.append("   * File ID: ").append(fileId).append("\n");
 
@@ -155,6 +159,8 @@ public class Metadata implements Serializable {
             }
             state.append("\n");
         }
+
+         */
 
         // stored chunks data
         state.append("* Stored:\n");
@@ -183,8 +189,6 @@ public class Metadata implements Serializable {
         int storedSize = storedChunksMetadata.getStoredSize();
         double finalSpace = storedSize + newFileSizeKb;
 
-        System.out.println("STORED SIZE: " + storedSize);
-        System.out.println("GOT FILE: " + finalSpace);
         if (maxSpace == -1) return true;
         return maxSpace > finalSpace;
     }
@@ -193,16 +197,24 @@ public class Metadata implements Serializable {
         return path;
     }
 
-    public FileMetadata getFileMetadata(String fileId) {
-        return hostingFileInfo.get(fileId);
+    public FileMetadata getHostingFileMetadata(String fileId) {
+        return hostingMetadata.getFileMetadata(fileId);
     }
+
+    /*public boolean hostesFile(String fileId){
+        return hostingFileInfo.contains(fileId);
+    }*/
 
     public StoredChunksMetadata getStoredChunksMetadata() {
         return storedChunksMetadata;
     }
 
-    public int getFileSize(String fileId) {
-        return hostingFileInfo.get(fileId).getSize();
+    public HostingMetadata getHostingMetadata() {
+        return hostingMetadata;
+    }
+
+    public int getFileSize(String idFile) {
+        return hostingMetadata.getFileMetadata(idFile).getSize();
     }
 
 }

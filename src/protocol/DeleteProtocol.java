@@ -1,16 +1,15 @@
 package protocol;
 
-import messages.handlers.DeleteHandler;
+import filehandler.FileHandler;
+import messages.MessageSender;
+import messages.protocol.Delete;
 import peer.Peer;
+import peer.metadata.FileMetadata;
 import peer.metadata.Metadata;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class DeleteProtocol extends Protocol {
-    final int repsLimit = 3;
-    int reps = 1;
-    final int timeWait = 1;
     final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
     public DeleteProtocol(String path, Peer peer) {
@@ -27,10 +26,23 @@ public class DeleteProtocol extends Protocol {
             System.out.println("[ERROR] Peer has not hosted BACKUP to file");
             return;
         }
-        peer.getMetadata().getFileMetadata(fileId).setDeleted(true);
+
+        FileMetadata fileMetadata = peer.getMetadata().getHostingFileMetadata(fileId);
+        fileMetadata.print();
+
+        peer.getMetadata().getHostingFileMetadata(fileId).setDeleted(true);
         peer.getMetadata().deleteFile(fileId);
 
-        new DeleteHandler().sendDeleteMessage(peer, fileId);
+        sendDeleteMessage(peer, fileId, fileMetadata);
     }
 
+    public void sendDeleteMessage(Peer peer, String fileId, FileMetadata fileMetadata) {
+        Delete msg = new Delete(fileId, true);
+        for (int i = 0; i < fileMetadata.getNumberChunks(); i++) {
+            for (int repDgr = 1; repDgr <= fileMetadata.getRepDgr(); repDgr++) {
+                String chunkFileId = FileHandler.createChunkFileId(fileId, i, repDgr);
+                MessageSender.sendTCPMessageMC(chunkFileId, peer, msg.getBytes());
+            }
+        }
+    }
 }

@@ -5,6 +5,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.SSLSession;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,7 @@ public class SslSender extends Ssl implements Runnable {
         this.port = port;
         this.message = message;
 
-        initializeSslContext(protocol, "../ssl/resources/client.keys");
+        initializeSslContext(protocol, SSLInformation.clientKeys);
         engine = context.createSSLEngine(host, port);
         engine.setUseClientMode(true);
     }
@@ -44,25 +45,28 @@ public class SslSender extends Ssl implements Runnable {
         SslSender.protocol = protocol;
     }
 
-    public void connect() {
+    public boolean connect() {
         try {
             engine.beginHandshake();
         } catch (SSLException e) {
-            e.printStackTrace();
-            return;
+            System.out.println("Could not start handshake state!");
+            return false;
         }
         try {
             channel = SocketChannel.open();
             channel.configureBlocking(false);
             channel.connect(new InetSocketAddress(host, port));
             while (!channel.finishConnect()) ;
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("Socket exception!");
+            return false;
         }
-        if (handshake(channel, engine)) {
-            //System.out.println("[Client] Handshake successful");
-        } else {
-            System.out.println("[Client] Handshake error!");
+
+        try {
+            return handshake(channel, engine);
+        } catch (Exception e) {
+            System.out.println("[Client] could not perform handshake!");
+            return false;
         }
     }
 
@@ -76,40 +80,25 @@ public class SslSender extends Ssl implements Runnable {
         start();
     }
 
-
     public void write(byte[] message) {
-        try {
-            //System.out.println("[Client] writing...");
-            write(message, channel, engine);
-        } catch (IOException e) {
-            System.out.println("Error writing message");
-            e.printStackTrace();
-        }
+        write(message, channel, engine);
     }
 
     public byte[] read() {
-        //System.out.println("[Client] attempting to read...");
-        int tries = 0;
+        int tries = 1;
 
-        while (tries < 15) {
+        while (tries <= 50) {
             tries++;
+            byte[] message = read(channel, engine);
+            if (message != null) return message;
             try {
-                //System.out.println("[Client] reading...");
-                byte[] message = read(channel, engine);
-                //System.out.println("[Client] read " + (message == null ? "null" : message.length) + " bytes");
-                if (message != null) return message;
-            } catch (IOException e) {
-                System.out.println("Error Reading message");
-                e.printStackTrace();
-            }
-            try {
-                Thread.sleep(500);
+                Thread.sleep(Math.min(10L + 5L * tries, 500));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
 
-        System.out.println("[Client] could not read! tries = " + tries);
+        System.out.println("[Client] could not read! tries = " + (tries - 1));
         return null;
     }
 
@@ -126,10 +115,5 @@ public class SslSender extends Ssl implements Runnable {
     @Override
     protected void logSentMessage(byte[] message) {
         System.out.println("Sent message to server: " + new String(message));
-    }
-
-    @Override
-    public void handleSSlMsg(byte[] msg) {
-        logReceivedMessage(msg);
     }
 }

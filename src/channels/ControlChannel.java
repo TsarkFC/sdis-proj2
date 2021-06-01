@@ -1,19 +1,18 @@
 package channels;
 
 import filehandler.FileHandler;
-import messages.handlers.DeleteHandler;
-import messages.handlers.GetChunkHandler;
+import messages.MessageSender;
 import messages.protocol.*;
 import peer.Peer;
 import peer.metadata.ChunkMetadata;
-import peer.metadata.FileMetadata;
 import peer.metadata.StoredChunksMetadata;
 import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
+import utils.AddressPort;
 import utils.AddressPortList;
 import utils.Utils;
 
-import java.util.List;
+import java.io.File;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -41,24 +40,24 @@ public class ControlChannel extends Channel {
             case "REMOVED" -> handleReclaim(msgString);
             default -> System.out.println("\nERROR NOT PARSING THAT MESSAGE " + msgType);
         }
-        return Utils.discard();
+        return null;
     }
 
     public void handleBackup(String msgString) {
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
         Stored msg = new Stored(msgString);
 
+        //peer.getMetadata().updateStoredInfo(msg.getFileId(),msg.getChunkNo(),msg.get);
+
         // TODO: check rep degree
         //peer.getMetadata().updateStoredInfo(msg.getFileId(), msg.getChunkNo(), msg.getSenderId(), peer);
     }
 
     public void handleDelete(String msgString) {
-        Delete msg = new Delete(msgString);
-        if (!msg.samePeerAndSender(peer)) {
-            System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
-            if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
-                peer.getMetadata().deleteFile(msg.getFileId());
-            }
+        Delete msg = new Delete(msgString, false);
+        System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
+        if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
+            peer.getMetadata().getHostingMetadata().deleteFile(msg.getFileId());
         }
     }
 
@@ -66,12 +65,26 @@ public class ControlChannel extends Channel {
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
         GetChunk msg = new GetChunk(msgString);
         peer.resetChunksReceived();
-        new GetChunkHandler().handleGetChunkMsg(msg, peer);
+        getAndSendChunk(msg, peer);
+    }
+
+    private void getAndSendChunk(GetChunk rcvdMsg, Peer peer) {
+        byte[] chunk = FileHandler.getChunk(rcvdMsg, peer.getFileSystem());
+        if (chunk == null) {
+            MessageSender.sendTCPMessageMCSuccessor(peer, rcvdMsg.getBytes());
+            return;
+        }
+
+        Chunk msg = new Chunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), chunk);
+        byte[] message = msg.getBytes();
+
+        String chunkId = rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo();
+        if (peer.hasReceivedChunk(chunkId)) return;
+        MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message);
     }
 
     public void handleReclaim(String msgString) {
         Removed removed = new Removed(msgString);
-        if (removed.samePeerAndSender(peer)) return;
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
 
         //A peer that has a local copy of the chunk shall update its local count of this chunk
@@ -86,7 +99,6 @@ public class ControlChannel extends Channel {
             //Acho que mais vale simpesmente quando eliminar fazer backup noutro.
             //chunkMetadata.removePeer(removed.getSenderId());
             System.out.println("[RECLAIM]: Peer has Chunk" + chunkMetadata.getId() + " from " + removed.getFileId() + " stored");
-            System.out.println("[RECLAIM]: Updated perceived degree of chunk to " + chunkMetadata.getPerceivedRepDgr());
 
 
             //If this count drops below the desired replication degree of that chunk, it shall initiate

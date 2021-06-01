@@ -6,12 +6,7 @@ import ssl.SslReceiver;
 import utils.AddressPortList;
 import utils.Utils;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.net.Socket;
 import java.util.Arrays;
-
-import static filehandler.FileHandler.CHUNK_SIZE;
 
 public class RestoreChannel extends Channel {
 
@@ -36,12 +31,7 @@ public class RestoreChannel extends Channel {
         Chunk msg = new Chunk(headerString, body);
         String chunkId = msg.getFileId() + "-" + msg.getChunkNo();
         peer.addChunkReceived(chunkId);
-        handleChunkMsg(msg);
-        return Utils.discard();
-    }
-
-
-    public void handleChunkMsg(Chunk rcvdMsg) {
-        peer.addChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getBody());
+        peer.addChunk(msg.getFileId(), msg.getChunkNo(), msg.getBody());
+        return null;
     }
 }

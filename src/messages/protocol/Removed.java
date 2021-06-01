@@ -2,11 +2,11 @@ package messages.protocol;
 
 import utils.Utils;
 
-// REMOVED <IPAddress> <Port> <FileId> <ChunkNo> <CRLF><CRLF>
+// REMOVED <FileId> <ChunkNo> <CRLF><CRLF>
 public class Removed extends MsgWithChunk {
 
-    public Removed(String ipAddress, Integer port, String fileId, Integer chunkNo) {
-        super(ipAddress, port, fileId, chunkNo);
+    public Removed(String fileId, Integer chunkNo) {
+        super( fileId, chunkNo);
     }
     public Removed(String rcvd){
         super(rcvd);
@@ -17,13 +17,14 @@ public class Removed extends MsgWithChunk {
     }
 
     @Override
-    protected String getChildString() {
-        return "";
+    public String getMsgString() {
+        return String.format("%s %s %d", getMsgType(), this.fileId, this.chunkNo);
     }
+
 
     @Override
     public int getNumberArguments() {
-        return 6;
+        return 4;
     }
 
     @Override
