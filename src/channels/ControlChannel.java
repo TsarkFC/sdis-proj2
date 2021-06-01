@@ -1,5 +1,6 @@
 package channels;
 
+import chord.ChordNode;
 import filehandler.FileHandler;
 import messages.MessageSender;
 import messages.protocol.*;
@@ -90,14 +91,9 @@ public class ControlChannel extends Channel {
         //A peer that has a local copy of the chunk shall update its local count of this chunk
         //1- Check if chunk is stored
         StoredChunksMetadata storageMetadata = peer.getMetadata().getStoredChunksMetadata();
-        int peerId = peer.getArgs().getPeerId();
         if (storageMetadata.chunkIsStored(removed.getFileId(), removed.getChunkNo())) {
             //2- Update local count of its chunk
             ChunkMetadata chunkMetadata = storageMetadata.getChunk(removed.getFileId(), removed.getChunkNo());
-            //TODO Ele agora ja nao tem acesso ao sender id
-            //Mas tambem nao faz sentido ter no chunkMetadata qual é o rep degree
-            //Acho que mais vale simpesmente quando eliminar fazer backup noutro.
-            //chunkMetadata.removePeer(removed.getSenderId());
             System.out.println("[RECLAIM]: Peer has Chunk" + chunkMetadata.getId() + " from " + removed.getFileId() + " stored");
 
             BackupProtocolInitiator backupProtocolInitiator = new BackupProtocolInitiator(removed, chunkMetadata, peer);
@@ -105,9 +101,21 @@ public class ControlChannel extends Channel {
             new ScheduledThreadPoolExecutor(1).schedule(backupProtocolInitiator, 0, TimeUnit.MILLISECONDS);
             //}
         } else {
-            System.out.println("Tenho que o propagar ate ele encontrar o chunk right?");
-
             System.out.println("[RECLAIM]: Peer does not have Chunk stored");
+            if(shouldResend(removed)){
+                MessageSender.sendTCPMessageMCSuccessor(peer, removed.getBytes());
+                System.out.println("[RECLAIM]: Propagating to successor");
+            }else{
+                System.out.println("Did not find chunk");
+            }
+
         }
+    }
+
+    private boolean shouldResend(Removed message) {
+        String chunkFileId = FileHandler.createChunkFileId(message.getFileId(), message.getChunkNo(), message.getReplicationDeg());
+        int fileChordID = peer.getChordNode().generateHash(chunkFileId);
+        ChordNode node = peer.getChordNode();
+        return !node.isInInterval(fileChordID, node.getId(), node.getSuccessor().getId());
     }
 }
