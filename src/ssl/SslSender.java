@@ -87,12 +87,12 @@ public class SslSender extends Ssl implements Runnable {
     public byte[] read() {
         int tries = 1;
 
-        while (tries <= 20) {
+        while (tries <= 50) {
             tries++;
             byte[] message = read(channel, engine);
             if (message != null) return message;
             try {
-                Thread.sleep(Math.min(10L * tries, 500));
+                Thread.sleep(Math.min(10L + 5L * tries, 500));
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

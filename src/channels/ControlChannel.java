@@ -1,16 +1,18 @@
 package channels;
 
 import filehandler.FileHandler;
-import messages.handlers.GetChunkHandler;
+import messages.MessageSender;
 import messages.protocol.*;
 import peer.Peer;
 import peer.metadata.ChunkMetadata;
 import peer.metadata.StoredChunksMetadata;
 import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
+import utils.AddressPort;
 import utils.AddressPortList;
 import utils.Utils;
 
+import java.io.File;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -52,20 +54,33 @@ public class ControlChannel extends Channel {
     }
 
     public void handleDelete(String msgString) {
-        Delete msg = new Delete(msgString,false);
+        Delete msg = new Delete(msgString, false);
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
-        System.out.println("ZAS " + msg.getFileId());
         if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
             peer.getMetadata().getHostingMetadata().deleteFile(msg.getFileId());
         }
-
     }
 
     public void handleRestore(String msgString) {
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
         GetChunk msg = new GetChunk(msgString);
         peer.resetChunksReceived();
-        new GetChunkHandler().handleGetChunkMsg(msg, peer);
+        getAndSendChunk(msg, peer);
+    }
+
+    private void getAndSendChunk(GetChunk rcvdMsg, Peer peer) {
+        byte[] chunk = FileHandler.getChunk(rcvdMsg, peer.getFileSystem());
+        if (chunk == null) {
+            MessageSender.sendTCPMessageMCSuccessor(peer, rcvdMsg.getBytes());
+            return;
+        }
+
+        Chunk msg = new Chunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), chunk);
+        byte[] message = msg.getBytes();
+
+        String chunkId = rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo();
+        if (peer.hasReceivedChunk(chunkId)) return;
+        MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message);
     }
 
     public void handleReclaim(String msgString) {
@@ -84,7 +99,6 @@ public class ControlChannel extends Channel {
             //Acho que mais vale simpesmente quando eliminar fazer backup noutro.
             //chunkMetadata.removePeer(removed.getSenderId());
             System.out.println("[RECLAIM]: Peer has Chunk" + chunkMetadata.getId() + " from " + removed.getFileId() + " stored");
-            System.out.println("[RECLAIM]: Updated perceived degree of chunk to " + chunkMetadata.getPerceivedRepDgr());
 
 
             //If this count drops below the desired replication degree of that chunk, it shall initiate

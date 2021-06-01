@@ -1,6 +1,8 @@
 package protocol;
 
-import messages.handlers.DeleteHandler;
+import filehandler.FileHandler;
+import messages.MessageSender;
+import messages.protocol.Delete;
 import peer.Peer;
 import peer.metadata.FileMetadata;
 import peer.metadata.Metadata;
@@ -25,15 +27,22 @@ public class DeleteProtocol extends Protocol {
             return;
         }
 
-
         FileMetadata fileMetadata = peer.getMetadata().getHostingFileMetadata(fileId);
         fileMetadata.print();
 
         peer.getMetadata().getHostingFileMetadata(fileId).setDeleted(true);
         peer.getMetadata().deleteFile(fileId);
 
-
-        new DeleteHandler().sendDeleteMessage(peer, fileId,fileMetadata);
+        sendDeleteMessage(peer, fileId, fileMetadata);
     }
 
+    public void sendDeleteMessage(Peer peer, String fileId, FileMetadata fileMetadata) {
+        Delete msg = new Delete(fileId, true);
+        for (int i = 0; i < fileMetadata.getNumberChunks(); i++) {
+            for (int repDgr = 1; repDgr <= fileMetadata.getRepDgr(); repDgr++) {
+                String chunkFileId = FileHandler.createChunkFileId(fileId, i, repDgr);
+                MessageSender.sendTCPMessageMC(chunkFileId, peer, msg.getBytes());
+            }
+        }
+    }
 }
