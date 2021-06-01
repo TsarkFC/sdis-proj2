@@ -164,15 +164,12 @@ public class ChordNode {
     }
 
     private void fileTransfer() {
-        int i = 0;
         for (Map.Entry<String, ChunkMetadata> entry : this.peer.getMetadata().getStoredChunksMetadata().getChunksInfo().entrySet()) {
-            i++;
             ChunkMetadata chunkMetadata = entry.getValue();
-            int fileIdHashed = generateHash(chunkMetadata.getFileId());
-            System.out.println("[FILE TRANSFER] FileIdHashed: " + fileIdHashed + " PredecessorId: " + predecessor.getId());
-            if (compareDistances(fileIdHashed, predecessor.getId())) {
-                System.out.println("[FILE TRANSFER] Passed");
+            String fileIdStr = FileHandler.createChunkFileId(chunkMetadata.getFileId(), chunkMetadata.getChunkNum(), chunkMetadata.getRepDgr());
+            int fileId = peer.getChordNode().generateHash(fileIdStr);
 
+            if (isInInterval(fileId, this.id, predecessor.getId())) {
                 String chunkPath = FileHandler.getChunkPath(this.peer.getFileSystem(), chunkMetadata.getFileId(), chunkMetadata.getChunkNum());
                 FileHandler fileHandler = new FileHandler(FileHandler.getFile(chunkPath));
                 AddressPort addressPort = this.addressPortList.getMcAddressPort();
@@ -183,7 +180,8 @@ public class ChordNode {
                 AddressPort predecessorAddrPort = predecessor.getAddressPortList().getMdbAddressPort();
                 MessageSender.sendTCPMessage(predecessorAddrPort.getAddress(), predecessorAddrPort.getPort(), message);
                 FileHandler.deleteFile(chunkMetadata.getFileId() + "/" + chunkMetadata.getChunkNum(), this.peer.getFileSystem());
-                System.out.println("[FILE TRANSFER] I: " + i);
+
+                peer.getMetadata().getStoredChunksMetadata().deleteChunk(chunkMetadata.getFileId(), chunkMetadata.getChunkNum());
             }
         }
     }
@@ -348,22 +346,5 @@ public class ChordNode {
     private int calculateKey(int id, int tablePos) {
         int key = id + (int) Math.pow(2, tablePos);
         return key % (int) Math.pow(2, Chord.m);
-    }
-
-    /**
-     * Checks between two chord nodes which one is the best successor to the file position
-     * @return
-     */
-    private boolean compareDistances(int fileIdHashed, int incoming) {
-        int currentDiff = this.id - fileIdHashed;
-        int incomingDiff = incoming - fileIdHashed;
-
-        if (currentDiff > 0 && incomingDiff > 0)
-            return incomingDiff < currentDiff;
-
-        if (currentDiff < 0 && incomingDiff < 0)
-            return incomingDiff > currentDiff;
-
-        return incomingDiff > currentDiff;
     }
 }

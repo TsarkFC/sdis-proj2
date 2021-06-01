@@ -70,12 +70,10 @@ public class BackupChannel extends Channel {
                 rcvdMsg.getBody().length / 1000.0);
     }
 
+    //TODO: remove
     private void sendStored(PutChunk rcvdMsg) {
         Stored message = new Stored(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
         MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
-
-        //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-        saveChunk(rcvdMsg);
     }
 
     private boolean resendFile(PutChunk message) {

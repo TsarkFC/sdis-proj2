@@ -22,7 +22,7 @@ public class FileHandler {
 
     public FileHandler(File file) {
         this.file = file;
-        fileReader = new FileReader(file, getNumberOfChunks((int)file.length()));
+        fileReader = new FileReader(file, getNumberOfChunks((int) file.length()));
     }
 
     public static File getFile(String path) {
@@ -52,8 +52,8 @@ public class FileHandler {
         return sb.toString();
     }
 
-    public static String createChunkFileId(String fileId,int chunkNo,int repDgr){
-        return fileId+chunkNo+repDgr;
+    public static String createChunkFileId(String fileId, int chunkNo, int repDgr) {
+        return fileId + chunkNo + repDgr;
     }
 
     public static String getFilePath(String peerDir, Message message) {

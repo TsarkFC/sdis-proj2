@@ -50,7 +50,6 @@ public class StoredChunksMetadata implements Serializable {
             System.out.println("[DELETE] Cannot delete Chunk from Metadata");
         } else {
             chunksInfo.remove(chunkId);
-
         }
     }
 
