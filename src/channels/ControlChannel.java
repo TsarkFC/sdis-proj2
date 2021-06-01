@@ -1,19 +1,16 @@
 package channels;
 
 import filehandler.FileHandler;
-import messages.handlers.DeleteHandler;
 import messages.handlers.GetChunkHandler;
 import messages.protocol.*;
 import peer.Peer;
 import peer.metadata.ChunkMetadata;
-import peer.metadata.FileMetadata;
 import peer.metadata.StoredChunksMetadata;
 import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
 import utils.AddressPortList;
 import utils.Utils;
 
-import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +38,7 @@ public class ControlChannel extends Channel {
             case "REMOVED" -> handleReclaim(msgString);
             default -> System.out.println("\nERROR NOT PARSING THAT MESSAGE " + msgType);
         }
-        return Utils.discard();
+        return null;
     }
 
     public void handleBackup(String msgString) {

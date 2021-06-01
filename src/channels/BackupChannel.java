@@ -45,11 +45,11 @@ public class BackupChannel extends Channel {
             if (repDgr == rcvdMsg.getReplicationDeg()) {
                 System.out.println("Resent message");
                 MessageSender.sendTCPMessageMDBSuccessor(rcvdMsg.getFileId(), peer, rcvdMsg.getBytes());
-                return Utils.discard();
+                return null;
             }
             System.out.println("Did not resend message!");
         }
-        return Utils.discard();
+        return null;
     }
 
     private boolean shouldSaveFile(PutChunk rcvdMsg) {

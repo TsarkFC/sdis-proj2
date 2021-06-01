@@ -145,8 +145,8 @@ public abstract class Ssl {
                 while (byteBuffers.getEncryptedData().hasRemaining()) {
                     try {
                         channel.write(byteBuffers.getEncryptedData());
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    } catch (Exception e) {
+                        return false;
                     }
                 }
             }
@@ -171,7 +171,6 @@ public abstract class Ssl {
         byte[] readResult = null;
 
         // Read SSL/TLS encoded data from peer
-        // TODO: surround with try catch to now if read failed on disconnect
         try {
             int num = channel.read(byteBuffers.getPeerEncryptedData());
             if (num < 0) {
@@ -198,8 +197,9 @@ public abstract class Ssl {
                     }
                 }
             }
-        } catch (IOException exception) {
+        } catch (Exception e) {
             System.out.println("Could not read!!");
+            disconnect(channel, engine);
         }
         return readResult;
     }
@@ -245,8 +245,9 @@ public abstract class Ssl {
                     }
                 }
             }
-        } catch (IOException io) {
+        } catch (Exception e) {
             System.out.println("Could not write!!");
+            disconnect(channel, engine);
         }
     }
 

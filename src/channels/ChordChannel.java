@@ -1,8 +1,6 @@
 package channels;
 
 import chord.ChordNodeData;
-import constants.Constants;
-import jdk.jshell.execution.Util;
 import messages.Messages;
 import peer.Peer;
 import ssl.SslReceiver;
@@ -10,8 +8,6 @@ import utils.AddressPortList;
 import utils.SerializeChordData;
 import utils.Utils;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
 import java.util.Arrays;
 
 public class ChordChannel extends Channel {
