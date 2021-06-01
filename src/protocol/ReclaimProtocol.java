@@ -81,6 +81,15 @@ public class ReclaimProtocol extends Protocol {
                     int chunkNo = Integer.parseInt(chunkFile.getName());
                     double size = chunkFile.length() / 1000.0;
                     System.out.println("[RECLAIM] Eliminating chunk: " + chunkFile.getPath() + " size: " + size);
+
+                    AddressPort mcAddr = peer.getArgs().getAddressPortList().getMcAddressPort();
+                    //byte[] chunkData = FileReader.getChunk(chunkFile.getPath());
+                    //System.out.println("ChunkDataWelele: " + chunkData);
+                    FileHandler fileHandler = new FileHandler(chunkFile);
+                    System.out.println("Zaaaaaaaaaaaaaaah: " + fileHandler.getChunkFileData());
+                    PutChunk putChunk = new PutChunk(mcAddr.getAddress(),mcAddr.getPort(),fileIdName, Integer.parseInt(chunkFile.getName()),chunkMetadata.getRepDgr(),fileHandler.getChunkFileData());
+                    MessageSender.sendTCPMessageMDBSuccessor(peer,putChunk.getBytes());
+
                     if (FileHandler.deleteFile(chunkFile)) {
                         peer.getMetadata().getStoredChunksMetadata().deleteChunk(fileIdName, chunkNo);
                         peer.getMetadata().getStoredChunksMetadata().deleteReceivedChunk(fileIdName, chunkNo);
@@ -98,11 +107,7 @@ public class ReclaimProtocol extends Protocol {
                             MessageSender.sendTCPMessageMC(chunkIdLessRep,peer,removedMsg.getBytes());
                         }*/
 
-                        AddressPort mcAddr = peer.getArgs().getAddressPortList().getMcAddressPort();
-                        byte[] chunkData = FileReader.getChunk(chunkFile.getPath());
-                        PutChunk putChunk = new PutChunk(mcAddr.getAddress(),mcAddr.getPort(),file.getName(), Integer.parseInt(chunkFile.getName()),chunkMetadata.getRepDgr(),chunkData);
-                        MessageSender.sendTCPMessageMDBSuccessor(peer,putChunk.getBytes());
-
+                        
                         currentSize -= size;
                         System.out.println("[RECLAIM] Current Size = " + currentSize);
                         if (currentSize <= maxDiskSpace) break;

@@ -52,7 +52,8 @@ public class BackupChannel extends Channel {
         boolean sameSenderPeer = rcvdMsg.samePeerAndSender(peer);
         boolean hasSpace = peer.getMetadata().hasSpace(rcvdMsg.getBody().length / 1000.0);
         boolean isOriginalFileSender = peer.getMetadata().hasFile(rcvdMsg.getFileId());
-        return !sameSenderPeer && hasSpace && !isOriginalFileSender;
+        boolean alreadySavedFile = FileHandler.fileExists(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), peer);
+        return !sameSenderPeer && hasSpace && !isOriginalFileSender && !alreadySavedFile;
     }
 
     public void saveChunk(PutChunk rcvdMsg) {

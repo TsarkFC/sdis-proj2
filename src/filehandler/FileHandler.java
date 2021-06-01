@@ -14,6 +14,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
+import peer.Peer;
 
 public class FileHandler {
     private final File file;
@@ -164,5 +165,10 @@ public class FileHandler {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static boolean fileExists(String fileId, int chunkNo, Peer peer){
+        String path = FileHandler.getChunkPath(peer.getFileSystem(), fileId, chunkNo);
+        return Files.exists(Paths.get(path));
     }
 }

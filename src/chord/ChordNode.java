@@ -73,7 +73,7 @@ public class ChordNode {
         executor.scheduleAtFixedRate(this::checkPredecessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::checkSuccessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
-        System.out.println("Executors ready!");
+        //System.out.println("Executors ready!");
     }
 
     public void create() {
@@ -91,16 +91,16 @@ public class ChordNode {
     }
 
     public void printChordInfo() {
-        if (successor != null) {
-            System.out.println("Peer " + this.id + " successor: " + successor.getId());
-        } else {
-            System.out.println("Peer " + this.id + " successor: null");
-        }
-        if (predecessor != null) {
-            System.out.println("Peer " + this.id + " predecessor: " + predecessor.getId());
-        } else {
-            System.out.println("Peer " + this.id + " predecessor: null");
-        }
+        // if (successor != null) {
+        //     System.out.println("Peer " + this.id + " successor: " + successor.getId());
+        // } else {
+        //     System.out.println("Peer " + this.id + " successor: null");
+        // }
+        // if (predecessor != null) {
+        //     System.out.println("Peer " + this.id + " predecessor: " + predecessor.getId());
+        // } else {
+        //     System.out.println("Peer " + this.id + " predecessor: null");
+        // }
 
     }
 
@@ -151,9 +151,9 @@ public class ChordNode {
     public void checkPredecessor() {
         if (predecessor == null) return;
         AddressPort addressPort = predecessor.getAddressPortList().getChordAddressPort();
-        System.out.println("connecting to predecessor...");
+        //System.out.println("connecting to predecessor...");
         if (!new SslSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
-            System.out.println("error connecting to predecessor...");
+            //System.out.println("error connecting to predecessor...");
             predecessor = null;
         }
     }
@@ -161,9 +161,9 @@ public class ChordNode {
     public void checkSuccessor() {
         if (successor == null) return;
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
-        System.out.println("connecting to successor...");
+        //System.out.println("connecting to successor...");
         if (!new SslSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
-            System.out.println("error connecting to predecessor...");
+            //System.out.println("error connecting to predecessor...");
             int previousSuccessor = successor.getId();
             successor = null;
             successor = findSuccessor(previousSuccessor);
@@ -280,13 +280,13 @@ public class ChordNode {
     }
 
     private void logFingerTable() {
-        int count = 0;
-        System.out.println("----------------");
-        for (ChordNodeData node : fingerTable) {
-            System.out.print("key: " + calculateKey(this.id, count++));
-            System.out.println(" | node id: " + node.getId());
-        }
-        System.out.println("----------------");
+        // int count = 0;
+        // System.out.println("----------------");
+        // for (ChordNodeData node : fingerTable) {
+        //     System.out.print("key: " + calculateKey(this.id, count++));
+        //     System.out.println(" | node id: " + node.getId());
+        // }
+        // System.out.println("----------------");
     }
 
     private int calculateKey(int id, int tablePos) {
