@@ -106,7 +106,7 @@ public class FileHandler {
         return FileHandler.getDirectorySize(dirPath) / 1000.0;
     }
 
-    private static double getDirectorySize(String dirPath) {
+    public static double getDirectorySize(String dirPath) {
         File folder = new File(dirPath);
         float length = 0;
         File[] files = folder.listFiles();

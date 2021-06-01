@@ -13,6 +13,7 @@ import protocol.BackupProtocol;
 import filehandler.FileHandler;
 import messages.protocol.PutChunk;
 import messages.MessageSender;
+import peer.metadata.FileMetadata;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -156,21 +157,31 @@ public class ChordNode {
         if (predecessor == null || isInInterval(n.getId(), predecessor.getId(), this.id)) {
             predecessor = n;
             //System.out.println("[Notify] peer " + this.id + ": updated predecessor, is now: " + predecessor.getId());
-
+            int i = 0;
             for (Map.Entry<String, ChunkMetadata> entry : this.peer.getMetadata().getStoredChunksMetadata().getChunksInfo().entrySet()) {
+                i++;
                 String key = entry.getKey();
                 ChunkMetadata chunkMetadata = entry.getValue();
                 int fileIdHashed = generateHash(chunkMetadata.getFileId());
                 System.out.println("FileIdHashed: " + fileIdHashed + " PredecessorId: " + predecessor.getId());
-                if (!isInInterval(fileIdHashed, predecessor.getId(), this.id)) {
-                    FileHandler fileHandler = new FileHandler(FileHandler.getFile(FileHandler.getChunkPath(this.peer.getFileSystem(), chunkMetadata.getFileId(), chunkMetadata.getChunkNum())));
+                if (isInInterval(fileIdHashed, this.id, predecessor.getId())) {
+
+                    String chunkPath = FileHandler.getChunkPath(this.peer.getFileSystem(), chunkMetadata.getFileId(), chunkMetadata.getChunkNum());
+                    FileHandler fileHandler = new FileHandler(FileHandler.getFile(chunkPath));
                     AddressPort addressPort = this.addressPortList.getMcAddressPort();
                     PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), chunkMetadata.getFileId(),
                         chunkMetadata.getChunkNum(), 1, fileHandler.getChunkFileData());
+                    // TODO: Fix
+
+                    File chunkFile = FileHandler.getFile(chunkPath);
+                    System.out.println("CHUNK FILE SIZE " + (int) chunkFile.length());
+                    FileMetadata fileMetadata = new FileMetadata(chunkPath, chunkMetadata.getFileId(), 1, (int) chunkFile.length());
+                    this.peer.getMetadata().addHostingEntry(fileMetadata);
                     byte[] message = backupMsg.getBytes();
-                    System.out.println("Zaaaaaaaaaah: " + new String(message));
                     AddressPort predecessorAddrPort = predecessor.getAddressPortList().getMdbAddressPort();
                     MessageSender.sendTCPMessage(predecessorAddrPort.getAddress(), predecessorAddrPort.getPort(), message);
+                    FileHandler.deleteFile(chunkMetadata.getFileId() + "/" + chunkMetadata.getChunkNum(), this.peer.getFileSystem());
+                    System.out.println("I: " + String.valueOf(i));
                 }
             }
         }
@@ -308,6 +319,52 @@ public class ChordNode {
     public AddressPortList getAddressPortList() {
         return addressPortList;
     }
+
+    // peer 0 193
+
+
+
+    // peer 1 204
+    // peer 2 6
+    // file 154
+
+
+    //Peer 1
+        //predecessor = 193
+        //sucessor = 6 !isInInterval 
+    //Peer2
+        //predecessor 204
+        //sucessor 193
+
+    //file 154    
+    
+    
+    
+    // file < predecessor
+    // file > sucessor
+
+                //!predecssor e o proprio !intervalo(predecessor, this.id)
+
+             /*153  240     6
+                |----|------|
+
+                File 204
+                //peer 1 3
+                Peer 2 6
+
+                //Tem que ser menor que o predecessor
+                //Maior que o id
+
+                File 152
+                peer 1 204
+                Peer 2 6
+                
+                File 5
+                peer 1 204
+                Peer 2 6*/
+
+
+
 
     private boolean isInInterval(int element, int lowerBound, int upperBound) {
         if (lowerBound < upperBound)

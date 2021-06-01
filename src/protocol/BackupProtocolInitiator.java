@@ -1,6 +1,6 @@
 package protocol;
 
-import messages.protocol.Removed;
+import messages.protocol.MsgWithChunk;
 import peer.Peer;
 import peer.metadata.ChunkMetadata;
 import filehandler.FileHandler;
@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class BackupProtocolInitiator implements Runnable {
-    Removed removed;
+    MsgWithChunk msgWithChunk;
     private final ChunkMetadata chunkMetadata;
     private final Peer peer;
     /**
@@ -20,20 +20,20 @@ public class BackupProtocolInitiator implements Runnable {
     Set<String> receivedDuringReclaim = new HashSet<>();
 
 
-    public BackupProtocolInitiator(Removed removed, ChunkMetadata chunkMetadata, Peer peer) {
-        this.removed = removed;
+    public BackupProtocolInitiator(MsgWithChunk msgWithChunk, ChunkMetadata chunkMetadata, Peer peer) {
+        this.msgWithChunk = msgWithChunk;
         this.chunkMetadata = chunkMetadata;
         this.peer = peer;
     }
 
     public void run() {
-        String path = FileHandler.getChunkPath(peer.getFileSystem(), removed.getFileId(), removed.getChunkNo());
+        String path = FileHandler.getChunkPath(peer.getFileSystem(), msgWithChunk.getFileId(), msgWithChunk.getChunkNo());
         System.out.println("[BACKUP] Initiating backup protocol of path: " + path);
         //TODO ele agora ja nao precisa do if porque ele so envia o reclaim para um right?
         //E o rep degree e um pq ele so eliminou num file
-        //if (!receivedDuringReclaim(removed.getFileId(), removed.getChunkNo())) {
+        //if (!receivedDuringReclaim(msgWithChunk.getFileId(), msgWithChunk.getChunkNo())) {
         BackupProtocol backupProtocol = new BackupProtocol(path, peer, 1);
-        backupProtocol.backupChunk(removed.getFileId(), removed.getChunkNo());
+        backupProtocol.backupChunk(msgWithChunk.getFileId(), msgWithChunk.getChunkNo());
         //}
         peer.getChannelCoordinator().setBackupInitiator(null);
     }
