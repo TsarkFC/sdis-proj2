@@ -1,8 +1,8 @@
 package chord;
 
 public class ChordMessage {
-    private String header;
-    private Integer senderId;
+    private final String header;
+    private final Integer senderId;
 
     public ChordMessage(String header, Integer senderId) {
         this.header = header;

@@ -11,7 +11,7 @@ import utils.Utils;
 import java.util.Arrays;
 
 public class ChordChannel extends Channel {
-    private SerializeChordData serializeChordNode = new SerializeChordData();
+    private final SerializeChordData serializeChordNode = new SerializeChordData();
 
     public ChordChannel(AddressPortList addressPortList, Peer peer) {
         super(addressPortList, peer);

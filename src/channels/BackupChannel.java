@@ -1,9 +1,7 @@
 package channels;
 
 import chord.ChordNode;
-import chord.ChordNodeData;
 import messages.protocol.PutChunk;
-import messages.protocol.Stored;
 import peer.Peer;
 import ssl.SslReceiver;
 import utils.AddressPortList;
@@ -37,7 +35,6 @@ public class BackupChannel extends Channel {
         if (shouldSaveFile(rcvdMsg)) {
             System.out.println("Should save file");
             saveChunk(rcvdMsg);
-            sendStored(rcvdMsg);
             resendFile(rcvdMsg);
         } else {
             System.out.println("Should not save file " + new String(header));
@@ -70,20 +67,6 @@ public class BackupChannel extends Channel {
                 rcvdMsg.getBody().length / 1000.0);
     }
 
-    private void sendStored(PutChunk rcvdMsg) {
-        Stored message = new Stored(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-        MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
-
-        //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-        saveChunk(rcvdMsg);
-    }
-
-    /*private void preventReclaim(PutChunk rcvdMsg) {
-        BackupProtocolInitiator backupProtocolInitiator = peer.getChannelCoordinator().getBackupInitiator();
-        if (backupProtocolInitiator != null) {
-            backupProtocolInitiator.setReceivedPutChunk(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
-        }
-    }*/
 
     private boolean resendFile(PutChunk message) {
         if (message.getReplicationDeg() - 1 > 0) {

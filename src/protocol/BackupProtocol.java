@@ -64,7 +64,6 @@ public class BackupProtocol extends Protocol {
                     chunk.getKey(), repDgr, chunk.getValue());
             byte[] message = backupMsg.getBytes();
             String chunkFileId = FileHandler.createChunkFileId(fileId, i++, repDgr);
-            System.out.println("ZES" + chunkFileId);
             MessageSender.sendTCPMessageMDB(chunkFileId, peer, message);
         }
     }

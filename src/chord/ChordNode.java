@@ -22,7 +22,7 @@ public class ChordNode {
     /**
      * True if peer is the started the chord ring
      */
-    private boolean isBoot;
+    private final boolean isBoot;
 
     /**
      * The id of the peer in the ring
@@ -32,12 +32,12 @@ public class ChordNode {
     /**
      * Finger table containing peer's successors
      */
-    private List<ChordNodeData> fingerTable = new ArrayList<>();
+    private final List<ChordNodeData> fingerTable = new ArrayList<>();
 
     /**
      * Peer own data on the ring
      */
-    private ChordNodeData data;
+    private final ChordNodeData data;
 
     /**
      * Peer predecessor data
