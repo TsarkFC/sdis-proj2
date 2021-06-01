@@ -5,7 +5,6 @@ import messages.protocol.Stored;
 import peer.Peer;
 import protocol.BackupProtocolInitiator;
 import ssl.SslReceiver;
-import utils.AddressPort;
 import utils.AddressPortList;
 import filehandler.FileHandler;
 import messages.MessageSender;
@@ -41,7 +40,7 @@ public class BackupChannel extends Channel {
             resendFile(rcvdMsg);
         } else {
             System.out.println("Should not save file " + new String(header));
-            int repDgr = peer.getMetadata().getFileMetadata(rcvdMsg.getFileId()).getRepDgr();
+            int repDgr = peer.getMetadata().getHostingFileMetadata(rcvdMsg.getFileId()).getRepDgr();
             if (repDgr == rcvdMsg.getReplicationDeg()) {
                 System.out.println("Resent message");
                 MessageSender.sendTCPMessageMDBSuccessor(rcvdMsg.getFileId(), peer, rcvdMsg.getBytes());
@@ -59,22 +58,20 @@ public class BackupChannel extends Channel {
         return !sameSenderPeer && hasSpace && !isOriginalFileSender;
     }
 
-    private void saveStateMetadata(PutChunk rcvdMsg) {
+    /*private void saveStateMetadata(PutChunk rcvdMsg) {
         peer.getMetadata().updateStoredInfo(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg(),
                 rcvdMsg.getBody().length / 1000.0, peer.getArgs().getPeerId());
-    }
+    }*/
 
     public void saveChunk(PutChunk rcvdMsg) {
         System.out.println("[BACKUP] Backing up file " + rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo());
         preventReclaim(rcvdMsg);
         FileHandler.saveChunk(rcvdMsg, peer.getFileSystem());
-        saveStateMetadata(rcvdMsg);
+        //saveStateMetadata(rcvdMsg);
     }
 
     private void sendStored(PutChunk rcvdMsg) {
-        AddressPort addressPortChord = peer.getArgs().getAddressPortList().getChordAddressPort();
-
-        Stored message = new Stored(addressPortChord.getAddress(), addressPortChord.getPort(), rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
+        Stored message = new Stored(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());
         MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message.getBytes());
 
         //peer.getMetadata().getStoredChunksMetadata().deleteChunksSize(rcvdMsg.getFileId(), rcvdMsg.getChunkNo());

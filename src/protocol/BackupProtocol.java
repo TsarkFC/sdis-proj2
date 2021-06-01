@@ -41,7 +41,7 @@ public class BackupProtocol extends Protocol {
         numOfChunks = chunks.size();
         AddressPort mcAddr = peer.getArgs().getAddressPortList().getMcAddressPort();
 
-        if (peer.getMetadata().hasFile(fileId)) {
+        if (peer.getMetadata().getHostingMetadata().hasFile(fileId)) {
             System.out.println("[BACKUP] File already backed up, aborting...");
             return;
         }
@@ -49,12 +49,12 @@ public class BackupProtocol extends Protocol {
         // Updating a previously backed up file, delete previous one
         String previousFileId = peer.getMetadata().getFileIdFromPath(file.getPath());
         if (previousFileId != null) {
-            Delete msg = new Delete(mcAddr.getAddress(), mcAddr.getPort(), previousFileId);
+            Delete msg = new Delete(previousFileId,true);
             MessageSender.sendTCPMessageMC(fileId, peer, msg.getBytes());
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
 
-        FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length());
+        FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length(),numOfChunks);
         peer.getMetadata().addHostingEntry(fileMetadata);
 
         // message initialization
@@ -63,7 +63,8 @@ public class BackupProtocol extends Protocol {
             PutChunk backupMsg = new PutChunk(mcAddr.getAddress(), mcAddr.getPort(), fileId,
                     chunk.getKey(), repDgr, chunk.getValue());
             byte[] message = backupMsg.getBytes();
-            String chunkFileId = FileHandler.createChunkFileId(fileId, i++);
+            String chunkFileId = FileHandler.createChunkFileId(fileId, i++,repDgr);
+            System.out.println("ZES" + chunkFileId);
             MessageSender.sendTCPMessageMDB(chunkFileId, peer, message);
         }
     }

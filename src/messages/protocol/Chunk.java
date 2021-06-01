@@ -1,12 +1,12 @@
 package messages.protocol;
 
-// <Version> CHUNK <SenderId> <FileId> <ChunkNo> <CRLF><CRLF><Body>
+//CHUNK  <FileId> <ChunkNo> <CRLF><CRLF><Body>
 
 public class Chunk extends MsgWithChunk {
     private final byte[] body;
 
-    public Chunk(String ipAddress, Integer port, String fileId, Integer chunkNo, byte[] body) {
-        super(ipAddress, port, fileId, chunkNo);
+    public Chunk(String fileId, Integer chunkNo, byte[] body) {
+        super(fileId, chunkNo);
         this.body = body;
     }
 
@@ -21,20 +21,21 @@ public class Chunk extends MsgWithChunk {
     }
 
     @Override
-    protected String getChildString() {
-        return "";
+    public String getMsgString() {
+        return String.format("%s %s %d", getMsgType(), this.fileId, this.chunkNo);
+
     }
+
 
     @Override
     public int getNumberArguments() {
-        return 6;
+        return 4;
     }
 
     @Override
     public byte[] getBytes() {
         //<MessageType> <IPAddress> <Port> <FileId> <ChunkNo> <CRLF>
-        String header = String.format("%s %s %d %s %d", getMsgType(), this.ipAddress, this.port,
-                this.fileId, this.chunkNo);
+        String header = String.format("%s %s %d", getMsgType(), this.fileId, this.chunkNo);
         return addBody(header.getBytes(), body);
     }
 

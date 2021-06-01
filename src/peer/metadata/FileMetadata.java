@@ -1,5 +1,7 @@
 package peer.metadata;
 
+import utils.AddressPort;
+
 import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -11,17 +13,26 @@ public class FileMetadata implements Serializable {
     private final int repDgr;
     private final int size;
     private boolean deleted = false;
+    private int numberChunks;
 
     /**
      * Maps chunk no to peer Ids that store the chunk
      */
-    private final ConcurrentHashMap<Integer, ConcurrentSkipListSet<Integer>> chunksData = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, ConcurrentSkipListSet<AddressPort>> chunksData = new ConcurrentHashMap<>();
 
-    public FileMetadata(String pathname, String id, int repDgr, int size) {
+    public FileMetadata(String pathname, String id, int repDgr, int size,int numberChunks) {
         this.pathname = pathname;
         this.id = id;
         this.repDgr = repDgr;
         this.size = size;
+        this.numberChunks = numberChunks;
+    }
+
+    public void print(){
+        System.out.println("ID: " + id);
+        System.out.println("Pathname: " + pathname);
+        System.out.println("Rep Degree: " + repDgr);
+        System.out.println("Size: " + size);
     }
 
     public String getPathname() {
@@ -36,7 +47,7 @@ public class FileMetadata implements Serializable {
         return repDgr;
     }
 
-    public ConcurrentHashMap<Integer, ConcurrentSkipListSet<Integer>> getChunksData() {
+    public ConcurrentHashMap<Integer, ConcurrentSkipListSet<AddressPort>> getChunksData() {
         return chunksData;
     }
 
@@ -44,19 +55,21 @@ public class FileMetadata implements Serializable {
         return size;
     }
 
-    public void addChunk(Integer chunkId, Integer peerId) {
-        ConcurrentSkipListSet<Integer> peersIds = chunksData.get(chunkId);
+    public void addChunk(Integer chunkId, String ipAddress, int port) {
+        ConcurrentSkipListSet<AddressPort> peersIds = chunksData.get(chunkId);
         if (peersIds != null) {
-            peersIds.add(peerId);
+            peersIds.add(new AddressPort(ipAddress,port));
         } else {
             peersIds = new ConcurrentSkipListSet<>();
-            peersIds.add(peerId);
+            peersIds.add(new AddressPort(ipAddress,port));
             chunksData.put(chunkId, peersIds);
         }
     }
-
+    //TODO mudar caso seja usado
     public void removeID(int peersId) {
-        for (ConcurrentSkipListSet<Integer> peerIds : chunksData.values()) {
+        //Ele tinha chunk number e todos os peers que mandavam
+        //Para cada chunk obtem se uma lista de peers
+        for (ConcurrentSkipListSet<AddressPort> peerIds : chunksData.values()) {
             if (peerIds != null) {
                 peerIds.remove(peersId);
             }
@@ -64,7 +77,7 @@ public class FileMetadata implements Serializable {
     }
 
     public boolean deletedAllChunksAllPeers() {
-        for (ConcurrentSkipListSet<Integer> peerIds : chunksData.values()) {
+        for (ConcurrentSkipListSet<AddressPort> peerIds : chunksData.values()) {
             if (peerIds.size() != 0) return false;
         }
         return true;
@@ -76,5 +89,13 @@ public class FileMetadata implements Serializable {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public int getNumberChunks() {
+        return numberChunks;
+    }
+
+    public void setNumberChunks(int numberChunks) {
+        this.numberChunks = numberChunks;
     }
 }

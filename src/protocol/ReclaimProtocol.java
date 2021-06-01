@@ -62,7 +62,7 @@ public class ReclaimProtocol extends Protocol {
         }
     }
 
-
+    //Reclaim quando apaga faz backup outra vez do chunk
     private double reclaimFileSpace(File fileId, double currentSize, boolean onlyBiggerPercDgr) {
         StoredChunksMetadata storedChunksMetadata = peer.getMetadata().getStoredChunksMetadata();
         String fileIdName = fileId.getName();
@@ -84,8 +84,11 @@ public class ReclaimProtocol extends Protocol {
                             peer.getMetadata().writeMetadata();
                             //TODO Estou a enviar o do chord para ele verificar se e o mesmo sender
                             AddressPort addr = peerArgs.getAddressPortList().getChordAddressPort();
-                            Removed removedMsg = new Removed(addr.getAddress(), addr.getPort(), fileId.getName(), Integer.parseInt(chunkFile.getName()));
-                            String chunkId = FileHandler.createChunkFileId(fileIdName,chunkNo);
+                            Removed removedMsg = new Removed(fileId.getName(), Integer.parseInt(chunkFile.getName()));
+
+                            //TODO aqui é mesmo rep degree = 1 ?
+                            //Imaginando que ele tem o chunk de rep degree 2, ele assim faz do chunk com 1
+                            String chunkId = FileHandler.createChunkFileId(fileIdName,chunkNo,1);
                             MessageSender.sendTCPMessageMC(chunkId,peer,removedMsg.getBytes());
                             currentSize -= size;
                             System.out.println("[RECLAIM] Current Size = " + currentSize);

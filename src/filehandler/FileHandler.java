@@ -52,8 +52,8 @@ public class FileHandler {
         return sb.toString();
     }
 
-    public static String createChunkFileId(String fileId,int chunkNo){
-        return fileId+chunkNo;
+    public static String createChunkFileId(String fileId,int chunkNo,int repDgr){
+        return fileId+chunkNo+repDgr;
     }
 
     public static String getFilePath(String peerDir, Message message) {
@@ -70,6 +70,7 @@ public class FileHandler {
 
     public static boolean deleteFile(String fileId, String peerDir) {
         String dirPath = getFilePath(peerDir, fileId);
+
         File folder = new File(dirPath);
         if (!folder.exists()) System.out.println("[DELETE] Tried to delete directory that does not exist");
         else {

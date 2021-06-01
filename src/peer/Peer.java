@@ -87,7 +87,7 @@ public class Peer implements RemoteObject {
         }
         restore.put(chunkNo, chunk);
         if (restore.size() >= FileHandler.getNumberOfChunks(metadata.getFileSize(fileId))) {
-            Path restoreFilePath = Paths.get(metadata.getFileMetadata(fileId).getPathname());
+            Path restoreFilePath = Paths.get(metadata.getHostingFileMetadata(fileId).getPathname());
             String filename = getRestoreDir() + "/" + restoreFilePath.getFileName();
             if (!hasRestoreEntry(fileId)) return;
             ConcurrentHashMap<Integer, byte[]> copy = new ConcurrentHashMap<>(restore);
