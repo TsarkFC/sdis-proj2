@@ -273,7 +273,7 @@ public class ChordNode {
         return addressPortList;
     }
 
-    private boolean isInInterval(int element, int lowerBound, int upperBound) {
+    public boolean isInInterval(int element, int lowerBound, int upperBound) {
         if (lowerBound < upperBound)
             return element > lowerBound && element < upperBound;
         return element > lowerBound || element < upperBound;

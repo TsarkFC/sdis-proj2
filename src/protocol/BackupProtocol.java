@@ -49,12 +49,12 @@ public class BackupProtocol extends Protocol {
         // Updating a previously backed up file, delete previous one
         String previousFileId = peer.getMetadata().getFileIdFromPath(file.getPath());
         if (previousFileId != null) {
-            Delete msg = new Delete(previousFileId,true);
+            Delete msg = new Delete(previousFileId, true);
             MessageSender.sendTCPMessageMC(fileId, peer, msg.getBytes());
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
 
-        FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length(),numOfChunks);
+        FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length(), numOfChunks);
         peer.getMetadata().addHostingEntry(fileMetadata);
 
         // message initialization
@@ -63,7 +63,7 @@ public class BackupProtocol extends Protocol {
             PutChunk backupMsg = new PutChunk(mcAddr.getAddress(), mcAddr.getPort(), fileId,
                     chunk.getKey(), repDgr, chunk.getValue());
             byte[] message = backupMsg.getBytes();
-            String chunkFileId = FileHandler.createChunkFileId(fileId, i++,repDgr);
+            String chunkFileId = FileHandler.createChunkFileId(fileId, i++, repDgr);
             System.out.println("ZES" + chunkFileId);
             MessageSender.sendTCPMessageMDB(chunkFileId, peer, message);
         }

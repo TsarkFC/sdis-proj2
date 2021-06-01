@@ -1,5 +1,7 @@
 package channels;
 
+import chord.ChordNode;
+import chord.ChordNodeData;
 import messages.protocol.PutChunk;
 import messages.protocol.Stored;
 import peer.Peer;
@@ -40,8 +42,7 @@ public class BackupChannel extends Channel {
             resendFile(rcvdMsg);
         } else {
             System.out.println("Should not save file " + new String(header));
-            int repDgr = peer.getMetadata().getHostingFileMetadata(rcvdMsg.getFileId()).getRepDgr();
-            if (repDgr == rcvdMsg.getReplicationDeg()) {
+            if (shouldResend(rcvdMsg)) {
                 System.out.println("Resent message");
                 MessageSender.sendTCPMessageMDBSuccessor(rcvdMsg.getFileId(), peer, rcvdMsg.getBytes());
                 return null;
@@ -94,5 +95,12 @@ public class BackupChannel extends Channel {
             System.out.println("Completed Replication degree");
             return false;
         }
+    }
+
+    private boolean shouldResend(PutChunk message) {
+        String chunkFileId = FileHandler.createChunkFileId(message.getFileId(), message.getChunkNo(), message.getReplicationDeg());
+        int fileChordID = peer.getChordNode().generateHash(chunkFileId);
+        ChordNode node = peer.getChordNode();
+        return !node.isInInterval(fileChordID, node.getId(), node.getSuccessor().getId());
     }
 }
