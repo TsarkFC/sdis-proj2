@@ -78,7 +78,6 @@ public class ReclaimProtocol extends Protocol {
                     int chunkNo = Integer.parseInt(chunkFile.getName());
                     double size = chunkFile.length() / 1000.0;
                     System.out.println("[RECLAIM] Eliminating chunk: " + chunkFile.getPath() + " size: " + size);
-                    System.out.println("          With perceived dgr = " + chunkMetadata.getPerceivedRepDgr() + " and rep = " + chunkMetadata.getRepDgr());
                     if (FileHandler.deleteFile(chunkFile)) {
                         peer.getMetadata().getStoredChunksMetadata().deleteChunk(fileIdName, chunkNo);
                         peer.getMetadata().getStoredChunksMetadata().deleteReceivedChunk(fileIdName, chunkNo);

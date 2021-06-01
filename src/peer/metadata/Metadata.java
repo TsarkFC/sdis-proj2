@@ -54,8 +54,8 @@ public class Metadata implements Serializable {
         return almostDeletedFiles;
     }*/
 
-    public void updateHostingInfo(FileMetadata hostingMetadata, Integer chunkNo, String ipAddress,int port) {
-        hostingMetadata.addChunk(chunkNo, ipAddress,port);
+    public void updateHostingInfo(FileMetadata hostingMetadata, Integer chunkNo, String ipAddress, int port) {
+        hostingMetadata.addChunk(chunkNo, ipAddress, port);
         writeMetadata();
     }
 
@@ -85,16 +85,10 @@ public class Metadata implements Serializable {
     /**
      * Updating information on stored chunks data
      */
-    /*public void updateStoredInfo(String fileId, Integer chunkNo, String ipAddress,int port, Peer peer) {
-        FileMetadata hostingMetadata = hostingFileInfo.get(fileId);
-        if (hostingMetadata != null) {
-            updateHostingInfo(hostingMetadata, chunkNo, ipAddress,port);
-        } else {
-            System.out.println("\n\n\nIt was not supposed to go here!!!");
-            storedChunksMetadata.updateChunkInfo(fileId, chunkNo, peerId, peer);
-        }
+    public void updateStoredInfo(String fileId, Integer chunkNo, int repDgr, double chunkSize) {
+        storedChunksMetadata.updateChunkInfo(fileId, chunkNo, repDgr, chunkSize);
         writeMetadata();
-    }*/
+    }
 
     /*public void updateStoredInfo(String fileId, Integer chunkNo, Integer repDgr, Double chunkSize, Integer peerId) {
         int chunkSizeKb = (int) Math.round(chunkSize);

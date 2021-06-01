@@ -1,8 +1,6 @@
 package peer.metadata;
 
-import java.util.ArrayList;
-import java.io.*;
-import java.util.List;
+import java.io.Serializable;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class HostingMetadata implements Serializable  {

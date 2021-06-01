@@ -44,7 +44,7 @@ public class BackupChannel extends Channel {
             System.out.println("Should not save file " + new String(header));
             if (shouldResend(rcvdMsg)) {
                 System.out.println("Resent message");
-                MessageSender.sendTCPMessageMDBSuccessor(rcvdMsg.getFileId(), peer, rcvdMsg.getBytes());
+                MessageSender.sendTCPMessageMDBSuccessor(peer, rcvdMsg.getBytes());
                 return null;
             }
             System.out.println("Did not resend message!");
@@ -59,16 +59,16 @@ public class BackupChannel extends Channel {
         return !sameSenderPeer && hasSpace && !isOriginalFileSender;
     }
 
-    /*private void saveStateMetadata(PutChunk rcvdMsg) {
-        peer.getMetadata().updateStoredInfo(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg(),
-                rcvdMsg.getBody().length / 1000.0, peer.getArgs().getPeerId());
-    }*/
-
     public void saveChunk(PutChunk rcvdMsg) {
         System.out.println("[BACKUP] Backing up file " + rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo());
         preventReclaim(rcvdMsg);
         FileHandler.saveChunk(rcvdMsg, peer.getFileSystem());
-        //saveStateMetadata(rcvdMsg);
+        saveStateMetadata(rcvdMsg);
+    }
+
+    private void saveStateMetadata(PutChunk rcvdMsg) {
+        peer.getMetadata().updateStoredInfo(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg(),
+                rcvdMsg.getBody().length / 1000.0);
     }
 
     private void sendStored(PutChunk rcvdMsg) {
@@ -89,7 +89,7 @@ public class BackupChannel extends Channel {
     private boolean resendFile(PutChunk message) {
         if (message.getReplicationDeg() - 1 > 0) {
             PutChunk newPutChunk = new PutChunk(message.getIpAddress(), message.getPort(), message.getFileId(), message.getChunkNo(), message.getReplicationDeg() - 1, message.getBody());
-            MessageSender.sendTCPMessageMDBSuccessor(message.getFileId(), peer, newPutChunk.getBytes());
+            MessageSender.sendTCPMessageMDBSuccessor(peer, newPutChunk.getBytes());
             return true;
         } else {
             System.out.println("Completed Replication degree");
