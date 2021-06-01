@@ -25,12 +25,6 @@ import java.util.concurrent.TimeUnit;
 
 
 public class ChordNode {
-
-    /**
-     *
-     */
-    private boolean joined;
-
     /**
      * Peer corresponding to the node in the chord
      */
@@ -72,6 +66,11 @@ public class ChordNode {
     private ChordNodeData successor;
 
     /**
+     * Successor's successor, used in case of failure
+     */
+    private ChordNodeData safeSuccessor;
+
+    /**
      * Object containing ip addresses and ports of all the 4 channels
      */
     private final AddressPortList addressPortList;
@@ -87,23 +86,24 @@ public class ChordNode {
         this.id = generateHash(addressPortList.getChordAddressPort().getAddress(), addressPortList.getChordAddressPort().getPort());
         this.isBoot = peer.getArgs().isBoot();
         this.data = new ChordNodeData(id, addressPortList);
-        System.out.println("Chord Peer was created id: " + id);
+        System.out.println("[CHORD] Node was created id: " + id);
 
         //TODO Nao faz sentido por tudo no mesmo?
         //TODO: Verificar tempos
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
         executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::fixFingers, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(this::fixSafeSuccessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::checkPredecessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::checkSuccessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
-        //executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
+        executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         System.out.println("Executors ready!");
     }
 
     public void create() {
         predecessor = null;
         successor = this.data;
-        System.out.println("[CHORD] peer ready");
+        System.out.println("[CHORD] node ready");
     }
 
     public void join(String chordAddress, int chordPort) {
@@ -111,9 +111,13 @@ public class ChordNode {
 
         String message = Messages.JOIN + " " + this.id + "\r\n\r\n";
         byte[] successorInfoCRLF = sendMessageAndWait(message.getBytes(), chordAddress, chordPort);
+        if (successorInfoCRLF == null) {
+            System.out.println("[CHORD] join failed");
+            return;
+        }
         byte[] successorInfo = Utils.readUntilCRLF(successorInfoCRLF);
         successor = new SerializeChordData().deserialize(successorInfo);
-        System.out.println("[CHORD] peer ready");
+        System.out.println("[CHORD] node ready");
     }
 
     public void printChordInfo() {
@@ -136,6 +140,10 @@ public class ChordNode {
         String message = Messages.GET_PREDECESSOR + "\r\n\r\n";
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
         byte[] predecessorInfoCRLF = sendMessageAndWait(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
+        if (predecessorInfoCRLF == null) {
+            System.out.println("[CHORD] could not stabilize");
+            return;
+        }
         byte[] predecessorInfo = Utils.readUntilCRLF(predecessorInfoCRLF);
         ChordNodeData x = new SerializeChordData().deserialize(predecessorInfo);
 
@@ -186,7 +194,6 @@ public class ChordNode {
         }
     }
 
-
     /**
      * Updates finger table periodically
      */
@@ -199,7 +206,20 @@ public class ChordNode {
         if (next < fingerTable.size()) fingerTable.set(next, node);
         else fingerTable.add(node);
 
-        //logFingerTable();
+        logFingerTable();
+    }
+
+    /**
+     * Updates successors periodically
+     */
+    public void fixSafeSuccessor() {
+        System.out.println("[CHORD] fix safe successor called, current safe = " +  ((safeSuccessor == null) ? "null" : safeSuccessor.getId()));
+        if (successor == null) return;
+        ChordNodeData newSuccessor = findSuccessor(successor.getId() + 1);
+        if (safeSuccessor == null || newSuccessor != null && safeSuccessor.getId() != newSuccessor.getId()) {
+            safeSuccessor = newSuccessor;
+            System.out.println("[CHORD] safe successor updated!");
+        }
     }
 
     public void checkPredecessor() {
@@ -216,7 +236,7 @@ public class ChordNode {
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
         if (!new SslSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
             System.out.println("[CHORD] error connecting to successor...");
-            successor = null;
+            successor = safeSuccessor;
         }
     }
 
@@ -232,6 +252,10 @@ public class ChordNode {
             String message = Messages.GET_SUCCESSOR + " " + id + "\r\n\r\n";
             AddressPort addressPort = precedingNode.getAddressPortList().getChordAddressPort();
             byte[] response = sendMessageAndWait(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
+            if (response == null) {
+                System.out.println("[CHORD] error processing successor");
+                return null;
+            }
             return new SerializeChordData().deserialize(response);
         }
     }

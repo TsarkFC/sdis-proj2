@@ -63,11 +63,11 @@ public abstract class Ssl {
                         byteBuffers.getEncryptedData().clear();
                         result = engine.wrap(byteBuffers.getDecryptedData(), byteBuffers.getEncryptedData());
                         if (!handleWrapResult(result, engine, channel, byteBuffers)) {
-                            System.out.println("[Handshake] Error during wrap");
+                            System.out.println("[Handshake] Error during wrap (processing wrap)");
                             return false;
                         }
                     } catch (SSLException e) {
-                        System.out.println("[Handshake] Error during wrap");
+                        System.out.println("[Handshake] Error during wrap (SSLException)");
                         return false;
                     }
                 }
@@ -83,7 +83,7 @@ public abstract class Ssl {
                             break;
                         }
                     } catch (Exception e) {
-                        System.out.println("[Handshake] Error during unwrap");
+                        System.out.println("[Handshake] Error during unwrap (receiving data)");
                         return false;
                     }
 
@@ -94,11 +94,11 @@ public abstract class Ssl {
                         byteBuffers.getPeerEncryptedData().compact();
 
                         if (!handleUnwrapResult(result, engine, byteBuffers)) {
-                            System.out.println("[Handshake] Error during unwrap");
+                            System.out.println("[Handshake] Error during unwrap (processing data)");
                             return false;
                         }
                     } catch (Exception e) {
-                        System.out.println("[Handshake] Error during unwrap");
+                        System.out.println("[Handshake] Error during unwrap (exception processing data)");
                         return false;
                     }
                 }
