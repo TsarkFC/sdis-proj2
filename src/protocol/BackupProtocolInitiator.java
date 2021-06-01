@@ -32,7 +32,9 @@ public class BackupProtocolInitiator implements Runnable {
         //TODO ele agora ja nao precisa do if porque ele so envia o reclaim para um right?
         //E o rep degree e um pq ele so eliminou num file
         //if (!receivedDuringReclaim(removed.getFileId(), removed.getChunkNo())) {
-        BackupProtocol backupProtocol = new BackupProtocol(path, peer, 1);
+        //TODO Ao fazer isto, ele tambem vai fazer backup dos chunks com menos rep degree, e preciso por uma condçao que caso
+        //Os gajos ja tenham o backup feito, entao nao propaguem o ficheiro
+        BackupProtocol backupProtocol = new BackupProtocol(path, peer, removed.getReplicationDeg());
         backupProtocol.backupChunk(removed.getFileId(), removed.getChunkNo());
         //}
         peer.getChannelCoordinator().setBackupInitiator(null);

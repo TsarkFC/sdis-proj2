@@ -72,13 +72,16 @@ public class BackupProtocol extends Protocol {
     public void backupChunk(String fileId, int chunkNo) {
         FileHandler fileHandler = new FileHandler(file);
 
-        //FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length());
-        //peer.getMetadata().addHostingEntry(fileMetadata);
+        //TODO Tirar hosting metadata daqui
+        FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length(),FileHandler.getNumberOfChunks((int) file.length()));
+        peer.getMetadata().addHostingEntry(fileMetadata);
 
-        AddressPort addressPort = peer.getArgs().getAddressPortList().getMdbAddressPort();
+        AddressPort addressPort = peer.getArgs().getAddressPortList().getMcAddressPort();
         PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), fileId,
                 chunkNo, repDgr, fileHandler.getChunkFileData());
         byte[] message = backupMsg.getBytes();
-        MessageSender.sendTCPMessageMDB(fileId, peer, message);
+
+        String chunkId = FileHandler.createChunkFileId(fileId, chunkNo,repDgr);
+        MessageSender.sendTCPMessageMDB(chunkId, peer, message);
     }
 }

@@ -84,18 +84,15 @@ public class ControlChannel extends Channel {
             //Acho que mais vale simpesmente quando eliminar fazer backup noutro.
             //chunkMetadata.removePeer(removed.getSenderId());
             System.out.println("[RECLAIM]: Peer has Chunk" + chunkMetadata.getId() + " from " + removed.getFileId() + " stored");
-            System.out.println("[RECLAIM]: Updated perceived degree of chunk to " + chunkMetadata.getPerceivedRepDgr());
 
-
-            //If this count drops below the desired replication degree of that chunk, it shall initiate
-            // the chunk backup subProtocol between 0 and 400 ms
-            //if (chunkMetadata.getPerceivedRepDgr() < chunkMetadata.getRepDgr()) {
-            System.out.println("[RECLAIM]: Perceived Replication degree dropped below Replication Degree");
             BackupProtocolInitiator backupProtocolInitiator = new BackupProtocolInitiator(removed, chunkMetadata, peer);
             peer.getChannelCoordinator().setBackupInitiator(backupProtocolInitiator);
-            new ScheduledThreadPoolExecutor(1).schedule(backupProtocolInitiator,
-                    Utils.generateRandomDelay("[BACKUP] Starting backup of " + chunkMetadata.getId() + " after "), TimeUnit.MILLISECONDS);
+            new ScheduledThreadPoolExecutor(1).schedule(backupProtocolInitiator, 0, TimeUnit.MILLISECONDS);
             //}
-        } else System.out.println("[RECLAIM]: Peer does not have Chunk stored");
+        } else {
+            System.out.println("Tenho que o propagar ate ele encontrar o chunk right?");
+
+            System.out.println("[RECLAIM]: Peer does not have Chunk stored");
+        }
     }
 }

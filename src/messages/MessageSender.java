@@ -46,4 +46,11 @@ public class MessageSender {
         MessageSender.sendTCPMessage(addrPortMc.getAddress(),
                 addrPortMc.getPort(), msg);
     }
+    public static void sendTCPMessageMCSuccessor(String fileName, Peer peer, byte[] msg) {
+        ChordNodeData chordNodeData = peer.getChordNode().getSuccessor();
+        AddressPort addrPortMc = chordNodeData.getAddressPortList().getMcAddressPort();
+        MessageSender.sendTCPMessage(addrPortMc.getAddress(),
+                addrPortMc.getPort(), msg);
+    }
+
 }

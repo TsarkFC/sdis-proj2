@@ -1,5 +1,7 @@
 package protocol;
 
+import chord.ChordNode;
+import chord.ChordNodeData;
 import filehandler.FileHandler;
 import messages.protocol.Removed;
 import peer.Peer;
@@ -36,20 +38,20 @@ public class ReclaimProtocol extends Protocol {
         File[] fileFolders = FileHandler.getDirectoryFiles(peer.getFileSystem());
         if (fileFolders != null) {
 
-            System.out.println("[RECLAIM] Eliminating only chunks with Perceived Rep degree > Rep degree");
+            /*System.out.println("[RECLAIM] Eliminating only chunks with Perceived Rep degree > Rep degree");
             for (File file : fileFolders) {
                 if (currentSize <= maxDiskSpace) break;
                 currentSize = reclaimFileSpace(file, currentSize, true);
-            }
+            }*/
             fileFolders = FileHandler.getDirectoryFiles(peer.getFileSystem());
 
             //Eliminate every file until it has size < maxSize
             if (currentSize > maxDiskSpace) {
-                System.out.println("[RECLAIM] Eliminating the ones with bigger rep degree than desired was not enough...");
-                System.out.println("[RECLAIM] Eliminating other files");
+                //System.out.println("[RECLAIM] Eliminating the ones with bigger rep degree than desired was not enough...");
+                System.out.println("[RECLAIM] Eliminating files until desired storage size");
                 for (File file : fileFolders) {
                     if (currentSize <= maxDiskSpace) break;
-                    currentSize = reclaimFileSpace(file, currentSize, false);
+                    currentSize = reclaimFileSpace(file, currentSize);
                 }
             }
 
@@ -63,7 +65,7 @@ public class ReclaimProtocol extends Protocol {
     }
 
     //Reclaim quando apaga faz backup outra vez do chunk
-    private double reclaimFileSpace(File fileId, double currentSize, boolean onlyBiggerPercDgr) {
+    private double reclaimFileSpace(File fileId, double currentSize) {
         StoredChunksMetadata storedChunksMetadata = peer.getMetadata().getStoredChunksMetadata();
         String fileIdName = fileId.getName();
         if (!fileIdName.equals("metadata") && !fileIdName.equals("restored")) {
@@ -72,35 +74,40 @@ public class ReclaimProtocol extends Protocol {
             if (chunks != null) {
                 for (File chunkFile : chunks) {
                     ChunkMetadata chunkMetadata = storedChunksMetadata.getChunk(fileId.getName(), Integer.valueOf(chunkFile.getName()));
-                    if (!onlyBiggerPercDgr || chunkMetadata.biggerThanDesiredRep()) {
-                        PeerArgs peerArgs = peer.getArgs();
-                        int chunkNo = Integer.parseInt(chunkFile.getName());
-                        double size = chunkFile.length() / 1000.0;
-                        System.out.println("[RECLAIM] Eliminating chunk: " + chunkFile.getPath() + " size: " + size);
-                        System.out.println("          With perceived dgr = " + chunkMetadata.getPerceivedRepDgr() + " and rep = " + chunkMetadata.getRepDgr());
-                        if (FileHandler.deleteFile(chunkFile)) {
-                            peer.getMetadata().getStoredChunksMetadata().deleteChunk(fileIdName, chunkNo);
-                            peer.getMetadata().getStoredChunksMetadata().deleteReceivedChunk(fileIdName, chunkNo);
-                            peer.getMetadata().writeMetadata();
-                            //TODO Estou a enviar o do chord para ele verificar se e o mesmo sender
-                            AddressPort addr = peerArgs.getAddressPortList().getChordAddressPort();
-                            Removed removedMsg = new Removed(fileId.getName(), Integer.parseInt(chunkFile.getName()));
+                    PeerArgs peerArgs = peer.getArgs();
+                    int chunkNo = Integer.parseInt(chunkFile.getName());
+                    double size = chunkFile.length() / 1000.0;
+                    System.out.println("[RECLAIM] Eliminating chunk: " + chunkFile.getPath() + " size: " + size);
+                    System.out.println("          With perceived dgr = " + chunkMetadata.getPerceivedRepDgr() + " and rep = " + chunkMetadata.getRepDgr());
+                    if (FileHandler.deleteFile(chunkFile)) {
+                        peer.getMetadata().getStoredChunksMetadata().deleteChunk(fileIdName, chunkNo);
+                        peer.getMetadata().getStoredChunksMetadata().deleteReceivedChunk(fileIdName, chunkNo);
+                        peer.getMetadata().writeMetadata();
 
-                            //TODO aqui é mesmo rep degree = 1 ?
-                            //Imaginando que ele tem o chunk de rep degree 2, ele assim faz do chunk com 1
-                            String chunkId = FileHandler.createChunkFileId(fileIdName,chunkNo,1);
-                            MessageSender.sendTCPMessageMC(chunkId,peer,removedMsg.getBytes());
-                            currentSize -= size;
-                            System.out.println("[RECLAIM] Current Size = " + currentSize);
-                            if (currentSize <= maxDiskSpace) break;
+
+                        //Sending removed message
+                        Removed removedMsg = new Removed(fileId.getName(), Integer.parseInt(chunkFile.getName()),chunkMetadata.getRepDgr());
+
+                        if(chunkMetadata.getRepDgr()==1){
+                            String chunkIdMoreRep = FileHandler.createChunkFileId(fileIdName, chunkNo, chunkMetadata.getRepDgr()+1);
+                            MessageSender.sendTCPMessageMC(chunkIdMoreRep,peer,removedMsg.getBytes());
+                        }else{
+                            String chunkIdLessRep = FileHandler.createChunkFileId(fileIdName, chunkNo, chunkMetadata.getRepDgr()-1);
+                            MessageSender.sendTCPMessageMC(chunkIdLessRep,peer,removedMsg.getBytes());
                         }
+
+                        currentSize -= size;
+                        System.out.println("[RECLAIM] Current Size = " + currentSize);
+                        if (currentSize <= maxDiskSpace) break;
                     }
+
                 }
             }
         }
 
         return currentSize;
     }
+
 
 }
 
