@@ -29,4 +29,13 @@ public class HostingMetadata implements Serializable  {
         fileInfo.remove(fileId);
     }
 
+
+    public String getString(){
+        StringBuilder state = new StringBuilder();
+        for (FileMetadata fileMetadata : fileInfo.values()){
+            state.append(fileMetadata.getString()).append("\n");
+        }
+        return state.toString();
+    }
+
 }

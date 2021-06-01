@@ -145,7 +145,9 @@ public class Metadata implements Serializable {
         state.append("\n********************************************************************************\n");
         state.append("******************************** State Metadata ********************************\n");
         // hosting data
-        /*state.append("* Hosting:\n");
+        state.append("* Hosting:\n");
+        state.append(hostingMetadata.getString());
+        /*
         for (String fileId : hostingFileInfo.keySet()) {
             state.append("   * File ID: ").append(fileId).append("\n");
 

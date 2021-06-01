@@ -35,6 +35,21 @@ public class FileMetadata implements Serializable {
         System.out.println("Size: " + size);
     }
 
+    public String getString(){
+        String tabs = "   ";
+        StringBuilder state = new StringBuilder();
+        state.append(tabs + "* ID: " + id).append("\n");
+        state.append(tabs + "* Pathname: " + pathname).append("\n");
+        state.append(tabs + "* Rep Degree: " + repDgr).append("\n");
+        state.append(tabs + "* Size: " + size).append("\n");
+
+        return state.toString();
+
+
+    }
+
+
+
     public String getPathname() {
         return pathname;
     }
