@@ -63,7 +63,6 @@ public abstract class SSL {
                         byteBuffers.getEncryptedData().clear();
                         result = engine.wrap(byteBuffers.getDecryptedData(), byteBuffers.getEncryptedData());
                         if (!handleWrapResult(result, engine, channel, byteBuffers)) {
-                            System.out.println("[HANDSHAKE] Error during wrap (processing wrap)");
                             engine.closeOutbound();
                             return false;
                         }
@@ -205,13 +204,12 @@ public abstract class SSL {
                 }
             }
         } catch (Exception e) {
-            System.out.println("[SSL READ] Could not read!");
-            try {
+            /*try {
                 engine.closeInbound();
                 engine.closeOutbound();
             } catch (SSLException sslException) {
                 System.out.println("[SSL READ] Error closing inbound!");
-            }
+            }*/
             disconnect(channel, engine);
         }
         return readResult;
@@ -256,7 +254,6 @@ public abstract class SSL {
                 }
             }
         } catch (Exception e) {
-            System.out.println("[SSL WRITE] Could not write!");
             disconnect(channel, engine);
         }
     }

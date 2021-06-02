@@ -88,15 +88,12 @@ public class ChordNode {
         this.data = new ChordNodeData(id, addressPortList);
         System.out.println("[CHORD] Node was created id: " + id);
 
-        //TODO Nao faz sentido por tudo no mesmo?
-        //TODO: Verificar tempos
         ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(Constants.numThreads);
         executor.scheduleAtFixedRate(this::stabilize, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::fixFingers, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::fixSafeSuccessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::checkPredecessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::checkSuccessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
-        executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         System.out.println("[CHORD] Executors ready!");
     }
 
@@ -118,20 +115,6 @@ public class ChordNode {
         byte[] successorInfo = Utils.readUntilCRLF(successorInfoCRLF);
         successor = new SerializeChordData().deserialize(successorInfo);
         System.out.println("[CHORD] node ready");
-    }
-
-    public void printChordInfo() {
-        // if (successor != null) {
-        //     System.out.println("Peer " + this.id + " successor: " + successor.getId());
-        // } else {
-        //     System.out.println("Peer " + this.id + " successor: null");
-        // }
-        // if (predecessor != null) {
-        //     System.out.println("Peer " + this.id + " predecessor: " + predecessor.getId());
-        // } else {
-        //     System.out.println("Peer " + this.id + " predecessor: null");
-        // }
-
     }
 
     public void stabilize() {
@@ -203,10 +186,12 @@ public class ChordNode {
 
         ChordNodeData node = findSuccessor(calculateKey(this.id, next));
 
-        if (next < fingerTable.size()) fingerTable.set(next, node);
+        if (next < fingerTable.size()) {
+            ChordNodeData currentNode = fingerTable.get(next);
+            fingerTable.set(next, node);
+            if (currentNode == null || node == null || currentNode.getId() != node.getId()) logFingerTable();
+        }
         else fingerTable.add(node);
-
-        logFingerTable();
     }
 
     /**
@@ -370,12 +355,12 @@ public class ChordNode {
 
     private void logFingerTable() {
         int count = 0;
-        System.out.println("----------------");
+        System.out.println("\n### [CHORD] node " + this.id + " finger table updated");
         for (ChordNodeData node : fingerTable) {
             System.out.print("key: " + calculateKey(this.id, count++));
             System.out.println(" | node id: " + ((node == null) ? "null" : node.getId()));
         }
-        System.out.println("----------------");
+        System.out.println("###\n");
     }
 
     private int calculateKey(int id, int tablePos) {
