@@ -64,6 +64,12 @@ public class ControlChannel extends Channel {
             String chunkFileID = FileHandler.createChunkFileId(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getRepDgr());
             if (shouldResend(chunkFileID)) {
                 MessageSender.sendTCPMessageMCSuccessor(peer, rcvdMsg.getBytes());
+            } else {
+                if (rcvdMsg.getRepDgr() > 1) {
+                    GetChunk getChunk = new GetChunk(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), rcvdMsg.getFileId(),
+                            rcvdMsg.getChunkNo(), rcvdMsg.getRepDgr() - 1);
+                    MessageSender.sendTCPMessageMC(rcvdMsg.getFileId(), peer, getChunk.getBytes());
+                }
             }
             return;
         }

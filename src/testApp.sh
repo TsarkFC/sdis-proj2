@@ -5,7 +5,7 @@ cd build
 
 
 ################# Simple ###############################
-#../../scripts/test.sh access0 BACKUP ../files/321.txt 1
+#../../scripts/test.sh access0 BACKUP ../files/321.txt 2
 #../../scripts/test.sh access0 RESTORE ../files/321.txt
 #../../scripts/test.sh access0 BACKUP ../files/321.txt 2
 #../../scripts/test.sh access0 BACKUP ../files/test.txt 2
@@ -36,7 +36,7 @@ cd build
 #../../scripts/test.sh access0 BACKUP ../files/321.txt 1
 #../../scripts/test.sh access0 BACKUP ../files/bigimage.jpg 1
 #../../scripts/test.sh access0 BACKUP ../files/5mb.jpg 1
-#../../scripts/test.sh access1 STATE
+#../../scripts/test.sh access0 STATE
 
 
 #../../scripts/test.sh access0 RESTORE ../files/file.txt
@@ -78,6 +78,6 @@ cd build
 # TEST DEMO FILES
 #../../scripts/test.sh access0 BACKUP ../files/files/medium_file.pdf 2
 #../../scripts/test.sh access1 STATE
-#../../scripts/test.sh access0 RESTORE ../files/files/medium_file.pdf
+../../scripts/test.sh access0 RESTORE ../files/files/medium_file.pdf
 #../../scripts/test.sh access0 DELETE ../files/files/medium_file.pdf
 #../../scripts/test.sh access2 RECLAIM 0

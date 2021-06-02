@@ -29,6 +29,7 @@ public class BackupProtocol extends Protocol {
         ConcurrentHashMap<Integer, byte[]> chunks = fileHandler.getFileChunks();
         fileId = fileHandler.createFileId();
         numOfChunks = chunks.size();
+        System.out.println("####### numOfChunks = " + numOfChunks);
         AddressPort mcAddr = peer.getArgs().getAddressPortList().getMcAddressPort();
 
         if (peer.getMetadata().getHostingMetadata().hasFile(fileId)) {
@@ -51,6 +52,7 @@ public class BackupProtocol extends Protocol {
 
         FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length(), numOfChunks);
         peer.getMetadata().addHostingEntry(fileMetadata);
+        fileMetadata.print();
 
         // message initialization
         int i = 0;

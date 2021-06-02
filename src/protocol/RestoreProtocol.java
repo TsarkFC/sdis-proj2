@@ -36,16 +36,15 @@ public class RestoreProtocol extends Protocol {
         }
 
         peer.addRestoreEntry(fileId);
-
         FileMetadata fileMetadata = peer.getMetadata().getHostingFileMetadata(fileId);
         fileMetadata.print();
 
+        System.out.println("[RESTORE] file has " + fileMetadata.getNumberChunks() + " number of chunks");
         for (int i = 0; i < fileMetadata.getNumberChunks(); i++) {
             String chunkFileId = FileHandler.createChunkFileId(fileId, i, fileMetadata.getRepDgr());
             AddressPort addressPort = peerArgs.getAddressPortList().getMdrAddressPort();
             GetChunk getChunk = new GetChunk(addressPort.getAddress(), addressPort.getPort(), fileId, i, fileMetadata.getRepDgr());
-            File f = new File(path);
-            System.out.println("[RESTORE] Trying to restore file with name: " + f.getName());
+            System.out.println("[RESTORE] sent message " + getChunk.getMsgString());
             MessageSender.sendTCPMessageMC(chunkFileId, peer, getChunk.getBytes());
         }
     }

@@ -68,18 +68,6 @@ public class FileMetadata implements Serializable {
         return size;
     }
 
-    public void addChunk(Integer chunkId, String ipAddress, int port) {
-        ConcurrentSkipListSet<AddressPort> peersIds = chunksData.get(chunkId);
-        if (peersIds != null) {
-            peersIds.add(new AddressPort(ipAddress, port));
-        } else {
-            peersIds = new ConcurrentSkipListSet<>();
-            peersIds.add(new AddressPort(ipAddress, port));
-            chunksData.put(chunkId, peersIds);
-        }
-    }
-
-
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
     }
