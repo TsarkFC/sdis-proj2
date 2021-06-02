@@ -1,6 +1,6 @@
 # SDIS Project
 
-SDIS Project for group T6G08.
+SDIS Project for group T6G26.
 
 Group members:
 
@@ -17,14 +17,15 @@ All the commands are to be executed in the terminal.
 - There are some extra commands needed in comparison with the script:
     - Start the RMI - rmiregistry &
     - Compile project - ../scripts/compile.sh from the src/ directory
-    - Run peer - ../../scripts/peer.sh <version> <peer_id> <svc_access_point> <mc_addr> <mc_port> <mdb_addr> <mdb_port> <mdr_addr> <mdr_port>
+    - Run initiator peer - ../../scripts/peer.sh <version> <peer_id> <svc_access_point> <ip_addr> <mc_port> <mdb_port> <mdr_port> <chord_port>
+    - Run peer - ../../scripts/peer.sh <version> <peer_id> <svc_access_point> <ip_addr> <mc_port> <mdb_port> <mdr_port> <chord_port> <known_addr> <known_port>
       from the src/build/ directory
 
 ## Running the client:
 
 ### Using test.sh available in proj1/scripts:
 - Is supposed to be run on src/build/
-- Usage: ./test.sh <peer_ap> <sub_protocol> <opnd_1> <opnd_2>
+- Usage: ../../scripts/test.sh <peer_ap> <sub_protocol> <opnd_1> <opnd_2>
     - <sub_protocol>: BACKUP / RESTORE / DELETE / RECLAIM / ST
     - <opnd_1> and <opnd_2> are sub_protocol dependant:
       BACKUP <filepath> <replication_degree>
