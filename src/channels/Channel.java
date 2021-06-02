@@ -1,5 +1,6 @@
 package channels;
 
+import chord.ChordNode;
 import peer.Peer;
 import utils.AddressPort;
 import utils.AddressPortList;
@@ -46,5 +47,11 @@ public abstract class Channel {
 
     public AddressPortList getAddressPortList() {
         return addressPortList;
+    }
+
+    protected boolean shouldResend(String  chunkFileId) {
+        int fileChordID = peer.getChordNode().generateHash(chunkFileId);
+        ChordNode node = peer.getChordNode();
+        return !node.isInInterval(fileChordID, node.getId(), node.getSuccessor().getId());
     }
 }

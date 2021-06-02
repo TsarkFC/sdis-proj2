@@ -38,7 +38,7 @@ public class BackupChannel extends Channel {
             resendFile(rcvdMsg);
         } else {
             System.out.println("[BACKUP] Should not save file " + new String(header));
-            if (shouldResend(rcvdMsg)) {
+            if (shouldResend(FileHandler.createChunkFileId(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg()))) {
                 System.out.println("[BACKUP] Resent message");
                 MessageSender.sendTCPMessageMDBSuccessor(peer, rcvdMsg.getBytes());
                 return null;
@@ -67,7 +67,6 @@ public class BackupChannel extends Channel {
                 rcvdMsg.getBody().length / 1000.0);
     }
 
-
     private boolean resendFile(PutChunk message) {
         if (message.getReplicationDeg() - 1 > 0) {
             PutChunk newPutChunk = new PutChunk(message.getIpAddress(), message.getPort(), message.getFileId(), message.getChunkNo(), message.getReplicationDeg() - 1, message.getBody());
@@ -79,10 +78,5 @@ public class BackupChannel extends Channel {
         }
     }
 
-    private boolean shouldResend(PutChunk message) {
-        String chunkFileId = FileHandler.createChunkFileId(message.getFileId(), message.getChunkNo(), message.getReplicationDeg());
-        int fileChordID = peer.getChordNode().generateHash(chunkFileId);
-        ChordNode node = peer.getChordNode();
-        return !node.isInInterval(fileChordID, node.getId(), node.getSuccessor().getId());
-    }
+
 }

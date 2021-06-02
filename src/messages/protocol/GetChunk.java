@@ -5,20 +5,25 @@ import utils.AddressPort;
 import utils.AddressPortList;
 import utils.Utils;
 
-// GETCHUNK <FileID> <ChunkNo> <IPAddress> <Port> <CRLF><CRLF>
+// GETCHUNK <FileID> <ChunkNo> <IPAddress> <Port> <REP_DGR> <CRLF><CRLF>
 public class GetChunk extends MsgWithChunk {
     protected static final int ADDRESS_IDX = 3;
     protected static final int PORT_IDX = 4;
+    protected static final int REP_DGR_IDX = 5;
 
     protected final AddressPort addressPort;
+    private final int rep_dgr;
 
-    public GetChunk(String ipAddress, Integer port, String fileId, Integer chunkNo) {
+    public GetChunk(String ipAddress, Integer port, String fileId, Integer chunkNo,int rep_dgr) {
         super(fileId, chunkNo);
         this.addressPort = new AddressPort(ipAddress,port);
+        this.rep_dgr = rep_dgr;
     }
+
     public GetChunk(String msg){
         super(msg);
         this.addressPort = new AddressPort(tokens[ADDRESS_IDX],Integer.parseInt(tokens[PORT_IDX]));
+        this.rep_dgr = Integer.parseInt(tokens[REP_DGR_IDX]);
     }
 
     @Override
@@ -61,5 +66,7 @@ public class GetChunk extends MsgWithChunk {
     }
 
 
-
+    public int getRep_dgr() {
+        return rep_dgr;
+    }
 }

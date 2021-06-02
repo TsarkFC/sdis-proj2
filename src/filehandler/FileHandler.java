@@ -171,4 +171,10 @@ public class FileHandler {
         String path = FileHandler.getChunkPath(peer.getFileSystem(), fileId, chunkNo);
         return Files.exists(Paths.get(path));
     }
+
+    public static boolean folderExists(String fileId, Peer peer){
+        String path = getFilePath(peer.getFileSystem(),fileId);
+        return Files.exists(Paths.get(path));
+
+    }
 }
