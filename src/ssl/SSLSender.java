@@ -53,14 +53,12 @@ public class SSLSender extends SSL implements Runnable {
             channel.connect(new InetSocketAddress(host, port));
             while (!channel.finishConnect()) ;
         } catch (Exception e) {
-            System.out.println("[SSL CONNECT CLIENT] Socket exception!");
             return false;
         }
 
         try {
             return handshake(channel, engine);
         } catch (Exception e) {
-            System.out.println("[SSL CONNECT CLIENT] could not perform handshake!");
             return false;
         }
     }

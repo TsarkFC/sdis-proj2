@@ -67,7 +67,6 @@ public abstract class SSL {
                             return false;
                         }
                     } catch (SSLException e) {
-                        System.out.println("[HANDSHAKE] Error during wrap (SSLException)");
                         return false;
                     }
                 }
@@ -76,8 +75,7 @@ public abstract class SSL {
                     int bytesRead = -1;
                     try {
                         bytesRead = channel.read(byteBuffers.getPeerEncryptedData());
-                    } catch (Exception e) {
-                        System.out.println("[HANDSHAKE] Error during unwrap (receiving data)");
+                    } catch (Exception ignored) {
                     }
 
                     if (bytesRead < 0) {
@@ -86,8 +84,7 @@ public abstract class SSL {
                         }
                         try {
                             engine.closeInbound();
-                        } catch (SSLException e) {
-                            System.out.println("[HANDSHAKE] Error during unwrap (could not close inbound)");
+                        } catch (SSLException ignored) {
                         }
                         engine.closeOutbound();
                         break;
@@ -100,11 +97,9 @@ public abstract class SSL {
                         byteBuffers.getPeerEncryptedData().compact();
 
                         if (!handleUnwrapResult(result, engine, byteBuffers)) {
-                            System.out.println("[HANDSHAKE] Error during unwrap (processing data)");
                             return false;
                         }
                     } catch (Exception e) {
-                        System.out.println("[HANDSHAKE] Error during unwrap (exception processing data)");
                         return false;
                     }
                 }

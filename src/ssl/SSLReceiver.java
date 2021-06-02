@@ -51,7 +51,7 @@ public class SSLReceiver extends SSL implements Runnable {
     }
 
     public void createServer(String ipAddress, int port) {
-        System.out.println("Adding server in ip: " + ipAddress + " port: " + port);
+        System.out.println("[SSL] Adding server in ip = " + ipAddress + "; port = " + port + ";");
         try {
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);

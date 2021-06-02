@@ -114,7 +114,7 @@ public class ChordNode {
         }
         byte[] successorInfo = Utils.readUntilCRLF(successorInfoCRLF);
         successor = new SerializeChordData().deserialize(successorInfo);
-        System.out.println("[CHORD] node ready");
+        System.out.println("[CHORD] node ready, successor id = " + successor.getId());
     }
 
     public void stabilize() {
@@ -124,7 +124,6 @@ public class ChordNode {
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
         byte[] predecessorInfoCRLF = sendMessageAndWait(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
         if (predecessorInfoCRLF == null) {
-            System.out.println("[CHORD] could not stabilize");
             return;
         }
         byte[] predecessorInfo = Utils.readUntilCRLF(predecessorInfoCRLF);
@@ -202,7 +201,7 @@ public class ChordNode {
         ChordNodeData newSuccessor = findSuccessor(successor.getId() + 1);
         if (safeSuccessor == null || newSuccessor != null && safeSuccessor.getId() != newSuccessor.getId()) {
             safeSuccessor = newSuccessor;
-            System.out.println("[CHORD] safe successor updated!");
+            System.out.println("[CHORD] new safe successor (" + safeSuccessor.getId() + ")");
         }
     }
 
@@ -210,7 +209,7 @@ public class ChordNode {
         if (predecessor == null) return;
         AddressPort addressPort = predecessor.getAddressPortList().getChordAddressPort();
         if (!new SSLSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
-            System.out.println("[CHORD] error connecting to predecessor...");
+            System.out.println("[CHORD] could not connect to predecessor...");
             deleteDataFromFingerTable(fingerTable, predecessor);
             predecessor = null;
         }
@@ -220,7 +219,7 @@ public class ChordNode {
         if (successor == null || successor.getId() == this.id) return;
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
         if (!new SSLSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
-            System.out.println("[CHORD] error connecting to successor...");
+            System.out.println("[CHORD] could not connect to successor...");
             deleteDataFromFingerTable(fingerTable, successor);
             successor = safeSuccessor;
         }
@@ -239,7 +238,7 @@ public class ChordNode {
             AddressPort addressPort = precedingNode.getAddressPortList().getChordAddressPort();
             byte[] response = sendMessageAndWait(message.getBytes(), addressPort.getAddress(), addressPort.getPort());
             if (response == null) {
-                System.out.println("[CHORD] error processing successor");
+                System.out.println("[CHORD] connection closed, could not process successor...");
                 return null;
             }
             return new SerializeChordData().deserialize(response);
