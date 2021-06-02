@@ -11,6 +11,8 @@ Group members:
 
 All the commands are to be executed in the terminal.
 
+## Running the peer
+
 ### Using the peer.sh script:
 - The script is available in the folder scripts/
 - Is supposed to be run on src/build/
