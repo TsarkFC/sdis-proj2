@@ -2,11 +2,13 @@ package channels;
 
 import filehandler.FileHandler;
 import messages.MessageSender;
-import messages.protocol.*;
+import messages.protocol.Chunk;
+import messages.protocol.Delete;
+import messages.protocol.GetChunk;
+import messages.protocol.Message;
 import peer.Peer;
-import ssl.SslReceiver;
+import ssl.SSLReceiver;
 import utils.AddressPortList;
-
 
 public class ControlChannel extends Channel {
 
@@ -14,7 +16,7 @@ public class ControlChannel extends Channel {
         super(addressPortList, peer);
         super.currentAddr = addressPortList.getMcAddressPort();
 
-        SslReceiver receiver = new SslReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
+        SSLReceiver receiver = new SSLReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
         new Thread(receiver).start();
     }
 

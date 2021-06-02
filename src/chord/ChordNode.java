@@ -7,7 +7,7 @@ import messages.Messages;
 import messages.protocol.PutChunk;
 import peer.Peer;
 import peer.metadata.ChunkMetadata;
-import ssl.SslSender;
+import ssl.SSLSender;
 import utils.AddressPort;
 import utils.AddressPortList;
 import utils.SerializeChordData;
@@ -97,7 +97,7 @@ public class ChordNode {
         executor.scheduleAtFixedRate(this::checkPredecessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::checkSuccessor, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
         executor.scheduleAtFixedRate(this::printChordInfo, Constants.executorDelay, Constants.executorDelay, TimeUnit.MILLISECONDS);
-        //System.out.println("Executors ready!");
+        System.out.println("[CHORD] Executors ready!");
     }
 
     public void create() {
@@ -213,7 +213,6 @@ public class ChordNode {
      * Updates successors periodically
      */
     public void fixSafeSuccessor() {
-        System.out.println("[CHORD] fix safe successor called, current safe = " +  ((safeSuccessor == null) ? "null" : safeSuccessor.getId()));
         if (successor == null) return;
         ChordNodeData newSuccessor = findSuccessor(successor.getId() + 1);
         if (safeSuccessor == null || newSuccessor != null && safeSuccessor.getId() != newSuccessor.getId()) {
@@ -225,8 +224,9 @@ public class ChordNode {
     public void checkPredecessor() {
         if (predecessor == null) return;
         AddressPort addressPort = predecessor.getAddressPortList().getChordAddressPort();
-        if (!new SslSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
+        if (!new SSLSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
             System.out.println("[CHORD] error connecting to predecessor...");
+            deleteDataFromFingerTable(fingerTable, predecessor);
             predecessor = null;
         }
     }
@@ -234,8 +234,9 @@ public class ChordNode {
     public void checkSuccessor() {
         if (successor == null || successor.getId() == this.id) return;
         AddressPort addressPort = successor.getAddressPortList().getChordAddressPort();
-        if (!new SslSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
+        if (!new SSLSender(addressPort.getAddress(), addressPort.getPort(), null).connect()) {
             System.out.println("[CHORD] error connecting to successor...");
+            deleteDataFromFingerTable(fingerTable, successor);
             successor = safeSuccessor;
         }
     }
@@ -280,7 +281,7 @@ public class ChordNode {
      * @return The response received from SSLEngine server
      */
     private byte[] sendMessageAndWait(byte[] message, String address, Integer port) {
-        SslSender sender = new SslSender(address, port, message);
+        SSLSender sender = new SSLSender(address, port, message);
         sender.connect();
         sender.write(message);
         byte[] response = sender.read();
@@ -288,8 +289,18 @@ public class ChordNode {
         return response;
     }
 
+    private void deleteDataFromFingerTable(List<ChordNodeData> fingerTable, ChordNodeData toRemove) {
+        synchronized (this) {
+            for (int i = 0; i < fingerTable.size(); i++) {
+                if (toRemove.getId() == fingerTable.get(i).getId()) {
+                    fingerTable.set(i, this.data);
+                }
+            }
+        }
+    }
+
     private void sendMessage(byte[] message, String address, Integer port) {
-        SslSender sender = new SslSender(address, port, message);
+        SSLSender sender = new SSLSender(address, port, message);
         sender.connect();
         sender.write(message);
     }
@@ -358,13 +369,13 @@ public class ChordNode {
     }
 
     private void logFingerTable() {
-        // int count = 0;
-        // System.out.println("----------------");
-        // for (ChordNodeData node : fingerTable) {
-        //     System.out.print("key: " + calculateKey(this.id, count++));
-        //     System.out.println(" | node id: " + node.getId());
-        // }
-        // System.out.println("----------------");
+        int count = 0;
+        System.out.println("----------------");
+        for (ChordNodeData node : fingerTable) {
+            System.out.print("key: " + calculateKey(this.id, count++));
+            System.out.println(" | node id: " + ((node == null) ? "null" : node.getId()));
+        }
+        System.out.println("----------------");
     }
 
     private int calculateKey(int id, int tablePos) {

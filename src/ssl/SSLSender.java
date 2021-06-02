@@ -2,16 +2,11 @@ package ssl;
 
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLException;
-import javax.net.ssl.SSLSession;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketException;
 import java.nio.channels.SocketChannel;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 
-public class SslSender extends Ssl implements Runnable {
+public class SSLSender extends SSL implements Runnable {
 
     private final SSLEngine engine;
 
@@ -27,7 +22,7 @@ public class SslSender extends Ssl implements Runnable {
 
     private final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 
-    public SslSender(String host, int port, byte[] message) {
+    public SSLSender(String host, int port, byte[] message) {
         this.host = host;
         this.port = port;
         this.message = message;
@@ -42,14 +37,14 @@ public class SslSender extends Ssl implements Runnable {
     }
 
     public static void setProtocol(String protocol) {
-        SslSender.protocol = protocol;
+        SSLSender.protocol = protocol;
     }
 
     public boolean connect() {
         try {
             engine.beginHandshake();
         } catch (SSLException e) {
-            System.out.println("Could not start handshake state!");
+            System.out.println("[SSL CONNECT CLIENT] Could not start handshake state!");
             return false;
         }
         try {
@@ -58,14 +53,14 @@ public class SslSender extends Ssl implements Runnable {
             channel.connect(new InetSocketAddress(host, port));
             while (!channel.finishConnect()) ;
         } catch (Exception e) {
-            System.out.println("Socket exception!");
+            System.out.println("[SSL CONNECT CLIENT] Socket exception!");
             return false;
         }
 
         try {
             return handshake(channel, engine);
         } catch (Exception e) {
-            System.out.println("[Client] could not perform handshake!");
+            System.out.println("[SSL CONNECT CLIENT] could not perform handshake!");
             return false;
         }
     }
@@ -98,7 +93,13 @@ public class SslSender extends Ssl implements Runnable {
             }
         }
 
-        System.out.println("[Client] could not read! tries = " + (tries - 1));
+        System.out.println("[SSL CLIENT READ] could not read! tries = " + (tries - 1));
+        try {
+            engine.closeInbound();
+        } catch (SSLException e) {
+            System.out.println("[SSL CLIENT READ] Could not close inbound!");
+        }
+        shutdown();
         return null;
     }
 

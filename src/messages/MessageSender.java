@@ -2,7 +2,7 @@ package messages;
 
 import chord.ChordNodeData;
 import peer.Peer;
-import ssl.SslSender;
+import ssl.SSLSender;
 import utils.AddressPort;
 
 import java.util.concurrent.Executors;
@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 public class MessageSender {
     public static void sendTCPMessage(String ipAddress, int port, byte[] message) {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
-        SslSender tcpThread = new SslSender(ipAddress, port, message);
+        SSLSender tcpThread = new SSLSender(ipAddress, port, message);
         executor.schedule(tcpThread, 0, TimeUnit.SECONDS);
     }
 
