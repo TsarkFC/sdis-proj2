@@ -7,11 +7,7 @@ import peer.Peer;
 import peer.metadata.FileMetadata;
 import peer.metadata.Metadata;
 
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-
 public class DeleteProtocol extends Protocol {
-    final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
-
     public DeleteProtocol(String path, Peer peer) {
         super(path, peer);
     }
@@ -37,10 +33,10 @@ public class DeleteProtocol extends Protocol {
     }
 
     public void sendDeleteMessage(Peer peer, String fileId, FileMetadata fileMetadata) {
-        Delete msg = new Delete(fileId, true);
         for (int i = 0; i < fileMetadata.getNumberChunks(); i++) {
             for (int repDgr = 1; repDgr <= fileMetadata.getRepDgr(); repDgr++) {
                 String chunkFileId = FileHandler.createChunkFileId(fileId, i, repDgr);
+                Delete msg = new Delete(fileId, chunkFileId);
                 MessageSender.sendTCPMessageMC(chunkFileId, peer, msg.getBytes());
             }
         }

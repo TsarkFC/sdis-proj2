@@ -8,13 +8,13 @@ public class Delete extends Message {
     private final String chunkFileId;
     private final int CHUNK_FILE_IDX = 2;
 
-    public Delete(String fileId,String chunkFileId) {
-        super(fileId,true);
+    public Delete(String fileId, String chunkFileId) {
+        super(fileId, true);
         this.chunkFileId = chunkFileId;
     }
 
     public Delete(String message) {
-        super(message,false);
+        super(message, false);
         this.chunkFileId = tokens[CHUNK_FILE_IDX];
 
     }
@@ -23,6 +23,7 @@ public class Delete extends Message {
     public String getMsgString() {
         return String.format("%s %s %s", getMsgType(), this.fileId, this.chunkFileId);
     }
+
     @Override
     public String getMsgType() {
         return "DELETE";

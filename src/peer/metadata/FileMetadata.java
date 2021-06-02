@@ -29,26 +29,24 @@ public class FileMetadata implements Serializable {
     }
 
     public void print() {
+        System.out.println("\n### File metadata");
         System.out.println("ID: " + id);
         System.out.println("Pathname: " + pathname);
         System.out.println("Rep Degree: " + repDgr);
         System.out.println("Size: " + size);
+        System.out.println("###\n");
     }
 
     public String getString(){
         String tabs = "   ";
         StringBuilder state = new StringBuilder();
-        state.append(tabs + "* ID: " + id).append("\n");
-        state.append(tabs + "* Pathname: " + pathname).append("\n");
-        state.append(tabs + "* Rep Degree: " + repDgr).append("\n");
-        state.append(tabs + "* Size: " + size).append("\n");
+        state.append(tabs).append("* ID: ").append(id).append("\n");
+        state.append(tabs).append("* Pathname: ").append(pathname).append("\n");
+        state.append(tabs).append("* Rep Degree: ").append(repDgr).append("\n");
+        state.append(tabs).append("* Size: ").append(size).append("\n");
 
         return state.toString();
-
-
     }
-
-
 
     public String getPathname() {
         return pathname;

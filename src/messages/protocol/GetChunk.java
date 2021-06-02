@@ -2,7 +2,6 @@ package messages.protocol;
 
 import peer.Peer;
 import utils.AddressPort;
-import utils.AddressPortList;
 import utils.Utils;
 
 // GETCHUNK <FileID> <ChunkNo> <IPAddress> <Port> <REP_DGR> <CRLF><CRLF>
@@ -12,18 +11,19 @@ public class GetChunk extends MsgWithChunk {
     protected static final int REP_DGR_IDX = 5;
 
     protected final AddressPort addressPort;
-    private final int rep_dgr;
+    private final int repDgr;
 
-    public GetChunk(String ipAddress, Integer port, String fileId, Integer chunkNo,int rep_dgr) {
+    public GetChunk(String ipAddress, Integer port, String fileId, Integer chunkNo, int repDgr) {
         super(fileId, chunkNo);
-        this.addressPort = new AddressPort(ipAddress,port);
-        this.rep_dgr = rep_dgr;
+        this.addressPort = new AddressPort(ipAddress, port);
+        this.repDgr = repDgr;
     }
 
-    public GetChunk(String msg){
+    public GetChunk(String msg) {
         super(msg);
-        this.addressPort = new AddressPort(tokens[ADDRESS_IDX],Integer.parseInt(tokens[PORT_IDX]));
-        this.rep_dgr = Integer.parseInt(tokens[REP_DGR_IDX]);
+        this.addressPort = new AddressPort(tokens[ADDRESS_IDX], Integer.parseInt(tokens[PORT_IDX]));
+        byte[] parsedRepDgr = Utils.readUntilCRLF(tokens[REP_DGR_IDX].getBytes());
+        this.repDgr = Integer.parseInt(new String(parsedRepDgr));
     }
 
     @Override
@@ -33,7 +33,8 @@ public class GetChunk extends MsgWithChunk {
 
     @Override
     public String getMsgString() {
-        return String.format("%s %s %d %s %d", getMsgType(), this.fileId, this.chunkNo,this.addressPort.getAddress(),this.addressPort.getPort());
+        return String.format("%s %s %d %s %d %d", getMsgType(), this.fileId, this.chunkNo,
+                this.addressPort.getAddress(), this.addressPort.getPort(), this.repDgr);
     }
 
     public String getIpAddress() {
@@ -61,12 +62,12 @@ public class GetChunk extends MsgWithChunk {
         return Utils.addCRLF(getMsgString().getBytes());
     }
 
-    public boolean samePeerAndSender(Peer peer){
+    public boolean samePeerAndSender(Peer peer) {
         return this.addressPort.samePeerAndSender(peer);
     }
 
 
-    public int getRep_dgr() {
-        return rep_dgr;
+    public int getRepDgr() {
+        return repDgr;
     }
 }

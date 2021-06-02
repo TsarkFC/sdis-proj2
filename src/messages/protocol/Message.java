@@ -24,18 +24,11 @@ public abstract class Message {
         }
 
         this.fileId = tokens[FILE_ID_IDX];
-        /*if (getNumberArguments() >= 5) {
-            this.fileId = tokens[FILE_ID_IDX];
-        } else this.fileId = "";*/
     }
 
     public abstract String getMsgString();
-    /*{
-        return String.format("%s %s %s", getMsgType(), this.fileId, getExtraString());
-    }*/
 
     public abstract String getMsgType();
-
 
     public abstract int getNumberArguments();
 

@@ -66,8 +66,6 @@ public class SSLReceiver extends SSL implements Runnable {
     //Starts listening to new connections
     //Run in a loop as long the server is active
     public void start() {
-        //System.out.println("[Server] Initialized and waiting for new connections...");
-
         while (isActive) {
             try {
                 selector.select();

@@ -1,12 +1,11 @@
 package channels;
 
-import chord.ChordNode;
+import filehandler.FileHandler;
+import messages.MessageSender;
 import messages.protocol.PutChunk;
 import peer.Peer;
 import ssl.SSLReceiver;
 import utils.AddressPortList;
-import filehandler.FileHandler;
-import messages.MessageSender;
 import utils.Utils;
 
 import java.util.Arrays;
@@ -37,8 +36,15 @@ public class BackupChannel extends Channel {
             saveChunk(rcvdMsg);
             resendFile(rcvdMsg);
         } else {
-            System.out.println("[BACKUP] Should not save file " + new String(header));
-            if (shouldResend(FileHandler.createChunkFileId(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg()))) {
+            System.out.println("[BACKUP] Should not save file");
+            //String chunkFileId = FileHandler.createChunkFileId(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg());
+            //if (shouldResend(chunkFileId)) {
+            if (rcvdMsg.samePeerAndSender(peer) && rcvdMsg.getSelfRcvCount() < 1) {
+                rcvdMsg.incrementSelfRcvCount();
+                System.out.println("[BACKUP] Resent message");
+                MessageSender.sendTCPMessageMDBSuccessor(peer, rcvdMsg.getBytes());
+                return null;
+            } else if (!rcvdMsg.samePeerAndSender(peer)) {
                 System.out.println("[BACKUP] Resent message");
                 MessageSender.sendTCPMessageMDBSuccessor(peer, rcvdMsg.getBytes());
                 return null;
@@ -69,7 +75,8 @@ public class BackupChannel extends Channel {
 
     private boolean resendFile(PutChunk message) {
         if (message.getReplicationDeg() - 1 > 0) {
-            PutChunk newPutChunk = new PutChunk(message.getIpAddress(), message.getPort(), message.getFileId(), message.getChunkNo(), message.getReplicationDeg() - 1, message.getBody());
+            PutChunk newPutChunk = new PutChunk(message.getIpAddress(), message.getPort(), message.getFileId(),
+                    message.getChunkNo(), message.getReplicationDeg() - 1, message.getSelfRcvCount(), message.getBody());
             MessageSender.sendTCPMessageMDBSuccessor(peer, newPutChunk.getBytes());
             return true;
         } else {
@@ -77,6 +84,4 @@ public class BackupChannel extends Channel {
             return false;
         }
     }
-
-
 }

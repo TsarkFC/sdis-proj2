@@ -11,24 +11,11 @@ import java.util.concurrent.ThreadPoolExecutor;
 public abstract class Channel {
     protected final AddressPortList addressPortList;
     protected AddressPort currentAddr;
-
     protected Peer peer;
-    protected int numOfThreads = 20;
-    protected ThreadPoolExecutor executor;
-    private final double MAX_SIZE = Math.pow(2, 16);
 
     public Channel(AddressPortList addressPortList, Peer peer) {
         this.addressPortList = addressPortList;
         this.peer = peer;
-        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(numOfThreads);
-    }
-
-    public AddressPortList getAddrList() {
-        return addressPortList;
-    }
-
-    public void handleMsg(byte[] message) {
-        handle(message);
     }
 
     public abstract byte[] handle(byte[] message);
@@ -49,9 +36,10 @@ public abstract class Channel {
         return addressPortList;
     }
 
-    protected boolean shouldResend(String  chunkFileId) {
+    protected boolean shouldResend(String chunkFileId) {
         int fileChordID = peer.getChordNode().generateHash(chunkFileId);
         ChordNode node = peer.getChordNode();
+        if (node.getId() == node.getSuccessor().getId()) return false;
         return !node.isInInterval(fileChordID, node.getId(), node.getSuccessor().getId());
     }
 }

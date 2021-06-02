@@ -43,7 +43,7 @@ public class RestoreProtocol extends Protocol {
         for (int i = 0; i < fileMetadata.getNumberChunks(); i++) {
             String chunkFileId = FileHandler.createChunkFileId(fileId, i, fileMetadata.getRepDgr());
             AddressPort addressPort = peerArgs.getAddressPortList().getMdrAddressPort();
-            GetChunk getChunk = new GetChunk(addressPort.getAddress(), addressPort.getPort(), fileId, i,fileMetadata.getRepDgr());
+            GetChunk getChunk = new GetChunk(addressPort.getAddress(), addressPort.getPort(), fileId, i, fileMetadata.getRepDgr());
             File f = new File(path);
             System.out.println("[RESTORE] Trying to restore file with name: " + f.getName());
             MessageSender.sendTCPMessageMC(chunkFileId, peer, getChunk.getBytes());

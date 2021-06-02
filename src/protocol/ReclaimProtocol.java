@@ -40,9 +40,6 @@ public class ReclaimProtocol extends Protocol {
     public void reclaimSpace(double maxDiskSpace, double currentSize) {
         File[] fileFolders = FileHandler.getDirectoryFiles(peer.getFileSystem());
         if (fileFolders != null) {
-
-            fileFolders = FileHandler.getDirectoryFiles(peer.getFileSystem());
-
             //Eliminate every file until it has size < maxSize
             if (currentSize > maxDiskSpace) {
                 System.out.println("[RECLAIM] Eliminating files until desired storage size");
@@ -66,23 +63,24 @@ public class ReclaimProtocol extends Protocol {
             if (chunks != null) {
                 for (File chunkFile : chunks) {
                     ChunkMetadata chunkMetadata = storedChunksMetadata.getChunk(fileId.getName(), Integer.valueOf(chunkFile.getName()));
-                    PeerArgs peerArgs = peer.getArgs();
                     int chunkNo = Integer.parseInt(chunkFile.getName());
                     double size = chunkFile.length() / 1000.0;
                     System.out.println("[RECLAIM] Eliminating chunk: " + chunkFile.getPath() + " size: " + size);
 
                     AddressPort mcAddr = peer.getArgs().getAddressPortList().getMcAddressPort();
                     FileHandler fileHandler = new FileHandler(chunkFile);
-                    PutChunk putChunk = new PutChunk(mcAddr.getAddress(),mcAddr.getPort(),fileIdName, Integer.parseInt(chunkFile.getName()),chunkMetadata.getRepDgr(),fileHandler.getChunkFileData());
-                    MessageSender.sendTCPMessageMDBSuccessor(peer,putChunk.getBytes());
+                    PutChunk putChunk = new PutChunk(mcAddr.getAddress(), mcAddr.getPort(), fileIdName,
+                            Integer.parseInt(chunkFile.getName()), chunkMetadata.getRepDgr(), 0, fileHandler.getChunkFileData());
+
+                    System.out.println("[RECLAIM] Sent message " + putChunk.getMsgString());
+                    MessageSender.sendTCPMessageMDBSuccessor(peer, putChunk.getBytes());
 
                     if (FileHandler.deleteFile(chunkFile)) {
                         peer.getMetadata().getStoredChunksMetadata().deleteChunk(fileIdName, chunkNo);
                         peer.getMetadata().getStoredChunksMetadata().deleteReceivedChunk(fileIdName, chunkNo);
                         peer.getMetadata().writeMetadata();
-
-                        
                         currentSize -= size;
+
                         System.out.println("[RECLAIM] Current Size = " + currentSize);
                         if (currentSize <= maxDiskSpace) break;
                     }

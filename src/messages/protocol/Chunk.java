@@ -1,7 +1,6 @@
 package messages.protocol;
 
 //CHUNK  <FileId> <ChunkNo> <CRLF><CRLF><Body>
-
 public class Chunk extends MsgWithChunk {
     private final byte[] body;
 

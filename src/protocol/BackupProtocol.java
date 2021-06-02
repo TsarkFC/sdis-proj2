@@ -49,8 +49,13 @@ public class BackupProtocol extends Protocol {
         // Updating a previously backed up file, delete previous one
         String previousFileId = peer.getMetadata().getFileIdFromPath(file.getPath());
         if (previousFileId != null) {
-            Delete msg = new Delete(previousFileId, true);
-            MessageSender.sendTCPMessageMC(fileId, peer, msg.getBytes());
+            int i = 0;
+            for (ConcurrentHashMap.Entry<Integer, byte[]> chunk : chunks.entrySet()) {
+                String chunkFileId = FileHandler.createChunkFileId(fileId, i++, repDgr);
+                Delete msg = new Delete(previousFileId, chunkFileId);
+                MessageSender.sendTCPMessageMC(chunkFileId, peer, msg.getBytes());
+            }
+
             System.out.println("[BACKUP] Received new version of file. Deleted previous one!");
         }
 
@@ -61,26 +66,10 @@ public class BackupProtocol extends Protocol {
         int i = 0;
         for (ConcurrentHashMap.Entry<Integer, byte[]> chunk : chunks.entrySet()) {
             PutChunk backupMsg = new PutChunk(mcAddr.getAddress(), mcAddr.getPort(), fileId,
-                    chunk.getKey(), repDgr, chunk.getValue());
+                    chunk.getKey(), repDgr, 0, chunk.getValue());
             byte[] message = backupMsg.getBytes();
             String chunkFileId = FileHandler.createChunkFileId(fileId, i++, repDgr);
             MessageSender.sendTCPMessageMDB(chunkFileId, peer, message);
         }
-    }
-
-    public void backupChunk(String fileId, int chunkNo) {
-        FileHandler fileHandler = new FileHandler(file);
-
-        //TODO Tirar hosting metadata daqui
-        FileMetadata fileMetadata = new FileMetadata(file.getPath(), fileId, repDgr, (int) file.length(),FileHandler.getNumberOfChunks((int) file.length()));
-        peer.getMetadata().addHostingEntry(fileMetadata);
-
-        AddressPort addressPort = peer.getArgs().getAddressPortList().getMcAddressPort();
-        PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), fileId,
-                chunkNo, repDgr, fileHandler.getChunkFileData());
-        byte[] message = backupMsg.getBytes();
-
-        String chunkId = FileHandler.createChunkFileId(fileId, chunkNo,repDgr);
-        MessageSender.sendTCPMessageMDB(chunkId, peer, message);
     }
 }

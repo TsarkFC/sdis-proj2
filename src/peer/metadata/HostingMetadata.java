@@ -8,11 +8,9 @@ public class HostingMetadata implements Serializable  {
     //File id -> [rep Degree, numberChunks]
     ConcurrentHashMap<String, FileMetadata> fileInfo = new ConcurrentHashMap<>();
 
-
     public ConcurrentHashMap<String, FileMetadata> getFileInfo() {
         return fileInfo;
     }
-
 
     public FileMetadata getFileMetadata(String fileId){
         return fileInfo.get(fileId);

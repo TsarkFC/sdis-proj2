@@ -1,6 +1,5 @@
 package channels;
 
-import chord.ChordNode;
 import filehandler.FileHandler;
 import messages.MessageSender;
 import messages.protocol.Chunk;
@@ -31,7 +30,7 @@ public class ControlChannel extends Channel {
         switch (msgType) {
             case "DELETE" -> handleDelete(msgString);
             case "GETCHUNK" -> handleRestore(msgString);
-            default -> System.out.println("\nERROR NOT PARSING THAT MESSAGE " + msgType);
+            default -> System.out.println("\nERROR NOT PARSING MESSAGE: " + msgType);
         }
         return null;
     }
@@ -41,12 +40,11 @@ public class ControlChannel extends Channel {
         Delete msg = new Delete(msgString);
         System.out.println("[RECEIVED MESSAGE MC]: " + msgString.substring(0, msgString.length() - 4));
 
-        if(!FileHandler.folderExists(msg.getFileId(), peer)){
-            if(shouldResend(msg.getChunkFileId())){
-                MessageSender.sendTCPMessageMC(msg.getFileId(),peer, msg.getBytes());
-            }else{
-                System.out.println("It was not possible to delete the chunk");
+        if (!FileHandler.folderExists(msg.getFileId(), peer)) {
+            if (shouldResend(msg.getChunkFileId())) {
+                MessageSender.sendTCPMessageMCSuccessor(peer, msg.getBytes());
             }
+            return;
         }
         if (FileHandler.deleteFile(msg.getFileId(), peer.getFileSystem())) {
             peer.getMetadata().getHostingMetadata().deleteFile(msg.getFileId());
@@ -63,8 +61,8 @@ public class ControlChannel extends Channel {
     private void getAndSendChunk(GetChunk rcvdMsg, Peer peer) {
         byte[] chunk = FileHandler.getChunk(rcvdMsg, peer.getFileSystem());
         if (chunk == null) {
-            String chunkFileID = FileHandler.createChunkFileId(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getRep_dgr());
-            if(shouldResend(chunkFileID)){
+            String chunkFileID = FileHandler.createChunkFileId(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getRepDgr());
+            if (shouldResend(chunkFileID)) {
                 MessageSender.sendTCPMessageMCSuccessor(peer, rcvdMsg.getBytes());
             }
             return;
@@ -77,12 +75,4 @@ public class ControlChannel extends Channel {
         if (peer.hasReceivedChunk(chunkId)) return;
         MessageSender.sendTCPMessage(rcvdMsg.getIpAddress(), rcvdMsg.getPort(), message);
     }
-
-
-
-
-
-
-
-
 }

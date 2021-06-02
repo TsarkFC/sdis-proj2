@@ -4,30 +4,34 @@ import peer.Peer;
 import utils.AddressPort;
 import utils.AddressPortList;
 
-// PUTCHUNK <FileId> <ChunkNo> <IPAddress> <Port>  <ReplicationDeg> <CRLF><CRLF><Body>
+// PUTCHUNK <FileId> <ChunkNo> <IPAddress> <Port> <ReplicationDeg> <CRLF><CRLF><Body>
 public class PutChunk extends MsgWithChunk {
 
     protected static final int ADDRESS_IDX = 3;
     protected static final int PORT_IDX = 4;
     final int REP_DGR_IDX = 5;
-    final int BODY_IDX = 6;
+    final int SELF_RCV_IDX = 6;
+    final int BODY_IDX = 7;
 
     protected final AddressPort addressPort;
     private final Integer replicationDeg;
+    private Integer selfRcvCount;
     private final byte[] body;
 
     public PutChunk(String ipAddress, Integer port, String fileId, Integer chunkNo,
-                    Integer replicationDeg, byte[] body) {
+                    Integer replicationDeg, Integer selfRcvCount, byte[] body) {
         super(fileId, chunkNo);
         this.replicationDeg = replicationDeg;
         this.body = body;
-        this.addressPort = new AddressPort(ipAddress,port);
+        this.addressPort = new AddressPort(ipAddress, port);
+        this.selfRcvCount = selfRcvCount;
     }
 
     public PutChunk(String header, byte[] body) {
         super(header);
-        this.addressPort = new AddressPort(tokens[ADDRESS_IDX],Integer.parseInt(tokens[PORT_IDX]));
+        this.addressPort = new AddressPort(tokens[ADDRESS_IDX], Integer.parseInt(tokens[PORT_IDX]));
         this.replicationDeg = Integer.parseInt(tokens[REP_DGR_IDX]);
+        this.selfRcvCount = Integer.parseInt(tokens[SELF_RCV_IDX]);
         this.body = body;
     }
 
@@ -39,7 +43,8 @@ public class PutChunk extends MsgWithChunk {
 
     @Override
     public String getMsgString() {
-        return String.format("%s %s %d %s %d %d", getMsgType(), this.fileId, this.chunkNo,this.addressPort.getAddress(),this.addressPort.getPort(),this.replicationDeg);
+        return String.format("%s %s %d %s %d %d %d", getMsgType(), this.fileId, this.chunkNo,
+                this.addressPort.getAddress(), this.addressPort.getPort(), this.replicationDeg, this.selfRcvCount);
     }
 
     public String getIpAddress() {
@@ -52,7 +57,7 @@ public class PutChunk extends MsgWithChunk {
 
     @Override
     public int getNumberArguments() {
-        return 7;
+        return 8;
     }
 
     public void printMsg() {
@@ -65,8 +70,7 @@ public class PutChunk extends MsgWithChunk {
 
     @Override
     public byte[] getBytes() {
-        String header = String.format("%s %s %d %s %d %d", getMsgType(), this.fileId, this.chunkNo,this.addressPort.getAddress(),
-                    this.addressPort.getPort(),this.replicationDeg);
+        String header = getMsgString();
         return addBody(header.getBytes(), body);
     }
 
@@ -78,10 +82,15 @@ public class PutChunk extends MsgWithChunk {
         return body;
     }
 
-    public boolean samePeerAndSender(Peer peer){
+    public boolean samePeerAndSender(Peer peer) {
         return this.addressPort.samePeerAndSender(peer);
     }
 
+    public Integer getSelfRcvCount() {
+        return selfRcvCount;
+    }
 
-
+    public void incrementSelfRcvCount() {
+        selfRcvCount++;
+    }
 }

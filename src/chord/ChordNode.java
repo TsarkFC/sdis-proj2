@@ -156,15 +156,16 @@ public class ChordNode {
     private void fileTransfer() {
         for (Map.Entry<String, ChunkMetadata> entry : this.peer.getMetadata().getStoredChunksMetadata().getChunksInfo().entrySet()) {
             ChunkMetadata chunkMetadata = entry.getValue();
-            String fileIdStr = FileHandler.createChunkFileId(chunkMetadata.getFileId(), chunkMetadata.getChunkNum(), chunkMetadata.getRepDgr());
-            int fileId = peer.getChordNode().generateHash(fileIdStr);
+            String chunkIdStr = FileHandler.createChunkFileId(chunkMetadata.getFileId(), chunkMetadata.getChunkNum(), chunkMetadata.getRepDgr());
+            int chunkId = peer.getChordNode().generateHash(chunkIdStr);
 
-            if (isInInterval(fileId, this.id, predecessor.getId())) {
+            System.out.println(this.id + " < " + chunkId + " < " + predecessor.getId());
+            if (isInInterval(chunkId, this.id, predecessor.getId())) {
                 String chunkPath = FileHandler.getChunkPath(this.peer.getFileSystem(), chunkMetadata.getFileId(), chunkMetadata.getChunkNum());
                 FileHandler fileHandler = new FileHandler(FileHandler.getFile(chunkPath));
                 AddressPort addressPort = this.addressPortList.getMcAddressPort();
                 PutChunk backupMsg = new PutChunk(addressPort.getAddress(), addressPort.getPort(), chunkMetadata.getFileId(),
-                        chunkMetadata.getChunkNum(), 1, fileHandler.getChunkFileData());
+                        chunkMetadata.getChunkNum(), 1, 0, fileHandler.getChunkFileData());
 
                 byte[] message = backupMsg.getBytes();
                 AddressPort predecessorAddrPort = predecessor.getAddressPortList().getMdbAddressPort();
