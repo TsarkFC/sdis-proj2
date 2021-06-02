@@ -3,7 +3,7 @@ package channels;
 import chord.ChordNodeData;
 import messages.Messages;
 import peer.Peer;
-import ssl.SslReceiver;
+import ssl.SSLReceiver;
 import utils.AddressPortList;
 import utils.SerializeChordData;
 import utils.Utils;
@@ -17,7 +17,7 @@ public class ChordChannel extends Channel {
         super(addressPortList, peer);
         super.currentAddr = addressPortList.getChordAddressPort();
 
-        SslReceiver receiver = new SslReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
+        SSLReceiver receiver = new SSLReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
         new Thread(receiver).start();
     }
 
