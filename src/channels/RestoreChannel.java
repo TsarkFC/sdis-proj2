@@ -2,7 +2,7 @@ package channels;
 
 import messages.protocol.Chunk;
 import peer.Peer;
-import ssl.SslReceiver;
+import ssl.SSLReceiver;
 import utils.AddressPortList;
 import utils.Utils;
 
@@ -14,7 +14,7 @@ public class RestoreChannel extends Channel {
         super(addressPortList, peer);
         super.currentAddr = addressPortList.getMdrAddressPort();
 
-        SslReceiver receiver = new SslReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
+        SSLReceiver receiver = new SSLReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
         new Thread(receiver).start();
     }
 

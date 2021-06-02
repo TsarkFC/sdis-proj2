@@ -3,7 +3,7 @@ package channels;
 import chord.ChordNode;
 import messages.protocol.PutChunk;
 import peer.Peer;
-import ssl.SslReceiver;
+import ssl.SSLReceiver;
 import utils.AddressPortList;
 import filehandler.FileHandler;
 import messages.MessageSender;
@@ -17,7 +17,7 @@ public class BackupChannel extends Channel {
         super(addressPortList, peer);
         super.currentAddr = addressPortList.getMdbAddressPort();
 
-        SslReceiver receiver = new SslReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
+        SSLReceiver receiver = new SSLReceiver(currentAddr.getAddress(), currentAddr.getPort(), this);
         new Thread(receiver).start();
     }
 

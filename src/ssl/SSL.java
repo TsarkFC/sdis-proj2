@@ -13,7 +13,7 @@ import java.security.SecureRandom;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public abstract class Ssl {
+public abstract class SSL {
 
 
     /**
@@ -63,28 +63,31 @@ public abstract class Ssl {
                         byteBuffers.getEncryptedData().clear();
                         result = engine.wrap(byteBuffers.getDecryptedData(), byteBuffers.getEncryptedData());
                         if (!handleWrapResult(result, engine, channel, byteBuffers)) {
-                            System.out.println("[Handshake] Error during wrap (processing wrap)");
+                            engine.closeOutbound();
                             return false;
                         }
                     } catch (SSLException e) {
-                        System.out.println("[Handshake] Error during wrap (SSLException)");
                         return false;
                     }
                 }
                 case NEED_UNWRAP, NEED_UNWRAP_AGAIN -> {
                     // Receive handshaking data from peer
+                    int bytesRead = -1;
                     try {
-                        if (channel.read(byteBuffers.getPeerEncryptedData()) < 0) {
-                            if (engine.isOutboundDone() && engine.isInboundDone()) {
-                                return false;
-                            }
-                            engine.closeInbound();
-                            engine.closeOutbound();
-                            break;
+                        bytesRead = channel.read(byteBuffers.getPeerEncryptedData());
+                    } catch (Exception ignored) {
+                    }
+
+                    if (bytesRead < 0) {
+                        if (engine.isOutboundDone() && engine.isInboundDone()) {
+                            return false;
                         }
-                    } catch (Exception e) {
-                        System.out.println("[Handshake] Error during unwrap (receiving data)");
-                        return false;
+                        try {
+                            engine.closeInbound();
+                        } catch (SSLException ignored) {
+                        }
+                        engine.closeOutbound();
+                        break;
                     }
 
                     // Process incoming handshaking data
@@ -94,11 +97,9 @@ public abstract class Ssl {
                         byteBuffers.getPeerEncryptedData().compact();
 
                         if (!handleUnwrapResult(result, engine, byteBuffers)) {
-                            System.out.println("[Handshake] Error during unwrap (processing data)");
                             return false;
                         }
                     } catch (Exception e) {
-                        System.out.println("[Handshake] Error during unwrap (exception processing data)");
                         return false;
                     }
                 }
@@ -198,7 +199,12 @@ public abstract class Ssl {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Could not read!!");
+            /*try {
+                engine.closeInbound();
+                engine.closeOutbound();
+            } catch (SSLException sslException) {
+                System.out.println("[SSL READ] Error closing inbound!");
+            }*/
             disconnect(channel, engine);
         }
         return readResult;
@@ -228,12 +234,9 @@ public abstract class Ssl {
                         // Send SSL/TLS encoded data to peer
                         while (byteBuffers.getEncryptedData().hasRemaining()) {
                             int num = channel.write(byteBuffers.getEncryptedData());
-                            //System.out.println("Wrote " + num + " bytes");
                             if (num < 0) {
                                 engine.closeInbound();
                                 disconnect(channel, engine);
-                            } else if (num > 0) {
-                                //logSentMessage(new String(message));
                             }
                         }
                     }
@@ -246,7 +249,6 @@ public abstract class Ssl {
                 }
             }
         } catch (Exception e) {
-            System.out.println("Could not write!!");
             disconnect(channel, engine);
         }
     }

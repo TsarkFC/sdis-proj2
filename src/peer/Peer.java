@@ -139,9 +139,9 @@ public class Peer implements RemoteObject {
             RemoteObject stub = (RemoteObject) UnicastRemoteObject.exportObject(this, 0);
             Registry registry = LocateRegistry.getRegistry();
             registry.rebind(remoteObjName, stub);
-            System.err.println("Peer with name: " + remoteObjName + " ready");
+            System.err.println("[RMI] Peer with name: " + remoteObjName + " ready");
         } catch (Exception e) {
-            System.out.println("Error creating peer and connecting to RMI: " + e);
+            System.out.println("[RMI] Error creating peer and connecting to RMI: " + e);
             return false;
         }
         return true;

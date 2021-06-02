@@ -12,7 +12,7 @@ import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.Iterator;
 
-public class SslReceiver extends Ssl implements Runnable {
+public class SSLReceiver extends SSL implements Runnable {
 
     /**
      * It can be made more robust and scalable by using a Selector with the non-blocking SocketChannel
@@ -29,7 +29,7 @@ public class SslReceiver extends Ssl implements Runnable {
      */
     private Channel handlerChannel;
 
-    public SslReceiver(String host, Integer port, Channel handlerChannel) {
+    public SSLReceiver(String host, Integer port, Channel handlerChannel) {
         initializeSslContext(SSLInformation.protocol, SSLInformation.serverKeys);
         try {
             selector = SelectorProvider.provider().openSelector();
@@ -41,7 +41,7 @@ public class SslReceiver extends Ssl implements Runnable {
         this.handlerChannel = handlerChannel;
     }
 
-    public SslReceiver(String protocol, String serverKeys, String trustStore, String password) {
+    public SSLReceiver(String protocol, String serverKeys, String trustStore, String password) {
         initializeSslContext(protocol, SSLInformation.serverKeys);
         try {
             selector = SelectorProvider.provider().openSelector();
@@ -51,7 +51,7 @@ public class SslReceiver extends Ssl implements Runnable {
     }
 
     public void createServer(String ipAddress, int port) {
-        System.out.println("Adding server in ip: " + ipAddress + " port: " + port);
+        System.out.println("[SSL] Adding server in ip = " + ipAddress + "; port = " + port + ";");
         try {
             ServerSocketChannel serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);

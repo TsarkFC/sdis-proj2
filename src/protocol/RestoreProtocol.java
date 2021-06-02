@@ -36,7 +36,6 @@ public class RestoreProtocol extends Protocol {
         }
 
         peer.addRestoreEntry(fileId);
-        //int chunksNo = FileHandler.getNumberOfChunks(metadata.getFileSize(fileId));
 
         FileMetadata fileMetadata = peer.getMetadata().getHostingFileMetadata(fileId);
         fileMetadata.print();

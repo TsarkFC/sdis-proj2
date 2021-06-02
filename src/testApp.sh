@@ -5,7 +5,7 @@ cd build
 
 
 ################# Simple ###############################
-../../scripts/test.sh access0 BACKUP ../files/321.txt 1
+#../../scripts/test.sh access0 BACKUP ../files/321.txt 1
 #../../scripts/test.sh access0 RESTORE ../files/321.txt
 #../../scripts/test.sh access0 BACKUP ../files/321.txt 2
 #../../scripts/test.sh access0 BACKUP ../files/test.txt 2
@@ -75,23 +75,7 @@ cd build
 #../../scripts/test.sh access0 STATE
 #../../scripts/test.sh access1 STATE
 
-
-################# TEST ENHANCEMENT BACKUP ###################
-# Run backup with 10 peers version 1.1
-#../../scripts/test.sh access0 BACKUP ../files/file.txt 3
-#../../scripts/test.sh access0 RESTORE ../files/file.txt
-
-
-################# TEST ENHANCEMENT DELETE ###################
-#Run backup 10 Peers - python3 run_peers.py 10 1.1 yes
-#../../scripts/test.sh access0 BACKUP ../files/321.txt 3
-#Run Delete with 2 peers - python3 run_peers.py 2 1.1 yes
-#../../scripts/test.sh access0 DELETE ../files/321.txt
-#../../scripts/test.sh access0 STATE
-#Start 10 peers and see if deletes the remaining files
-#../../scripts/test.sh access2 STATE
-
-
-#correr 3 com rep 2
-#Tirar o 2 peer
-#e fazer reclaim do 1
+# TEST DEMO FILES
+../../scripts/test.sh access1 BACKUP ../files/files/medium_file.pdf 2
+#../../scripts/test.sh access1 STATE
+#../../scripts/test.sh access1 RESTORE ../files/files/medium_file.pdf
