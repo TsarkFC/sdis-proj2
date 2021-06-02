@@ -41,14 +41,6 @@ public class SSLReceiver extends SSL implements Runnable {
         this.handlerChannel = handlerChannel;
     }
 
-    public SSLReceiver(String protocol, String serverKeys, String trustStore, String password) {
-        initializeSslContext(protocol, SSLInformation.serverKeys);
-        try {
-            selector = SelectorProvider.provider().openSelector();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public void createServer(String ipAddress, int port) {
         System.out.println("[SSL] Adding server in ip = " + ipAddress + "; port = " + port + ";");
@@ -82,11 +74,6 @@ public class SSLReceiver extends SSL implements Runnable {
             }
         }
         System.out.println("Goodbye!");
-    }
-
-    public void stop() {
-        isActive = false;
-        selector.wakeup();
     }
 
     public void handleKey(SelectionKey key) {
@@ -127,15 +114,6 @@ public class SSLReceiver extends SSL implements Runnable {
         }
     }
 
-    @Override
-    protected void logReceivedMessage(byte[] message) {
-        System.out.println("Incoming message: " + new String(message));
-    }
-
-    @Override
-    protected void logSentMessage(byte[] message) {
-        System.out.println("Sent response: " + new String(message));
-    }
 
     @Override
     public void run() {

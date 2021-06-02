@@ -37,8 +37,6 @@ public class BackupChannel extends Channel {
             resendFile(rcvdMsg);
         } else {
             System.out.println("[BACKUP] Should not save file");
-            //String chunkFileId = FileHandler.createChunkFileId(rcvdMsg.getFileId(), rcvdMsg.getChunkNo(), rcvdMsg.getReplicationDeg());
-            //if (shouldResend(chunkFileId)) {
             if (rcvdMsg.samePeerAndSender(peer) && rcvdMsg.getSelfRcvCount() < 1) {
                 rcvdMsg.incrementSelfRcvCount();
                 System.out.println("[BACKUP] Resent message");

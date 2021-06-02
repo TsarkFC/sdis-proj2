@@ -11,7 +11,6 @@ public class PutChunk extends MsgWithChunk {
     protected static final int PORT_IDX = 4;
     final int REP_DGR_IDX = 5;
     final int SELF_RCV_IDX = 6;
-    final int BODY_IDX = 7;
 
     protected final AddressPort addressPort;
     private final Integer replicationDeg;

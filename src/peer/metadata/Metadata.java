@@ -46,18 +46,6 @@ public class Metadata implements Serializable {
         writeMetadata();
     }
 
-    /*public List<FileMetadata> getAlmostDeletedFiles() {
-        List<FileMetadata> almostDeletedFiles = new ArrayList<>();
-        for (FileMetadata fileMetadata : hostingFileInfo.values()) {
-            if (fileMetadata.isDeleted()) almostDeletedFiles.add(fileMetadata);
-        }
-        return almostDeletedFiles;
-    }*/
-
-    public void updateHostingInfo(FileMetadata hostingMetadata, Integer chunkNo, String ipAddress, int port) {
-        hostingMetadata.addChunk(chunkNo, ipAddress, port);
-        writeMetadata();
-    }
 
     public boolean hasFile(String fileId) {
         return hostingMetadata.hasFile(fileId);
@@ -76,11 +64,6 @@ public class Metadata implements Serializable {
         writeMetadata();
     }
 
-    /*public void deleteFileHosting(String fileID, Peer peer) {
-        FileMetadata fileMetadata = hostingFileInfo.get(fileID);
-        if (fileMetadata == null) return;
-
-    }*/
 
     /**
      * Updating information on stored chunks data
@@ -90,30 +73,6 @@ public class Metadata implements Serializable {
         writeMetadata();
     }
 
-    /*public void updateStoredInfo(String fileId, Integer chunkNo, Integer repDgr, Double chunkSize, Integer peerId) {
-        int chunkSizeKb = (int) Math.round(chunkSize);
-        storedChunksMetadata.updateChunkInfo(fileId, chunkNo, repDgr, chunkSizeKb, peerId);
-        writeMetadata();
-    }*/
-
-    //TODO nao tenho a certeza disto
-    /*public boolean verifySamePeerSender(Message message,Peer peer){
-        String messageFileId = message.getFileId();
-        return peer.getMetadata().hostesFile(messageFileId);
-    }*/
-
-    /*public boolean verifyRepDgr(String fileId, Integer repDgr, Integer numOfChunks) {
-
-        //TODO Verificar aquele erro da apresentaçao
-        //storedChunksMetadata.getFileChunkIds();
-        ConcurrentHashMap<Integer, ConcurrentSkipListSet<Integer>> chunkData = hostingFileInfo.get(fileId).getChunksData();
-        int chunksCount = 0;
-        for (Map.Entry<Integer, ConcurrentSkipListSet<Integer>> entry : chunkData.entrySet()) {
-            chunksCount++;
-            if (entry.getValue().size() < repDgr) return false;
-        }
-        return chunksCount == numOfChunks;
-    }*/
 
     public void writeMetadata() {
         ObjectOutputStream os;
@@ -147,22 +106,7 @@ public class Metadata implements Serializable {
         // hosting data
         state.append("* Hosting:\n");
         state.append(hostingMetadata.getString());
-        /*
-        for (String fileId : hostingFileInfo.keySet()) {
-            state.append("   * File ID: ").append(fileId).append("\n");
 
-            FileMetadata fileMetadata = hostingFileInfo.get(fileId);
-            state.append(String.format("\t* Pathname: %s\n\t* Desired Replication Degree: %d\n",
-                    fileMetadata.getPathname(), fileMetadata.getRepDgr()));
-            state.append("\t* Hosting Chunks:\n");
-            for (Map.Entry<Integer, ConcurrentSkipListSet<Integer>> entry : fileMetadata.getChunksData().entrySet()) {
-                state.append("\t     [").append(entry.getKey()).append("]");
-                state.append(" Perceived replication degree = ").append(entry.getValue().size()).append("\n");
-            }
-            state.append("\n");
-        }
-
-         */
 
         // stored chunks data
         state.append("* Stored:\n");
@@ -202,10 +146,6 @@ public class Metadata implements Serializable {
     public FileMetadata getHostingFileMetadata(String fileId) {
         return hostingMetadata.getFileMetadata(fileId);
     }
-
-    /*public boolean hostesFile(String fileId){
-        return hostingFileInfo.contains(fileId);
-    }*/
 
     public StoredChunksMetadata getStoredChunksMetadata() {
         return storedChunksMetadata;

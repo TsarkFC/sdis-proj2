@@ -1,7 +1,6 @@
 package peer.metadata;
 
 import java.io.Serializable;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 public class ChunkMetadata implements Serializable {
     private final int sizeKb;
@@ -14,11 +13,6 @@ public class ChunkMetadata implements Serializable {
         this.repDgr = repDgr;
     }
 
-    public ChunkMetadata() {
-        sizeKb = 0;
-        id = "";
-        repDgr = 0;
-    }
 
     public String getFileId() {
         return this.id.split("-")[0];

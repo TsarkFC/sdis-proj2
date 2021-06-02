@@ -28,7 +28,7 @@ public class ChordNode {
     /**
      * Peer corresponding to the node in the chord
      */
-    private Peer peer;
+    private final Peer peer;
 
     /**
      * True if peer is the started the chord ring
@@ -182,7 +182,7 @@ public class ChordNode {
      */
     public void fixFingers() {
         next++;
-        if (next > Chord.m - 1) next = 0;
+        if (next > Constants.m - 1) next = 0;
 
         ChordNodeData node = findSuccessor(calculateKey(this.id, next));
 
@@ -312,7 +312,7 @@ public class ChordNode {
         hashCode = hashCode < 0 ? -hashCode : hashCode;
 
         //Truncar ate ter m bits
-        return (int) (hashCode % Math.pow(2, Chord.m));
+        return (int) (hashCode % Math.pow(2, Constants.m));
     }
 
     public int getId() {
@@ -323,25 +323,14 @@ public class ChordNode {
         return this.peer;
     }
 
-    public ChordNodeData getData() {
-        return data;
-    }
-
     public ChordNodeData getPredecessor() {
         return this.predecessor;
-    }
-
-    public boolean isBoot() {
-        return isBoot;
     }
 
     public ChordNodeData getSuccessor() {
         return successor;
     }
 
-    public void setSuccessor(ChordNodeData successor) {
-        this.successor = successor;
-    }
 
     public AddressPortList getAddressPortList() {
         return addressPortList;
@@ -365,6 +354,6 @@ public class ChordNode {
 
     private int calculateKey(int id, int tablePos) {
         int key = id + (int) Math.pow(2, tablePos);
-        return key % (int) Math.pow(2, Chord.m);
+        return key % (int) Math.pow(2, Constants.m);
     }
 }

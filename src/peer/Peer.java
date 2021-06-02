@@ -116,11 +116,6 @@ public class Peer implements RemoteObject {
         channelCoordinator = new ChannelCoordinator(this);
     }
 
-    public String getFilesDir() {
-        return this.filesDir;
-    }
-
-
     public void startFileSystem() {
         fileSystem = "../filesystem/" + peerArgs.getPeerId();
         filesDir = fileSystem + "/files";
@@ -178,10 +173,6 @@ public class Peer implements RemoteObject {
 
     public String getRestoreDir() {
         return restoreDir;
-    }
-
-    public ChannelCoordinator getChannelCoordinator() {
-        return channelCoordinator;
     }
 
     public boolean hasReceivedChunk(String chunkId) {

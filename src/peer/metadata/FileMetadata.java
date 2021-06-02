@@ -79,27 +79,6 @@ public class FileMetadata implements Serializable {
         }
     }
 
-    //TODO mudar caso seja usado
-    public void removeID(int peersId) {
-        //Ele tinha chunk number e todos os peers que mandavam
-        //Para cada chunk obtem se uma lista de peers
-        for (ConcurrentSkipListSet<AddressPort> peerIds : chunksData.values()) {
-            if (peerIds != null) {
-                peerIds.remove(peersId);
-            }
-        }
-    }
-
-    public boolean deletedAllChunksAllPeers() {
-        for (ConcurrentSkipListSet<AddressPort> peerIds : chunksData.values()) {
-            if (peerIds.size() != 0) return false;
-        }
-        return true;
-    }
-
-    public boolean isDeleted() {
-        return deleted;
-    }
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
@@ -109,7 +88,4 @@ public class FileMetadata implements Serializable {
         return numberChunks;
     }
 
-    public void setNumberChunks(int numberChunks) {
-        this.numberChunks = numberChunks;
-    }
 }

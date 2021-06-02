@@ -32,13 +32,6 @@ public class MessageSender {
                 addrPortMdb.getPort(), msg);
     }
 
-    public static void sendTCPMessageMDR(String fileId, Peer peer, byte[] msg) {
-        int chordID = peer.getChordNode().generateHash(fileId);
-        ChordNodeData chordNodeData = peer.getChordNode().findSuccessor(chordID);
-        AddressPort addrPortMdr = chordNodeData.getAddressPortList().getMdrAddressPort();
-        MessageSender.sendTCPMessage(addrPortMdr.getAddress(),
-                addrPortMdr.getPort(), msg);
-    }
 
     public static void sendTCPMessageMDBSuccessor(Peer peer, byte[] msg) {
         ChordNodeData chordNodeData = peer.getChordNode().getSuccessor();

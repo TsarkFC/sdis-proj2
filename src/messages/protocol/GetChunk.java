@@ -62,11 +62,6 @@ public class GetChunk extends MsgWithChunk {
         return Utils.addCRLF(getMsgString().getBytes());
     }
 
-    public boolean samePeerAndSender(Peer peer) {
-        return this.addressPort.samePeerAndSender(peer);
-    }
-
-
     public int getRepDgr() {
         return repDgr;
     }

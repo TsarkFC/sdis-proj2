@@ -158,10 +158,6 @@ public abstract class SSL {
         return true;
     }
 
-    protected abstract void logReceivedMessage(byte[] message);
-
-    protected abstract void logSentMessage(byte[] message);
-
     protected byte[] read(SocketChannel channel, SSLEngine engine) {
 
         SSLSession session = engine.getSession();
@@ -199,12 +195,6 @@ public abstract class SSL {
                 }
             }
         } catch (Exception e) {
-            /*try {
-                engine.closeInbound();
-                engine.closeOutbound();
-            } catch (SSLException sslException) {
-                System.out.println("[SSL READ] Error closing inbound!");
-            }*/
             disconnect(channel, engine);
         }
         return readResult;
@@ -306,7 +296,6 @@ public abstract class SSL {
         KeyStore trustStoreKey = KeyStore.getInstance("JKS");
         trustStoreKey.load(new FileInputStream(trustStorePath), passphrase);
 
-        // TrustManager's decide whether to allow connections.
         TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
         tmf.init(trustStoreKey);
 

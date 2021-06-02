@@ -79,7 +79,6 @@ public class FileReader {
         }
 
         Future<Integer> result = readFileChannel.read(buffer, 0);
-        //while(!result.isDone());
 
         int chunkSize;
         try {

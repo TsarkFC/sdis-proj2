@@ -106,13 +106,4 @@ public class SSLSender extends SSL implements Runnable {
         executor.shutdown();
     }
 
-    @Override
-    public void logReceivedMessage(byte[] message) {
-        System.out.println("Server response: " + new String(message));
-    }
-
-    @Override
-    protected void logSentMessage(byte[] message) {
-        System.out.println("Sent message to server: " + new String(message));
-    }
 }

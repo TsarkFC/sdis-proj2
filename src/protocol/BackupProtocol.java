@@ -14,23 +14,13 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 public class BackupProtocol extends Protocol {
     final int repDgr;
-    final int repsLimit = 5;
-    final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
     int numOfChunks = 0;
-    int timeWait = 1;
-    int reps = 1;
     String fileId;
 
     public BackupProtocol(File file, Peer peer, int repDgr) {
         super(file, peer);
         this.repDgr = repDgr;
     }
-
-    public BackupProtocol(String path, Peer peer, int repDgr) {
-        super(path, peer);
-        this.repDgr = repDgr;
-    }
-
 
     @Override
     public void initialize() {
