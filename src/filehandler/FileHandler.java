@@ -23,7 +23,7 @@ public class FileHandler {
 
     public FileHandler(File file) {
         this.file = file;
-        fileReader = new FileReader(file, getNumberOfChunks((int)file.length()));
+        fileReader = new FileReader(file, getNumberOfChunks((int) file.length()));
     }
 
     public static File getFile(String path) {
@@ -31,7 +31,7 @@ public class FileHandler {
             File file = new File(path);
             if (file.exists() && file.canRead()) return file;
         }
-        System.out.println("[ERROR] " +path + " does not exist!");
+        System.out.println("[ERROR] " + path + " does not exist!");
         return null;
     }
 
@@ -53,8 +53,8 @@ public class FileHandler {
         return sb.toString();
     }
 
-    public static String createChunkFileId(String fileId,int chunkNo,int repDgr){
-        return fileId+chunkNo+repDgr;
+    public static String createChunkFileId(String fileId, int chunkNo, int repDgr) {
+        return fileId + chunkNo + repDgr;
     }
 
     public static String getFilePath(String peerDir, Message message) {
@@ -108,7 +108,7 @@ public class FileHandler {
         return FileHandler.getDirectorySize(dirPath) / 1000.0;
     }
 
-    private static double getDirectorySize(String dirPath) {
+    public static double getDirectorySize(String dirPath) {
         File folder = new File(dirPath);
         float length = 0;
         File[] files = folder.listFiles();

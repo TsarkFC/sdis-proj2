@@ -116,6 +116,10 @@ public class Peer implements RemoteObject {
         channelCoordinator = new ChannelCoordinator(this);
     }
 
+    public String getFilesDir() {
+        return this.filesDir;
+    }
+
 
     public void startFileSystem() {
         fileSystem = "../filesystem/" + peerArgs.getPeerId();

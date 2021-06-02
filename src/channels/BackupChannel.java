@@ -33,17 +33,17 @@ public class BackupChannel extends Channel {
         PutChunk rcvdMsg = new PutChunk(rcvd, body);
 
         if (shouldSaveFile(rcvdMsg)) {
-            System.out.println("Should save file");
+            System.out.println("[BACKUP] Should save file");
             saveChunk(rcvdMsg);
             resendFile(rcvdMsg);
         } else {
-            System.out.println("Should not save file " + new String(header));
+            System.out.println("[BACKUP] Should not save file " + new String(header));
             if (shouldResend(rcvdMsg)) {
-                System.out.println("Resent message");
+                System.out.println("[BACKUP] Resent message");
                 MessageSender.sendTCPMessageMDBSuccessor(peer, rcvdMsg.getBytes());
                 return null;
             }
-            System.out.println("Did not resend message!");
+            System.out.println("[BACKUP] Did not resend message!");
         }
         return null;
     }
@@ -58,7 +58,6 @@ public class BackupChannel extends Channel {
 
     public void saveChunk(PutChunk rcvdMsg) {
         System.out.println("[BACKUP] Backing up file " + rcvdMsg.getFileId() + "-" + rcvdMsg.getChunkNo());
-        //preventReclaim(rcvdMsg);
         FileHandler.saveChunk(rcvdMsg, peer.getFileSystem());
         saveStateMetadata(rcvdMsg);
     }
@@ -75,7 +74,7 @@ public class BackupChannel extends Channel {
             MessageSender.sendTCPMessageMDBSuccessor(peer, newPutChunk.getBytes());
             return true;
         } else {
-            System.out.println("Completed Replication degree");
+            System.out.println("[BACKUP] Completed replication degree, chunk stored");
             return false;
         }
     }

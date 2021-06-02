@@ -20,7 +20,7 @@ public class FileMetadata implements Serializable {
      */
     private final ConcurrentHashMap<Integer, ConcurrentSkipListSet<AddressPort>> chunksData = new ConcurrentHashMap<>();
 
-    public FileMetadata(String pathname, String id, int repDgr, int size,int numberChunks) {
+    public FileMetadata(String pathname, String id, int repDgr, int size, int numberChunks) {
         this.pathname = pathname;
         this.id = id;
         this.repDgr = repDgr;
@@ -28,7 +28,7 @@ public class FileMetadata implements Serializable {
         this.numberChunks = numberChunks;
     }
 
-    public void print(){
+    public void print() {
         System.out.println("ID: " + id);
         System.out.println("Pathname: " + pathname);
         System.out.println("Rep Degree: " + repDgr);
@@ -73,13 +73,14 @@ public class FileMetadata implements Serializable {
     public void addChunk(Integer chunkId, String ipAddress, int port) {
         ConcurrentSkipListSet<AddressPort> peersIds = chunksData.get(chunkId);
         if (peersIds != null) {
-            peersIds.add(new AddressPort(ipAddress,port));
+            peersIds.add(new AddressPort(ipAddress, port));
         } else {
             peersIds = new ConcurrentSkipListSet<>();
-            peersIds.add(new AddressPort(ipAddress,port));
+            peersIds.add(new AddressPort(ipAddress, port));
             chunksData.put(chunkId, peersIds);
         }
     }
+
     //TODO mudar caso seja usado
     public void removeID(int peersId) {
         //Ele tinha chunk number e todos os peers que mandavam

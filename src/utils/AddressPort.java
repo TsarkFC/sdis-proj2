@@ -27,9 +27,9 @@ public class AddressPort implements Serializable {
 
         if (!ipAddress.equals(this.address)) return false;
 
-        return port == (addressPortList.getMcAddressPort().getPort()) ||
-                port == (addressPortList.getMdbAddressPort().getPort()) ||
-                port == (addressPortList.getMdrAddressPort().getPort()) ||
-                port == (addressPortList.getChordAddressPort().getPort());
+        return port.equals(addressPortList.getMcAddressPort().getPort()) ||
+                port.equals(addressPortList.getMdbAddressPort().getPort()) ||
+                port.equals(addressPortList.getMdrAddressPort().getPort()) ||
+                port.equals(addressPortList.getChordAddressPort().getPort());
     }
 }
