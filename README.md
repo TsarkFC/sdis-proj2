@@ -11,7 +11,7 @@ Group members:
 
 All the commands are to be executed in the terminal.
 
-## Running the peer
+## Running the peer:
 
 ### Using the peer.sh script:
 - The script is available in the folder scripts/
@@ -25,7 +25,7 @@ All the commands are to be executed in the terminal.
 
 ## Running the client:
 
-### Using test.sh available in proj1/scripts:
+### Using test.sh available in scripts/:
 - Is supposed to be run on src/build/
 - Usage: ../../scripts/test.sh <peer_ap> <sub_protocol> <opnd_1> <opnd_2>
     - <sub_protocol>: BACKUP / RESTORE / DELETE / RECLAIM / ST
@@ -34,11 +34,6 @@ All the commands are to be executed in the terminal.
       RESTORE / DELETE <filepath_used_in_backup>
       RECLAIM <maximum_storage_space>
       STATE
-
-### Using testApp.sh available in proj1/src/
-- Cleans Classpath preventing common error.
-- Has some common scenarios to demonstrate program capabilities.
-- Runs test.sh with valid arguments and multiple scenarios.
 
 
 
