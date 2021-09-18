@@ -1,4 +1,4 @@
-# SDIS Project
+# SDIS Project - Distributed Backup Service for the Internet
 
 SDIS Project for group T6G26.
 
